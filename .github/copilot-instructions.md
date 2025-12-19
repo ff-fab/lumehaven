@@ -104,6 +104,26 @@ Use <solution> for <problem> because <rationale>.
 3. **Error swallowing** - PoC has `except: continue` patterns, need proper handling
 4. **Hardcoded URLs** - Use environment config, not literals
 
+## Git Workflow
+
+Follow **GitHub Flow**:
+
+1. `main` is always deployable
+2. Create feature branches from `main` for all changes
+3. Branch naming: `feature/<short-description>` or `adr/<number>-<topic>`
+4. Open pull request when ready for review
+5. Merge to `main` after review/approval
+
+```bash
+# Example workflow
+git checkout main
+git pull
+git checkout -b feature/backend-state-store
+# ... make changes ...
+git push -u origin feature/backend-state-store
+# Open PR on GitHub
+```
+
 ## Development Commands (TBD)
 
 Commands will be established after Bazel setup. Check `docs/TODO/00-project-approach.md` for current phase.
