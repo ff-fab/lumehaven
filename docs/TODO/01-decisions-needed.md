@@ -20,11 +20,10 @@ A prioritized list of decisions to make before and during development.
 
 ## Priority 2: Early Development
 
-### D4: Frontend Stack Details
-- **React vs alternatives** - React is likely, but confirm
-- **Bundler** - Vite is mentioned, but verify with Bazel integration
-- **State management** - Context API? Zustand? jotai?
-- **Next step:** Create ADR-004
+### ~~D4: Frontend Stack Details~~ → ADR-004 ✓
+- **Decision:** React + Vite + TypeScript
+- **Status:** Accepted - see `docs/adr/ADR-004-frontend-stack.md`
+- **Note:** Close call with Preact; React chosen for ecosystem breadth and reputation
 
 ### D5: Smart Home Abstraction
 - **How much abstraction?** - Full adapter pattern vs lighter approach
