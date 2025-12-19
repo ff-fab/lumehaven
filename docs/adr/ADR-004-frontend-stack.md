@@ -307,10 +307,13 @@ function App() {
     fetch('/api/states')
       .then(res => res.json())
       .then(data => {
-        const itemMap = data.reduce((acc, item) => {
-          acc[item.name] = item;
-          return acc;
-        }, {});
+        const itemMap = data.reduce<Record<string, Item>>(
+          (acc: Record<string, Item>, item: Item) => {
+            acc[item.name] = item;
+            return acc;
+          },
+          {}
+        );
         setInitialItems(itemMap);
       });
   }, []);
