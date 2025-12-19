@@ -8,14 +8,10 @@ A prioritized list of decisions to make before and during development.
 - **Decision:** Start with native tooling (uv + bun), add Bazel later
 - **Status:** Resolved - see `docs/TODO/00-project-approach.md`
 
-### D2: Backend Language/Runtime
-- **Impact:** Determines skill requirements, performance, ecosystem
-- **Question:** Stay with Python (proven) or move to Bun/Rust?
-- **Considerations:**
-  - Python: FastAPI worked well, familiar, uv is fast
-  - Bun: Could unify frontend/backend tooling
-  - Rust: Performance, but steep learning curve
-- **Next step:** Create ADR-002 with benchmarks if relevant
+### ~~D2: Backend Language/Runtime~~ → ADR-002 ✓
+- **Decision:** Python + FastAPI + uv
+- **Status:** Accepted - see `docs/adr/ADR-002-backend-runtime.md`
+- **Future:** Rust rewrite noted as potential learning/optimization path once Python version is stable
 
 ### ~~D3: State Layer Architecture~~ → ADR-001 ✓
 - **Decision:** Single backend with abstracted state storage (no Redis initially)
@@ -39,6 +35,19 @@ A prioritized list of decisions to make before and during development.
 - **Unit test frameworks** - pytest, vitest
 - **Integration testing** - How to mock smart home APIs
 - **E2E testing** - Playwright? Cypress? None initially?
+
+### D7: Documentation System
+- **Leaning:** Sphinx, possibly with sphinx-needs for requirements traceability
+- **Considerations:**
+  - Sphinx: Mature, great for technical docs, supports reStructuredText + Markdown
+  - sphinx-needs: Adds requirements/specs management, traceability matrices
+  - MkDocs: Simpler, Markdown-native, but less powerful
+  - Docusaurus: React-based, overkill for this project
+- **Questions:**
+  - Do we need formal requirements traceability (sphinx-needs)?
+  - How to integrate with ADRs?
+  - API docs generation (autodoc for Python, TypeDoc for TS)?
+- **Next step:** Create ADR-007
 
 ## Priority 3: Pre-Production
 
