@@ -253,7 +253,7 @@ packages/frontend/
 
 ```typescript
 // hooks/useSSE.ts
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Item {
   name: string;
