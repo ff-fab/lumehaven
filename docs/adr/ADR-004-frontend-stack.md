@@ -402,6 +402,11 @@ function DimmerSlider({ item, onCommand, isPending }: DimmerSliderProps) {
   );
 }
 
+interface ToggleButtonProps {
+  item: Item;
+  onCommand: (value: string) => void;
+  isPending: boolean;
+}
 // components/widgets/ToggleButton.tsx
 function ToggleButton({ item, onCommand, isPending }: ToggleButtonProps) {
   const isOn = item.value === 'ON';
