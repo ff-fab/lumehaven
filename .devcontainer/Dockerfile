@@ -1,0 +1,47 @@
+# lumehaven development container
+# Python 3.12 + uv + bun + common dev tools
+
+FROM mcr.microsoft.com/devcontainers/python:1-3.12-bookworm
+
+# Install uv (fast Python package manager)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Install bun (JavaScript runtime and package manager)
+RUN curl -fsSL https://bun.sh/install | bash \
+    && mv /root/.bun/bin/bun /usr/local/bin/ \
+    && mv /root/.bun/bin/bunx /usr/local/bin/ \
+    && rm -rf /root/.bun
+
+# Install additional system dependencies
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends \
+        # For Robot Framework Browser library (future)
+        libglib2.0-0 \
+        libnss3 \
+        libnspr4 \
+        libatk1.0-0 \
+        libatk-bridge2.0-0 \
+        libcups2 \
+        libdrm2 \
+        libdbus-1-3 \
+        libxkbcommon0 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxfixes3 \
+        libxrandr2 \
+        libgbm1 \
+        libasound2 \
+        # General utilities
+        jq \
+        httpie \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure uv to use project-local virtual environments
+ENV UV_PROJECT_ENVIRONMENT="/workspace/packages/backend/.venv"
+
+# Set bun environment
+ENV BUN_INSTALL="/usr/local"
+
+# Verify installations
+RUN uv --version && bun --version && python --version

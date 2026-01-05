@@ -1,0 +1,68 @@
+{
+  "name": "lumehaven",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/workspace/packages/backend/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+          }
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true
+        },
+        "[typescriptreact]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true
+        },
+        "editor.rulers": [88, 120],
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml",
+        "robocorp.robotframework-lsp",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "eamodio.gitlens",
+        "yzhang.markdown-all-in-one"
+      ]
+    }
+  },
+
+  "forwardPorts": [
+    8000,
+    5173,
+    8080
+  ],
+  "portsAttributes": {
+    "8000": { "label": "Backend API", "onAutoForward": "notify" },
+    "5173": { "label": "Frontend Dev", "onAutoForward": "notify" },
+    "8080": { "label": "OpenHAB", "onAutoForward": "silent" }
+  },
+
+  "postCreateCommand": ".devcontainer/post-create.sh",
+
+  "remoteUser": "vscode"
+}
