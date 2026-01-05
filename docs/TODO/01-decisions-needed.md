@@ -62,7 +62,7 @@ A prioritized list of decisions to make before and during development.
 ### D11: HomeAssistant Support
 - **When to add?** - After OpenHAB is stable
 - **Adapter complexity**
-- **Testing against real HA instance
+- **Testing against real HA instance**
 
 ### D12: Authentication
 - **Single user/household assumed?**
