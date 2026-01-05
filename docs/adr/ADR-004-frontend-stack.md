@@ -372,6 +372,9 @@ export function useCommand() {
 
 ```typescript
 // components/widgets/DimmerSlider.tsx
+import { useState, useEffect } from 'react';
+import type { Item } from '../hooks/useSSE';
+
 interface DimmerSliderProps {
   item: Item;
   onCommand: (value: string) => void;
@@ -408,6 +411,14 @@ interface ToggleButtonProps {
   isPending: boolean;
 }
 // components/widgets/ToggleButton.tsx
+import type { Item } from '../hooks/useSSE';
+
+interface ToggleButtonProps {
+  item: Item;
+  onCommand: (value: string) => void;
+  isPending: boolean;
+}
+
 function ToggleButton({ item, onCommand, isPending }: ToggleButtonProps) {
   const isOn = item.value === 'ON';
   
