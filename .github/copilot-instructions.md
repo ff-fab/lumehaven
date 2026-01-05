@@ -6,46 +6,103 @@
 
 **Architecture:** BFF + SPA pattern. React frontend talks only to our backend, never directly to smart home APIs. Backend normalizes data (units, formatting) so the frontend stays "dumb" and lightweight.
 
-## Reference Material
+## Decided Technology Stack
 
-- `old/` - Proof-of-concept implementation (working but incomplete)
-- `docs/ll/` - Lessons learned from PoC, OpenHAB API quirks
-- `docs/TODO/` - Project approach, decisions needed
-- `docs/adr/` - Architecture Decision Records
+All major architectural decisions are documented in `docs/adr/`. **Follow these decisions during implementation.**
 
-## Repository Structure (Planned)
+### Backend (ADR-001, ADR-002)
+| Component | Choice | Notes |
+|-----------|--------|-------|
+| Runtime | Python 3.12+ | |
+| Framework | FastAPI | Async, good OpenAPI support |
+| Package Manager | uv | Fast, replaces pip/poetry |
+| Validation | pydantic v2 | PoC used v1, upgrade required |
+| State Storage | In-memory (abstracted) | No Redis initially, interface allows swapping |
+
+### Frontend (ADR-004)
+| Component | Choice | Notes |
+|-----------|--------|-------|
+| Framework | React 18+ | Chosen over Preact for ecosystem |
+| Build Tool | Vite | Fast, modern |
+| Language | TypeScript | Strict mode |
+| Runtime | bun | Replaces node.js |
+
+### Signal Model (ADR-005)
+The unified data model for smart home signals:
+```python
+@dataclass
+class Signal:
+    id: str           # Unique identifier (OpenHAB item name / HA entity_id)
+    value: str        # Pre-formatted, display-ready value
+    unit: str         # Unit symbol (e.g., "°C", "%", "W")
+    label: str = ""   # Human-readable name
+```
+
+**Key principle:** Backend normalizes all data. Frontend just displays `value` and `unit`.
+
+### Testing (ADR-006)
+| Layer | Tool | Notes |
+|-------|------|-------|
+| Backend Unit Tests | pytest + pytest-asyncio | Primary focus |
+| Integration/Acceptance | Robot Framework + RESTinstance | Human-readable scenarios |
+| Frontend | Vitest | Lightweight, deferred |
+| E2E | Robot Framework + Browser Library | Deferred until UI stable |
+
+### Documentation (ADR-007)
+| Component | Choice |
+|-----------|--------|
+| Site Generator | MkDocs |
+| Theme | Material for MkDocs |
+| Python API Docs | mkdocstrings |
+
+### Build System
+| Tool | Purpose | Status |
+|------|---------|--------|
+| uv | Python packages | Use now |
+| bun | JS/TS packages | Use now |
+| Bazel | Monorepo orchestration | Deferred (learning goal) |
+
+## Repository Structure
 
 ```
 lumehaven/
 ├── packages/
-│   ├── backend/          # Python BFF (FastAPI)
-│   ├── frontend/         # React SPA (TypeScript)
-│   └── shared/           # Shared types/schemas
+│   ├── backend/              # Python BFF (FastAPI)
+│   │   ├── src/lumehaven/
+│   │   ├── tests/
+│   │   │   ├── unit/         # pytest
+│   │   │   ├── integration/  # Robot Framework
+│   │   │   └── fixtures/
+│   │   └── pyproject.toml
+│   ├── frontend/             # React SPA (TypeScript)
+│   │   ├── src/
+│   │   ├── tests/
+│   │   └── package.json
+│   └── shared/               # Shared types/schemas (if needed)
 ├── docs/
-│   ├── adr/              # Architecture Decision Records
-│   ├── ll/               # Lessons learned
-│   └── TODO/             # Planning documents
-└── old/                  # PoC reference (do not modify)
+│   ├── adr/                  # Architecture Decision Records
+│   ├── ll/                   # Lessons learned from PoC
+│   └── planning/             # Roadmap, decision tracker
+├── old/                      # PoC reference (do not modify)
+└── mkdocs.yml
 ```
 
-## Tooling Preferences
+## Reference Material
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| Bazel | Build system | Learning goal, orchestrates monorepo |
-| bun | JS/TS runtime | Replaces node.js |
-| uv | Python package manager | Replaces pip/poetry |
-| pydantic v2 | Python validation | PoC used v1 |
-| TypeScript | Frontend | PoC used JS, no type safety |
+- `old/` - Proof-of-concept implementation (working but incomplete)
+- `docs/ll/` - Lessons learned from PoC, OpenHAB API quirks
+- `docs/adr/` - Architecture Decision Records (**authoritative**)
+- `docs/planning/` - Roadmap and decision tracker
 
-## Key Patterns from PoC
+## Key Patterns
 
-### Smart Home Abstraction
-See `old/backend/home-observer/smarthome.py` - Protocol class enables OpenHAB/HomeAssistant swapping:
+### Smart Home Adapter Protocol
+From ADR-005, adapters implement:
 ```python
-class SmartHome(Protocol):
-    items: Dict[str, SmartHomeItem]
-    def get_event_stream(self) -> Generator[SmartHomeItem, None, None]: ...
+class SmartHomeAdapter(Protocol):
+    def get_signals(self) -> Dict[str, Signal]: ...
+    def get_signal(self, signal_id: str) -> Signal: ...
+    def subscribe_events(self) -> Generator[Signal, None, None]: ...
 ```
 
 ### SSE Event Flow
@@ -55,54 +112,48 @@ OpenHAB → [SSE] → Backend (normalize) → [SSE] → Frontend (render)
 - Backend handles unit extraction, value formatting, encoding fixes
 - Frontend receives ready-to-display values
 
-### Unit Normalization
+### OpenHAB Unit Extraction
 See `old/backend/home-observer/units_of_measurement.json` for SI/US mapping.
-OpenHAB `stateDescription.pattern` like `"%.1f °C"` must be parsed to extract unit and format value.
-
-## Architecture Decision Records (ADRs)
-
-Document decisions in `docs/adr/ADR-NNN-title.md` using this format:
-
-```markdown
-# ADR-<number>: <title>
-
-## Status
-Proposed | Accepted | Deprecated | Superseded
-
-## Context
-The issue and context for the decision.
-
-## Decision
-Use <solution> for <problem> because <rationale>.
-
-## Decision Drivers
-- Driver 1...
-
-## Considered Options
-- Option 1...
-
-## Decision Matrix
-| Criterion | Option 1 | Option 2 |
-|-----------|----------|----------|
-| Driver 1  | 3        | 5        |
-
-*Scale: 1 (poor) to 5 (excellent)*
-
-## Consequences
-### Positive
-- ...
-### Negative
-- ...
-
-*<Date>*
-```
+Parse `stateDescription.pattern` like `"%.1f °C"` to extract unit and format value.
 
 ## Common Pitfalls (from PoC)
 
 1. **SSE in React** - Must use `useEffect` with cleanup, not in render
-2. **OpenHAB special values** - `"UNDEF"` and `"NULL"` are valid states, don't parse
-3. **Error swallowing** - PoC has `except: continue` patterns, need proper handling
+2. **OpenHAB special values** - `"UNDEF"` and `"NULL"` are valid states, don't parse as errors
+3. **Error swallowing** - PoC has `except: continue` patterns, need proper logging
 4. **Hardcoded URLs** - Use environment config, not literals
+5. **Encoding issues** - OpenHAB SSE may have encoding problems (see `ftfy` usage in PoC)
+
+## Implementation Roadmap
+
+### Phase 1: Project Setup (Current)
+- [ ] Initialize `packages/backend/` with uv + pyproject.toml
+- [ ] Initialize `packages/frontend/` with bun + Vite
+- [ ] Set up pytest and basic test structure
+- [ ] Set up MkDocs
+
+### Phase 2: Core Backend
+- [ ] Signal model (pydantic)
+- [ ] SmartHomeAdapter protocol
+- [ ] OpenHAB adapter (port from PoC)
+- [ ] FastAPI endpoints (REST + SSE)
+- [ ] Unit tests for parsing logic
+
+### Phase 3: Frontend Shell
+- [ ] React app with Vite + TypeScript
+- [ ] SSE client hook with proper cleanup
+- [ ] Basic dashboard layout
+- [ ] Signal display components
+
+### Phase 4: Integration
+- [ ] Robot Framework integration tests
+- [ ] Docker configuration
+- [ ] MkDocs documentation site
+
+### Phase 5: Deployment (Decisions D8-D10)
+- [ ] Raspberry Pi deployment
+- [ ] Configuration management
+- [ ] Observability/logging
 
 ## Git Workflow
 
@@ -116,25 +167,48 @@ Follow **GitHub Flow**:
 
 ```bash
 # Example workflow
-git checkout main
-git pull
-git checkout -b feature/backend-state-store
+git checkout main && git pull
+git checkout -b feature/backend-signal-model
 # ... make changes ...
-git push -u origin feature/backend-state-store
-# Open PR on GitHub
+git push -u origin feature/backend-signal-model
+gh pr create
 ```
 
-## Development Commands (TBD)
+## Development Commands
 
-Commands will be established after Bazel setup. Check `docs/TODO/00-project-approach.md` for current phase.
+```bash
+# Backend
+cd packages/backend
+uv sync                      # Install dependencies
+uv run pytest               # Run unit tests
+uv run robot tests/integration  # Run Robot Framework tests
 
-## Review Instructions for pull-requests
+# Frontend
+cd packages/frontend
+bun install                 # Install dependencies
+bun run dev                 # Start dev server
+bun test                    # Run tests
+
+# Documentation
+mkdocs serve                # Preview docs locally
+mkdocs build                # Build static site
+```
+
+## ADR Quick Reference
+
+| ADR | Decision | Key Points |
+|-----|----------|------------|
+| 001 | State Management | In-memory, abstracted interface, no Redis |
+| 002 | Backend Runtime | Python + FastAPI + uv |
+| 004 | Frontend Stack | React + Vite + TypeScript + bun |
+| 005 | Signal Abstraction | Minimal: `id`, `value`, `unit`, `label` |
+| 006 | Testing | pytest (unit) + Robot Framework (integration) |
+| 007 | Documentation | MkDocs + Material + mkdocstrings |
+
+## Review Instructions for Pull Requests
 
 - Ensure ADRs are created/updated for architectural decisions
 - Ensure ADRs are followed in implementation (or new ones suggested where necessary)
-- Check TODO items and suggest changes to the pull request where future work could be impacted
-  and changes should be made to accommodate future work.
-- Specifically check against SOLID principles on every pull request and suggest changes where
-  necessary. Even where no change is necessary, leave a comment indicating examples on successful
-  adherence to SOLID principles, explaining why the code is a good example of SOLID principles.
-  Consider yourself a tutor teaching best practices in software architecture.
+- Check against remaining TODO items (D8-D13) for future compatibility
+- **SOLID principles:** Review and comment on adherence. Even when code is good, explain why as a teaching moment.
+- Consider yourself a tutor teaching best practices in software architecture.

@@ -1,12 +1,12 @@
-# Decisions Needed
+# Decisions Tracker
 
-A prioritized list of decisions to make before and during development.
+Tracking architectural decisions for lumehaven. Completed decisions have ADRs in `docs/adr/`.
 
-## Priority 1: Blocking (Cannot proceed without)
+## ✅ Completed Decisions
 
 ### ~~D1: Build System Choice~~ → Deferred
 - **Decision:** Start with native tooling (uv + bun), add Bazel later
-- **Status:** Resolved - see `docs/TODO/00-project-approach.md`
+- **Status:** Resolved - see `docs/planning/00-project-approach.md`
 
 ### ~~D2: Backend Language/Runtime~~ → ADR-002 ✓
 - **Decision:** Python + FastAPI + uv
@@ -17,8 +17,6 @@ A prioritized list of decisions to make before and during development.
 - **Decision:** Single backend with abstracted state storage (no Redis initially)
 - **Status:** Accepted - see `docs/adr/ADR-001-state-management.md`
 - **Rationale:** Weighted for future flexibility + resource efficiency
-
-## Priority 2: Early Development
 
 ### ~~D4: Frontend Stack Details~~ → ADR-004 ✓
 - **Decision:** React + Vite + TypeScript
@@ -40,7 +38,9 @@ A prioritized list of decisions to make before and during development.
 - **Status:** Accepted - see `docs/adr/ADR-007-documentation-system.md`
 - **Rationale:** Markdown-native, simple, beautiful output, good Python integration
 
-## Priority 3: Pre-Production
+## 🔜 Pending Decisions (Pre-Production)
+
+These decisions can be made during implementation when needed.
 
 ### D8: Deployment Model
 - **Container orchestration** - Docker Compose, Kubernetes, or simpler?
@@ -57,7 +57,9 @@ A prioritized list of decisions to make before and during development.
 - **Metrics** - Prometheus? None?
 - **Error tracking**
 
-## Priority 4: Future Considerations
+## 📋 Future Considerations
+
+These will be addressed after core functionality is complete.
 
 ### D11: HomeAssistant Support
 - **When to add?** - After OpenHAB is stable
