@@ -35,47 +35,39 @@ A prioritized list of decisions to make before and during development.
 - **Status:** Accepted - see `docs/adr/ADR-006-testing-strategy.md`
 - **Rationale:** Backend-first focus, human-readable scenarios, extensible to E2E
 
-### D7: Documentation System
-- **Leaning:** Sphinx, possibly with sphinx-needs for requirements traceability
-- **Considerations:**
-  - Sphinx: Mature, great for technical docs, supports reStructuredText + Markdown
-  - sphinx-needs: Adds requirements/specs management, traceability matrices
-  - MkDocs: Simpler, Markdown-native, but less powerful
-  - Docusaurus: React-based, overkill for this project
-- **Questions:**
-  - Do we need formal requirements traceability (sphinx-needs)?
-  - How to integrate with ADRs?
-  - API docs generation (autodoc for Python, TypeDoc for TS)?
-- **Next step:** Create ADR-007
+### ~~D7: Documentation System~~ → ADR-007 ✓
+- **Decision:** MkDocs + Material theme + mkdocstrings for Python API docs
+- **Status:** Accepted - see `docs/adr/ADR-007-documentation-system.md`
+- **Rationale:** Markdown-native, simple, beautiful output, good Python integration
 
 ## Priority 3: Pre-Production
 
-### D7: Deployment Model
+### D8: Deployment Model
 - **Container orchestration** - Docker Compose, Kubernetes, or simpler?
 - **Target:** Raspberry Pi 4
 - **Update mechanism**
 
-### D8: Configuration Management
+### D9: Configuration Management
 - **Environment variables vs config files**
 - **Secrets handling**
 - **Multi-environment support (dev/prod)**
 
-### D9: Observability
+### D10: Observability
 - **Logging** - Structured logging format
 - **Metrics** - Prometheus? None?
 - **Error tracking**
 
 ## Priority 4: Future Considerations
 
-### D10: HomeAssistant Support
+### D11: HomeAssistant Support
 - **When to add?** - After OpenHAB is stable
 - **Adapter complexity**
 - **Testing against real HA instance
 
-### D11: Authentication
+### D12: Authentication
 - **Single user/household assumed?**
 - **Network security model (LAN-only?)**
 
-### D12: Mobile Support
+### D13: Mobile Support
 - **PWA features**
 - **Responsive design requirements**
