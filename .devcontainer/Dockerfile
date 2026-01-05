@@ -1,7 +1,7 @@
 # lumehaven development container
-# Python 3.12 + uv + bun + common dev tools
+# Python 3.14 + uv + bun + common dev tools
 
-FROM mcr.microsoft.com/devcontainers/python:1-3.12-bookworm
+FROM mcr.microsoft.com/devcontainers/python:3.14
 
 # Install uv (fast Python package manager)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -42,6 +42,11 @@ ENV UV_PROJECT_ENVIRONMENT="/workspace/packages/backend/.venv"
 
 # Set bun environment
 ENV BUN_INSTALL="/usr/local"
+
+# Create .vscode-server directory with proper ownership
+# This prevents permission issues when volumes are mounted
+RUN mkdir -p /home/vscode/.vscode-server /home/vscode/.vscode-server/extensions \
+    && chown -R vscode:vscode /home/vscode/.vscode-server
 
 # Verify installations
 RUN uv --version && bun --version && python --version

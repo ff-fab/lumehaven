@@ -10,6 +10,11 @@ cd /workspace/packages/backend
 uv sync --all-extras
 echo "✅ Backend dependencies installed"
 
+# Generate version from git tags (setuptools_scm)
+echo "📌 Updating version from git tags..."
+cd /workspace
+python scripts/update_version.py || echo "⚠️  Could not update version (git tags may not be available)"
+
 # Frontend setup (when it exists)
 if [ -f "/workspace/packages/frontend/package.json" ]; then
     echo "📦 Setting up frontend..."

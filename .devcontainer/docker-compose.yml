@@ -5,32 +5,14 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ..:/workspace:cached
-      # Persist VS Code extensions
-      - devcontainer-vscode-extensions:/home/vscode/.vscode-server/extensions
+      # Persist VS Code server data (extensions, settings, etc.)
+      - devcontainer-vscode-server:/home/vscode/.vscode-server
       # Persist bash history
       - devcontainer-bash-history:/commandhistory
     command: sleep infinity
     # Required for Docker-in-Docker
     privileged: true
 
-  # OpenHAB for integration testing
-  # Uncomment when needed for testing against real OpenHAB
-  # openhab:
-  #   image: openhab/openhab:4.1.0
-  #   volumes:
-  #     - openhab-conf:/openhab/conf
-  #     - openhab-userdata:/openhab/userdata
-  #     - openhab-addons:/openhab/addons
-  #   environment:
-  #     OPENHAB_HTTP_PORT: "8080"
-  #     CRYPTO_POLICY: "unlimited"
-  #   ports:
-  #     - "8080:8080"
-  #   restart: unless-stopped
-
 volumes:
-  devcontainer-vscode-extensions:
+  devcontainer-vscode-server:
   devcontainer-bash-history:
-  # openhab-conf:
-  # openhab-userdata:
-  # openhab-addons:

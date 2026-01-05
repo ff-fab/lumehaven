@@ -5,18 +5,19 @@ Run with: uvicorn lumehaven.main:app --reload
 """
 
 import asyncio
+import contextlib
 import logging
-from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from lumehaven import __version__
+from lumehaven.adapters.openhab import OpenHABAdapter
 from lumehaven.api.routes import router as api_router
 from lumehaven.api.sse import router as sse_router
-from lumehaven.config import get_settings, SmartHomeType
-from lumehaven.adapters.openhab import OpenHABAdapter
+from lumehaven.config import SmartHomeType, get_settings
 from lumehaven.state.store import get_signal_store
 
 # Configure logging
@@ -44,7 +45,7 @@ async def sync_from_smart_home(adapter: OpenHABAdapter) -> None:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Application lifespan manager.
 
     Handles startup and shutdown tasks:
@@ -68,6 +69,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Store adapter for access in routes if needed
     app.state.adapter = adapter
 
+    sync_task: asyncio.Task[None] | None = None
     try:
         # Load initial signals
         logger.info(f"Connecting to {settings.smart_home_type.value}...")
@@ -84,12 +86,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     finally:
         # Cleanup
         logger.info("Shutting down...")
-        if "sync_task" in locals():
+        if sync_task is not None:
             sync_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await sync_task
-            except asyncio.CancelledError:
-                pass
         await adapter.close()
         logger.info("Shutdown complete")
 

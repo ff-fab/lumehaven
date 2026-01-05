@@ -5,7 +5,9 @@
   "workspaceFolder": "/workspace",
 
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    },
     "ghcr.io/devcontainers/features/git:1": {}
   },
 
@@ -23,11 +25,11 @@
           }
         },
         "[typescript]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.defaultFormatter": "prettier.prettier-vscode",
           "editor.formatOnSave": true
         },
         "[typescriptreact]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.defaultFormatter": "prettier.prettier-vscode",
           "editor.formatOnSave": true
         },
         "editor.rulers": [88, 120],
@@ -41,7 +43,7 @@
         "tamasfe.even-better-toml",
         "robocorp.robotframework-lsp",
         "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode",
+        "prettier.prettier-vscode",
         "bradlc.vscode-tailwindcss",
         "GitHub.copilot",
         "GitHub.copilot-chat",
@@ -53,13 +55,11 @@
 
   "forwardPorts": [
     8000,
-    5173,
-    8080
+    5173
   ],
   "portsAttributes": {
     "8000": { "label": "Backend API", "onAutoForward": "notify" },
-    "5173": { "label": "Frontend Dev", "onAutoForward": "notify" },
-    "8080": { "label": "OpenHAB", "onAutoForward": "silent" }
+    "5173": { "label": "Frontend Dev", "onAutoForward": "notify" }
   },
 
   "postCreateCommand": ".devcontainer/post-create.sh",
