@@ -25,10 +25,10 @@ A prioritized list of decisions to make before and during development.
 - **Status:** Accepted - see `docs/adr/ADR-004-frontend-stack.md`
 - **Note:** Close call with Preact; React chosen for ecosystem breadth and reputation
 
-### D5: Smart Home Abstraction
-- **How much abstraction?** - Full adapter pattern vs lighter approach
-- **What's the common model?** - Define Item/Entity schema
-- **Next step:** Create ADR-005, define types
+### ~~D5: Signal Identity and Metadata Strategy~~ → ADR-005 ✓
+- **Decision:** Minimal Signal abstraction (id, value, unit, label) based on PoC pattern
+- **Status:** Accepted - see `docs/adr/ADR-005-signal-abstraction.md`
+- **Rationale:** Proven in PoC, simple extension path, keeps frontend "dumb"
 
 ### D6: Testing Strategy
 - **Unit test frameworks** - pytest, vitest
