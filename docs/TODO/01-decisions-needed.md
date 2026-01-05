@@ -30,10 +30,10 @@ A prioritized list of decisions to make before and during development.
 - **Status:** Accepted - see `docs/adr/ADR-005-signal-abstraction.md`
 - **Rationale:** Proven in PoC, simple extension path, keeps frontend "dumb"
 
-### D6: Testing Strategy
-- **Unit test frameworks** - pytest, vitest
-- **Integration testing** - How to mock smart home APIs
-- **E2E testing** - Playwright? Cypress? None initially?
+### ~~D6: Testing Strategy~~ → ADR-006 ✓
+- **Decision:** Hybrid approach - pytest for unit tests, Robot Framework for integration/acceptance
+- **Status:** Accepted - see `docs/adr/ADR-006-testing-strategy.md`
+- **Rationale:** Backend-first focus, human-readable scenarios, extensible to E2E
 
 ### D7: Documentation System
 - **Leaning:** Sphinx, possibly with sphinx-needs for requirements traceability
