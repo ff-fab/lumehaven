@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**lumehaven** - A smart home dashboard supporting OpenHAB (later HomeAssistant), running on Raspberry Pi 4.
+**lumehaven** - A smart home dashboard supporting common smart home frameworks, starting with OpenHAB and later HomeAssistant.
 
 **Architecture:** BFF + SPA pattern. React frontend talks only to our backend, never directly to smart home APIs. Backend normalizes data (units, formatting) so the frontend stays "dumb" and lightweight.
 
@@ -115,6 +115,9 @@ OpenHAB → [SSE] → Backend (normalize) → [SSE] → Frontend (render)
 ### OpenHAB Unit Extraction
 See `old/backend/home-observer/units_of_measurement.json` for SI/US mapping.
 Parse `stateDescription.pattern` like `"%.1f °C"` to extract unit and format value.
+
+The PoC in `old/backend/home-observer` successfully implemented deriving units
+and value formatting from OpenHAB metadata, which should be ported to the new backend.
 
 ## Common Pitfalls (from PoC)
 
