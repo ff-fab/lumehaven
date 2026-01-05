@@ -293,4 +293,6 @@ class Signal:
 - OpenHAB API examples: [docs/ll/openhab-example-api-calls.md](../ll/openhab-example-api-calls.md)
 - HomeAssistant WebSocket API: https://developers.home-assistant.io/docs/api/websocket/
 
+Note: The PoC references are not checked into the main codebase.
+
 *January 5, 2026*
