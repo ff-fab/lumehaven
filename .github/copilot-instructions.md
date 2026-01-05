@@ -131,6 +131,7 @@ Commands will be established after Bazel setup. Check `docs/TODO/00-project-appr
 ## Review Instructions for pull-requests
 
 - Ensure ADRs are created/updated for architectural decisions
+- Ensure ADRs are followed in implementation (or new ones suggested where necessary)
 - Check TODO items and suggest changes to the pull request where future work could be impacted
   and changes should be made to accommodate future work.
 - Specifically check against SOLID principles on every pull request and suggest changes where
