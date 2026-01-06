@@ -29,7 +29,7 @@ fi
 cd /workspace
 if [ -f ".pre-commit-config.yaml" ]; then
     echo "🪝 Installing pre-commit hooks..."
-    uv run pre-commit install
+    uv run --with pre-commit pre-commit install
 fi
 
 # GitHub CLI authentication reminder
