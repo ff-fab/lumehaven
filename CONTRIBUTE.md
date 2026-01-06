@@ -75,7 +75,7 @@ manual activation.
 - On devcontainer startup, `uv sync --all-extras` creates `.venv/` with all dependencies
 - The devcontainer's `PATH` includes `.venv/bin/`, so Python commands automatically use
   the venv
-- You don't see the "_(venv)_" prompt because uv manages it transparently
+- You don't see the `(venv)` prompt because uv manages it transparently
 
 **To verify the venv is active:**
 
