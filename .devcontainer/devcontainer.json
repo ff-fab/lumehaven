@@ -1,6 +1,5 @@
 {
   "name": "lumehaven",
-  "image": "mcr.microsoft.com/devcontainers/python:3.14",
   "build": {
     "dockerfile": "Dockerfile"
   },
@@ -113,7 +112,7 @@
         "charliermarsh.ruff",
         "tamasfe.even-better-toml",
         "robocorp.robotframework-lsp",
-        "dbaeumer.vscode-eslint",
+        "dbaeumer.vscode-eslt",
         "prettier.prettier-vscode",
         "bradlc.vscode-tailwindcss",
         "GitHub.copilot",
