@@ -36,12 +36,16 @@ DevContainer applies all settings either way.
 
 ## GitHub CLI Authentication
 
-By default, GitHub CLI uses SSH authentication from your host machine:
+By default, GitHub CLI uses SSH authentication from your host machine via VS Code's SSH forwarding:
 
-**The container automatically mounts your SSH directory** (`~/.ssh` from host) with full access.
+**The container automatically forwarded your SSH socket** from VS Code, which has access to your host's SSH keys.
 If you have SSH keys configured on your host, `gh` should work out of the box on first use.
 
-**Why full access?** SSH needs to read your private keys AND write to `known_hosts` when connecting to new hosts (like github.com for the first time). This is safe because the container runs under your host's ssh-agent context.
+**Why this approach?** VS Code's SSH forwarding:
+- Works on **all platforms** (Linux, macOS, Windows/WSL)
+- Keeps SSH keys on the host (never copied to container)
+- Allows SSH to read keys AND write `known_hosts` on first connection
+- Secure: Uses SSH agent forwarding, not file mounting
 
 **If SSH isn't configured on your host:**
 ```bash
@@ -49,13 +53,17 @@ gh auth login
 # Prompts you to authenticate (creates a token in the container)
 ```
 
-**Security note:** The `~/.ssh` mount uses your host's keys—they're not copied into the container. When the devcontainer stops, nothing persists except `known_hosts` entries.
+**Prerequisites:**
+- VS Code with Remote Development extension (included in devcontainer)
+- SSH key on host with **correct permissions**: `chmod 600 ~/.ssh/id_rsa` (private keys)
+- SSH public key added to GitHub: https://github.com/settings/keys
 
 ### Troubleshooting GitHub CLI
 
-- **"permission denied (publickey)"** → SSH key on host needs GitHub SSH keys configured
+- **"permission denied (publickey)"** → Add your SSH public key to GitHub at https://github.com/settings/keys (verify your host SSH key has correct permissions: `chmod 600 ~/.ssh/id_*`)
 - **"command not found: gh"** → Run `sudo apt update && sudo apt install -y gh` (GitHub CLI feature auto-installs, but sometimes needs refresh)
 - **Token expired** → Run `gh auth login` again to refresh
+- **SSH not working in WSL** → Ensure SSH keys are in WSL `~/.ssh/` directory, not Windows home
 
 ## Development Workflows
 
