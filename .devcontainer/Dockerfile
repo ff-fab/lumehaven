@@ -6,15 +6,12 @@ FROM mcr.microsoft.com/devcontainers/python:3.14
 # Install uv (fast Python package manager)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Install bun (JavaScript runtime and package manager)
-RUN curl -fsSL https://bun.sh/install | bash \
-    && mv /root/.bun/bin/bun /usr/local/bin/ \
-    && mv /root/.bun/bin/bunx /usr/local/bin/ \
-    && rm -rf /root/.bun
-
-# Install additional system dependencies
+# Install additional system dependencies FIRST (ensures curl/bash are available)
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
+        # Required for bun installation
+        curl \
+        unzip \
         # For Robot Framework Browser library (future)
         libglib2.0-0 \
         libnss3 \
@@ -36,6 +33,12 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         httpie \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install bun (JavaScript runtime and package manager)
+RUN curl -fsSL https://bun.sh/install | bash \
+    && mv /root/.bun/bin/bun /usr/local/bin/ \
+    && mv /root/.bun/bin/bunx /usr/local/bin/ \
+    && rm -rf /root/.bun
 
 # Configure uv to use project-local virtual environments
 ENV UV_PROJECT_ENVIRONMENT="/workspace/packages/backend/.venv"
