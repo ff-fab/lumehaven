@@ -69,6 +69,7 @@
 
         // Disable Markdown All in One's formatter (conflicts with Prettier)
         "markdown.extension.formatting.enable": false,
+        "markdown.extension.preview.autoShow": false,
 
         // YAML formatting
         "[yaml]": {
@@ -109,8 +110,7 @@
         "bradlc.vscode-tailwindcss",
         "GitHub.copilot",
         "GitHub.copilot-chat",
-        "eamodio.gitlens",
-        "yzhang.markdown-all-in-one"
+        "eamodio.gitlens"
       ]
     }
   },
