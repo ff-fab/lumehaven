@@ -98,7 +98,7 @@ update or modify `uv.lock` itself.
 ```bash
 cd packages/backend
 
-# Install/update dependencies (automatically runs after git pull)
+# Install/update dependencies (run after git pull if pyproject.toml or uv.lock changed)
 uv sync --all-extras
 
 # Add a new dependency
