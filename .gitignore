@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # setuptools_scm generated version file
-*/_version.py
+**/_version.py
 
 # C extensions
 *.so

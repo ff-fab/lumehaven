@@ -1,8 +1,10 @@
 {
   "name": "lumehaven",
-  "dockerComposeFile": "docker-compose.yml",
-  "service": "devcontainer",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
 
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
@@ -13,8 +15,12 @@
   },
 
   "mounts": [
-    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh"
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,readonly"
   ],
+
+  "remoteEnv": {
+    "PATH": "/workspace/packages/backend/.venv/bin:${containerEnv:PATH}"
+  },
 
   "customizations": {
     "vscode": {
@@ -106,7 +112,7 @@
         "charliermarsh.ruff",
         "tamasfe.even-better-toml",
         "robocorp.robotframework-lsp",
-        "dbaeumer.vscode-eslint",
+        "dbaeumer.vscode-eslt",
         "prettier.prettier-vscode",
         "bradlc.vscode-tailwindcss",
         "GitHub.copilot",
@@ -116,10 +122,7 @@
     }
   },
 
-  "forwardPorts": [
-    8000,
-    5173
-  ],
+  "forwardPorts": [8000, 5173],
   "portsAttributes": {
     "8000": { "label": "Backend API", "onAutoForward": "notify" },
     "5173": { "label": "Frontend Dev", "onAutoForward": "notify" }
