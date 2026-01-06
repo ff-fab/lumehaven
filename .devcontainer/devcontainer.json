@@ -1,8 +1,11 @@
 {
   "name": "lumehaven",
-  "dockerComposeFile": "docker-compose.yml",
-  "service": "devcontainer",
+  "image": "mcr.microsoft.com/devcontainers/python:3.14",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
 
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
@@ -12,7 +15,9 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
-  "mounts": ["source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh"],
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,readonly"
+  ],
 
   "containerEnv": {
     "PATH": "/workspace/packages/backend/.venv/bin:${containerEnv:PATH}"
