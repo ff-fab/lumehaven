@@ -143,8 +143,8 @@ class SignalStore:
         # Update stored value
         await self.set(signal)
 
-        # Notify subscribers
-        for queue in self._subscribers:
+        # Notify subscribers (iterate over snapshot to prevent race conditions)
+        for queue in list(self._subscribers):
             try:
                 queue.put_nowait(signal)
             except asyncio.QueueFull:

@@ -68,6 +68,18 @@ class OpenHABAdapter:
             )
         return self._client
 
+    async def _get_sse_client(self) -> httpx.AsyncClient:
+        """Get or create SSE client with disabled read timeout.
+
+        SSE connections are long-lived and should not timeout on idle reads.
+        Returns a separate client configured for streaming.
+        """
+        # Create a new client with read timeout disabled for SSE
+        return httpx.AsyncClient(
+            base_url=self.base_url,
+            timeout=httpx.Timeout(30.0, connect=10.0, read=None),
+        )
+
     async def _ensure_initialized(self) -> None:
         """Ensure default units are loaded."""
         if not self._default_units:
@@ -172,7 +184,7 @@ class OpenHABAdapter:
             await self.get_signals()
 
         try:
-            client = await self._get_client()
+            client = await self._get_sse_client()
 
             # Connect to SSE endpoint
             async with client.stream("GET", "/rest/events/states") as response:
@@ -210,6 +222,9 @@ class OpenHABAdapter:
 
         except httpx.HTTPError as e:
             raise SmartHomeConnectionError("openhab", self.base_url, e) from e
+        finally:
+            # Clean up SSE client after subscription ends
+            await client.aclose()
 
     def _extract_signal(self, item: dict[str, Any]) -> tuple[Signal, _ItemMetadata]:
         """Extract a Signal and metadata from an OpenHAB item response.

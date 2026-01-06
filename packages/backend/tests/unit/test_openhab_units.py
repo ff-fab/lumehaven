@@ -1,7 +1,5 @@
 """Unit tests for OpenHAB unit extraction and value formatting."""
 
-import pytest
-
 from lumehaven.adapters.openhab.units import (
     extract_unit_from_pattern,
     format_value,
