@@ -31,6 +31,7 @@ dev = [
     "robotframework-requests>=0.9.0",
     "RESTinstance>=1.4.0",
     "setuptools_scm[toml]>=8.0.0",
+    "pre-commit>=4.5.0",
 ]
 
 [build-system]

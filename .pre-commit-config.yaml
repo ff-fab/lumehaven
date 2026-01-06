@@ -9,10 +9,8 @@ repos:
     hooks:
       - id: trailing-whitespace
         name: Trim trailing whitespace
-        stages: [commit]
       - id: end-of-file-fixer
         name: Fix end of file
-        stages: [commit]
       - id: check-yaml
         name: Check YAML syntax
         args: ['--unsafe']
@@ -33,7 +31,9 @@ repos:
         name: Prettier (JS, TS, JSON, MD, YAML)
         types_or:
           - javascript
-          - typescript
+          - jsx
+          - ts
+          - tsx
           - json
           - markdown
           - yaml
@@ -42,7 +42,6 @@ repos:
             packages/backend/.*|
             old/.*
           )$
-        stages: [commit]
 
   # Ruff: Lint and format Python
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -51,10 +50,8 @@ repos:
       - id: ruff
         name: Ruff (lint Python)
         args: ['check', '--fix']
-        stages: [commit]
       - id: ruff-format
         name: Ruff (format Python)
-        stages: [commit]
 
   # mypy: Type checking for Python
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -70,12 +67,9 @@ repos:
           - fastapi>=0.109.0
           - httpx>=0.26.0
           - sse-starlette>=2.0.0
-        stages: [commit]
 
 # Configuration options
 default_language_version:
   python: python3.14
 
-# Skip certain hooks in certain conditions
-default_stages: [commit]
-fail_fast: false  # Run all hooks, don't stop at first failure
+fail_fast: false # Run all hooks, don't stop at first failure
