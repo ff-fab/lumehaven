@@ -34,6 +34,27 @@ code .                         # Also works (less organized)
 ```
 DevContainer applies all settings either way.
 
+## GitHub CLI Authentication
+
+By default, GitHub CLI uses SSH authentication from your host machine:
+
+**The container automatically mounts your SSH keys** (`~/.ssh` from host) as read-only.
+If you have SSH keys configured on your host, `gh` should work out of the box.
+
+**If SSH isn't configured on your host:**
+```bash
+gh auth login
+# Prompts you to authenticate (creates a token in the container)
+```
+
+**Note:** SSH keys are mounted read-only and never copied into the container—your security setup on the host is respected.
+
+### Troubleshooting GitHub CLI
+
+- **"permission denied (publickey)"** → SSH key on host needs GitHub SSH keys configured
+- **"command not found: gh"** → Run `sudo apt update && sudo apt install -y gh` (GitHub CLI feature auto-installs, but sometimes needs refresh)
+- **Token expired** → Run `gh auth login` again to refresh
+
 ## Development Workflows
 
 ### Backend (Python/FastAPI)
