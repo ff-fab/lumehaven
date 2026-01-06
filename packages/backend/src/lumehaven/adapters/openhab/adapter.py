@@ -322,9 +322,7 @@ class OpenHABAdapter:
             label=label,
         ), _ItemMetadata(event_state_contains_unit=False)
 
-    def _process_event(
-        self, item_name: str, payload: dict[str, Any]
-    ) -> Signal | None:
+    def _process_event(self, item_name: str, payload: dict[str, Any]) -> Signal | None:
         """Process an SSE event payload into a Signal.
 
         Args:

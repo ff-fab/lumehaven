@@ -148,7 +148,9 @@ class SignalStore:
             try:
                 queue.put_nowait(signal)
             except asyncio.QueueFull:
-                logger.warning(f"Subscriber queue full, dropping update for {signal.id}")
+                logger.warning(
+                    f"Subscriber queue full, dropping update for {signal.id}"
+                )
 
     def subscriber_count(self) -> int:
         """Get the number of active subscribers.
