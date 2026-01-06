@@ -88,13 +88,14 @@ A prioritized list of decisions to make before and during development.
     - [x] Deleted `.vscode/settings.json` - No local settings (DevContainer is official)
     - [x] Verified `.devcontainer/devcontainer.json` - All settings mirrored and consistent
     - [x] Created `README.md` - Project overview and quick start
-    - [x] Created `docs/DEVELOPMENT-ENVIRONMENT.md` - Complete development guide
     - [x] Created `.devcontainer/README.md` - DevContainer-specific documentation
-    - [x] Created `docs/DEVCONTAINER-ARCHITECTURE.md` - Architecture and design principles
     - [x] Updated `.devcontainer/post-create.sh` - Added workspace file pro-tip
+  - [x] T1d: **Pre-commit Hooks Setup** - Enforce formatting checks before commits
+    - [x] Created `.pre-commit-config.yaml` - Hooks for Prettier, Ruff, mypy, basic checks
+    - [x] Updated `CONTRIBUTE.md` - Instructions for setup and workflow
+    - [x] Updated `.devcontainer/post-create.sh` - Auto-installs pre-commit hooks on container startup
 
 - **Remaining (Backlog for Phase 2+):**
-  - [ ] T1d: **Pre-commit Hooks Setup** - Enforce formatting checks before commits (`.pre-commit-config.yaml`)
   - [ ] T1e: **Overhaul copilot-instructions** - Multi-context instruction files following best practices
   - [ ] T1f: **Evaluate Code Analysis Tools** - SonarQube, etc. for code quality and security
   - [ ] T1g: **GitHub Repository Settings** - Branch protection, required reviews, issue/PR templates

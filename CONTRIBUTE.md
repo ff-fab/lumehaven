@@ -72,6 +72,45 @@ bun test
 bun run format
 ```
 
+## Pre-commit Hooks (Optional but Recommended)
+
+Pre-commit hooks automatically check and fix code issues **before you commit**, preventing bad code from entering the repository.
+
+### Setup (One-time)
+
+```bash
+# Install pre-commit framework
+uv run pre-commit install
+
+# (Optional) Run all checks on all files
+uv run pre-commit run --all-files
+```
+
+### What Gets Checked
+
+- **Trailing whitespace** — Removes trailing spaces
+- **File endings** — Ensures files end with newline
+- **YAML/JSON/TOML** — Validates syntax
+- **Merge conflicts** — Detects unresolved conflicts
+- **Private keys** — Prevents committing secrets
+- **Prettier** — Formats JS, TS, JSON, Markdown, YAML
+- **Ruff** — Lints and formats Python
+- **mypy** — Type checking in strict mode
+
+### How It Works
+
+When you run `git commit`, pre-commit hooks run automatically:
+- ✓ If checks pass → commit succeeds
+- ✓ If checks fail but can auto-fix → files are fixed, you re-stage and commit
+- ✗ If checks fail with manual fixes needed → commit blocked until fixed
+
+### Disable for Specific Commit
+
+If you need to bypass hooks temporarily:
+```bash
+git commit --no-verify  # Not recommended, but exists
+```
+
 ## Code Quality
 
 All formatters and linters are **auto-configured**:
