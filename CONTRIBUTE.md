@@ -38,8 +38,10 @@ DevContainer applies all settings either way.
 
 By default, GitHub CLI uses SSH authentication from your host machine:
 
-**The container automatically mounts your SSH keys** (`~/.ssh` from host) as read-only.
-If you have SSH keys configured on your host, `gh` should work out of the box.
+**The container automatically mounts your SSH directory** (`~/.ssh` from host) with full access.
+If you have SSH keys configured on your host, `gh` should work out of the box on first use.
+
+**Why full access?** SSH needs to read your private keys AND write to `known_hosts` when connecting to new hosts (like github.com for the first time). This is safe because the container runs under your host's ssh-agent context.
 
 **If SSH isn't configured on your host:**
 ```bash
@@ -47,7 +49,7 @@ gh auth login
 # Prompts you to authenticate (creates a token in the container)
 ```
 
-**Note:** SSH keys are mounted read-only and never copied into the container—your security setup on the host is respected.
+**Security note:** The `~/.ssh` mount uses your host's keys—they're not copied into the container. When the devcontainer stops, nothing persists except `known_hosts` entries.
 
 ### Troubleshooting GitHub CLI
 
