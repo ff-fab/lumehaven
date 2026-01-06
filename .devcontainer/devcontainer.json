@@ -15,7 +15,7 @@
   "mounts": ["source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh"],
 
   "containerEnv": {
-    "PATH": "/workspace/packages/backend/.venv/bin:${PATH}"
+    "PATH": "/workspace/packages/backend/.venv/bin:${containerEnv:PATH}"
   },
 
   "customizations": {
