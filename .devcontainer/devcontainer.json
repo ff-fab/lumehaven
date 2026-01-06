@@ -29,6 +29,7 @@
 
         // Default formatter for different file types
         "editor.defaultFormatter": "prettier.prettier-vscode",
+        "editor.formatOnSave": true,
 
         // Python formatting and linting
         "[python]": {
