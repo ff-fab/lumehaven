@@ -89,9 +89,10 @@ pip list        # Shows installed packages in the venv
 
 - Automatically when you run `uv add <package>` or `uv add --dev <package>`
 - Manually when you run `uv lock --upgrade` (to update to latest compatible versions)
-- After any `uv sync` that brings in new dependencies
 - **Always commit uv.lock** to git (like package-lock.json or poetry.lock)
 
+_Note:_ `uv sync` installs dependencies based on the existing `uv.lock` file but does **not**
+update or modify `uv.lock` itself.
 ### Backend (Python/FastAPI)
 
 ```bash
