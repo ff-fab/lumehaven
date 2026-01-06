@@ -55,25 +55,58 @@ markers = [
 ]
 
 [tool.ruff]
+# Python linting and formatting configuration for lumehaven backend
+# Aligned with frontend formatting (.prettierrc.json) for consistency
 target-version = "py314"
 line-length = 88
+
+[tool.ruff.lint]
+# Linting rules: What code issues to catch
 select = [
-    "E",      # pycodestyle errors
+    # Error classes (pycodestyle)
+    "E",      # pycodestyle errors (indentation, whitespace, etc.)
     "W",      # pycodestyle warnings
-    "F",      # Pyflakes
-    "I",      # isort
-    "B",      # flake8-bugbear
-    "C4",     # flake8-comprehensions
-    "UP",     # pyupgrade
-    "ARG",    # flake8-unused-arguments
-    "SIM",    # flake8-simplify
+
+    # Correctness
+    "F",      # Pyflakes (undefined names, unused imports, etc.)
+    "B",      # flake8-bugbear (common bugs and design problems)
+
+    # Code quality
+    "I",      # isort (import sorting and organization)
+    "C4",     # flake8-comprehensions (simplify list/dict/set comprehensions)
+    "UP",     # pyupgrade (modernize Python syntax)
+    "SIM",    # flake8-simplify (simplify complex code)
+    "ARG",    # flake8-unused-arguments (catch unused function parameters)
 ]
+
 ignore = [
     "E501",   # line too long (handled by formatter)
 ]
 
-[tool.ruff.isort]
+# Per-file rule exceptions: Allow unused args in specific contexts
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "ARG",    # Test fixtures intentionally have unused arguments (e.g., pytest 'request' fixture)
+    "F841",   # Local variables may be intentionally unused in tests
+]
+"**/adapters/protocol.py" = [
+    "ARG001", # Protocol methods define signatures with intentionally unused parameters
+]
+"**/__init__.py" = [
+    "F401",   # Imported but unused (common in __init__.py for re-exporting public API)
+    "E402",   # Module-level import not at top (re-exports need to come after docstring)
+]
+
+# Import sorting configuration (isort integration)
+[tool.ruff.lint.isort]
 known-first-party = ["lumehaven"]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
 
 [tool.mypy]
 python_version = "3.14"

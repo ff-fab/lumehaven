@@ -19,7 +19,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sse_starlette.sse import EventSourceResponse
 
-from lumehaven.core.signal import Signal
 from lumehaven.state.store import SignalStore, get_signal_store
 
 logger = logging.getLogger(__name__)
@@ -32,7 +31,7 @@ HEARTBEAT_INTERVAL = 30
 
 async def signal_event_generator(
     store: SignalStore,
-) -> AsyncGenerator[dict[str, str], None]:
+) -> AsyncGenerator[dict[str, str]]:
     """Generate SSE events from signal store updates.
 
     Yields:

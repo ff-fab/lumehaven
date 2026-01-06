@@ -11,7 +11,7 @@ Key design decisions (from ADR-005):
 - Backend normalizes all data; frontend just displays value + unit
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,7 +54,7 @@ class Signal:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, str]) -> "Signal":
+    def from_dict(cls, data: dict[str, str]) -> Signal:
         """Create a Signal from a dictionary.
 
         Args:

@@ -66,7 +66,7 @@ class SmartHomeAdapter(Protocol):
         """
         ...
 
-    async def subscribe_events(self) -> AsyncGenerator[Signal, None]:
+    async def subscribe_events(self) -> AsyncGenerator[Signal]:
         """Subscribe to real-time signal updates.
 
         Returns an async generator that yields Signal objects whenever

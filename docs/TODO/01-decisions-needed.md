@@ -71,3 +71,51 @@ A prioritized list of decisions to make before and during development.
 ### D13: Mobile Support
 - **PWA features**
 - **Responsive design requirements**
+
+## Phase 1 Setup Tasks ✅ (Complete)
+
+### T1: Code Formatting & Linting Configuration ✅ COMPLETE
+- **Status:** ✅ Complete
+- **Completed:**
+  - [x] `.prettierrc.json` - Frontend formatting rules (2-space indent, single quotes, LF line endings)
+  - [x] `VERSIONING.md` - Automated versioning with setuptools_scm from git tags
+  - [x] `scripts/update_version.py` - Version regeneration helper
+  - [x] `.devcontainer/post-create.sh` - Auto-generate version on container startup
+  - [x] T1a: `.gitattributes` Configuration - Line ending normalization across platforms
+  - [x] T1b: Explicit Ruff Configuration - Python linting & formatting rules (explicit in pyproject.toml)
+  - [x] T1c: DevContainer-Only Development Setup
+    - [x] Created `lumehaven.code-workspace` - Workspace file with folder structure
+    - [x] Deleted `.vscode/settings.json` - No local settings (DevContainer is official)
+    - [x] Verified `.devcontainer/devcontainer.json` - All settings mirrored and consistent
+    - [x] Created `README.md` - Project overview and quick start
+    - [x] Created `docs/DEVELOPMENT-ENVIRONMENT.md` - Complete development guide
+    - [x] Created `.devcontainer/README.md` - DevContainer-specific documentation
+    - [x] Created `docs/DEVCONTAINER-ARCHITECTURE.md` - Architecture and design principles
+    - [x] Updated `.devcontainer/post-create.sh` - Added workspace file pro-tip
+
+- **Remaining (Backlog for Phase 2+):**
+  - [ ] T1d: **Pre-commit Hooks Setup** - Enforce formatting checks before commits (`.pre-commit-config.yaml`)
+  - [ ] T1e: **Overhaul copilot-instructions** - Multi-context instruction files following best practices
+  - [ ] T1f: **Evaluate Code Analysis Tools** - SonarQube, etc. for code quality and security
+  - [ ] T1g: **GitHub Repository Settings** - Branch protection, required reviews, issue/PR templates
+  - [ ] T1h: **Document Phase 1 Setup** - Create comprehensive summary document
+
+---
+
+## Notes
+
+- **Phase 1 Setup (T1)** is ✅ **COMPLETE** — All code quality infrastructure is now in place
+- **Key Decision:** DevContainer is the **exclusive official development environment**
+  - No local `.vscode/settings.json` — all settings come from `.devcontainer/devcontainer.json`
+  - Workspace file (`lumehaven.code-workspace`) is optional but recommended for clarity
+  - This eliminates configuration drift and guarantees consistency across all developers
+- **Single Source of Truth Architecture:**
+  - Tool configs (pyproject.toml, .prettierrc.json, .gitattributes) = authoritative rules
+  - DevContainer settings = mirrored for VS Code real-time feedback
+  - Both apply identical rules via different mechanisms
+- **Documentation Updated:**
+  - `README.md` - Project overview and quick start
+  - `docs/DEVELOPMENT-ENVIRONMENT.md` - Complete development guide
+  - `.devcontainer/README.md` - DevContainer configuration details
+  - `docs/DEVCONTAINER-ARCHITECTURE.md` - Architecture and design principles
+- **Next Phase Tasks (T1d+):** Will focus on pre-commit hooks, GitHub settings, and code analysis tools

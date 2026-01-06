@@ -39,7 +39,7 @@ class SignalResponse(BaseModel):
     label: str
 
     @classmethod
-    def from_signal(cls, signal: Signal) -> "SignalResponse":
+    def from_signal(cls, signal: Signal) -> SignalResponse:
         """Create from domain Signal."""
         return cls(
             id=signal.id,

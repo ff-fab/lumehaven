@@ -57,7 +57,7 @@ class OpenHABAdapter:
         self.tag = tag
         self._client: httpx.AsyncClient | None = None
         self._default_units: dict[str, str] = {}
-        self._item_metadata: dict[str, "_ItemMetadata"] = {}
+        self._item_metadata: dict[str, _ItemMetadata] = {}
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create the HTTP client."""
@@ -156,7 +156,7 @@ class OpenHABAdapter:
                 raise SignalNotFoundError(signal_id) from e
             raise SmartHomeConnectionError("openhab", self.base_url, e) from e
 
-    async def subscribe_events(self) -> AsyncGenerator[Signal, None]:
+    async def subscribe_events(self) -> AsyncGenerator[Signal]:
         """Subscribe to OpenHAB state change events via SSE.
 
         Yields:
@@ -211,7 +211,7 @@ class OpenHABAdapter:
         except httpx.HTTPError as e:
             raise SmartHomeConnectionError("openhab", self.base_url, e) from e
 
-    def _extract_signal(self, item: dict[str, Any]) -> tuple[Signal, "_ItemMetadata"]:
+    def _extract_signal(self, item: dict[str, Any]) -> tuple[Signal, _ItemMetadata]:
         """Extract a Signal and metadata from an OpenHAB item response.
 
         This handles the complex logic of determining units and formatting

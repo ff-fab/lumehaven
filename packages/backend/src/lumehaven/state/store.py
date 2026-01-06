@@ -44,7 +44,7 @@ class SignalStoreProtocol(Protocol):
         """Store or update multiple signals."""
         ...
 
-    async def subscribe(self) -> AsyncGenerator[Signal, None]:
+    async def subscribe(self) -> AsyncGenerator[Signal]:
         """Subscribe to signal updates."""
         ...
 
@@ -114,7 +114,7 @@ class SignalStore:
             self._signals.update(signals)
         logger.debug(f"Stored {len(signals)} signals")
 
-    async def subscribe(self) -> AsyncGenerator[Signal, None]:
+    async def subscribe(self) -> AsyncGenerator[Signal]:
         """Subscribe to signal updates.
 
         Yields:
