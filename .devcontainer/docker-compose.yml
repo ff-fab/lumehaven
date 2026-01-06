@@ -9,6 +9,12 @@ services:
       - devcontainer-vscode-server:/home/vscode/.vscode-server
       # Persist bash history
       - devcontainer-bash-history:/commandhistory
+      # Mount SSH directory for Git operations (cross-platform, auto-detected)
+      # SSH_DIR is set by detect-ssh-dir.sh based on OS:
+      # - macOS: ${HOME}/.ssh
+      # - Linux: ${HOME}/.ssh (or ${USERPROFILE}/.ssh in WSL2)
+      # - Windows/WSL2: ${USERPROFILE}/.ssh
+      - ${SSH_DIR}:/home/vscode/.ssh:ro
     command: sleep infinity
     # Required for Docker-in-Docker
     privileged: true

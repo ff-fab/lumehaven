@@ -9,9 +9,15 @@
       "moby": false
     },
     "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/ssh-from-vscode:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
+
+  // SSH key mounting for Git operations
+  // Mounts your local ~/.ssh directory into the container (read-only)
+  // SSH directory paths vary by OS and are defined in docker-compose.yml:
+  // - Linux/macOS: ~/.ssh mounts to /home/vscode/.ssh
+  // - Windows/WSL2: %USERPROFILE%\.ssh mounts to /home/vscode/.ssh
+  // Configure your docker-compose.yml volume mounts if needed for your OS
 
   "customizations": {
     "vscode": {
@@ -120,6 +126,8 @@
     "8000": { "label": "Backend API", "onAutoForward": "notify" },
     "5173": { "label": "Frontend Dev", "onAutoForward": "notify" }
   },
+
+  "initializeCommand": ".devcontainer/detect-ssh-dir.sh",
 
   "postCreateCommand": ".devcontainer/post-create.sh",
 
