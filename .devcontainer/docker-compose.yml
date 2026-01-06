@@ -1,0 +1,18 @@
+services:
+  devcontainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+      # Persist VS Code server data (extensions, settings, etc.)
+      - devcontainer-vscode-server:/home/vscode/.vscode-server
+      # Persist bash history
+      - devcontainer-bash-history:/commandhistory
+    command: sleep infinity
+    # Required for Docker-in-Docker
+    privileged: true
+
+volumes:
+  devcontainer-vscode-server:
+  devcontainer-bash-history:

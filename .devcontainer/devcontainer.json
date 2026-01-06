@@ -1,0 +1,126 @@
+{
+  "name": "lumehaven",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    },
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // Python interpreter in container
+        "python.defaultInterpreterPath": "/workspace/packages/backend/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+
+        // Line length: 88 characters (matches Prettier, Ruff, and Black conventions)
+        "editor.rulers": [88],
+        "editor.wordWrap": "off",
+
+        // Default formatter for different file types
+        "editor.defaultFormatter": "prettier.prettier-vscode",
+
+        // Python formatting and linting
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+          }
+        },
+
+        // TypeScript/JavaScript formatting
+        "[typescript]": {
+          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.formatOnSave": true
+        },
+        "[typescriptreact]": {
+          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.formatOnSave": true
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.formatOnSave": true
+        },
+
+        // JSON formatting
+        "[json]": {
+          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.formatOnSave": true
+        },
+
+        // Markdown formatting (Prettier, not Markdown All in One)
+        "[markdown]": {
+          "editor.wordWrap": "on",
+          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.formatOnSave": true
+        },
+
+        // Disable Markdown All in One's formatter (conflicts with Prettier)
+        "markdown.extension.formatting.enable": false,
+
+        // YAML formatting
+        "[yaml]": {
+          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.formatOnSave": true
+        },
+
+        // File consistency
+        "files.eol": "\n",
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true,
+        "files.trimTrailingWhitespace": true,
+
+        // Python linting
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.mypyEnabled": true,
+        "python.analysis.typeCheckingMode": "strict",
+
+        // Search and exclude patterns
+        "search.exclude": {
+          "**/__pycache__": true,
+          "**/node_modules": true,
+          "**/dist": true,
+          "**/.venv": true,
+          "**/.mypy_cache": true,
+          "**/build": true
+        }
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml",
+        "robocorp.robotframework-lsp",
+        "dbaeumer.vscode-eslint",
+        "prettier.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "eamodio.gitlens",
+        "yzhang.markdown-all-in-one"
+      ]
+    }
+  },
+
+  "forwardPorts": [
+    8000,
+    5173
+  ],
+  "portsAttributes": {
+    "8000": { "label": "Backend API", "onAutoForward": "notify" },
+    "5173": { "label": "Frontend Dev", "onAutoForward": "notify" }
+  },
+
+  "postCreateCommand": ".devcontainer/post-create.sh",
+
+  "remoteUser": "vscode"
+}

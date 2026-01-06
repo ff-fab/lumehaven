@@ -1,0 +1,68 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Backend (FastAPI)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "lumehaven.main:app",
+                "--reload",
+                "--host", "0.0.0.0",
+                "--port", "8000"
+            ],
+            "cwd": "${workspaceFolder}/packages/backend/src",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/packages/backend/src"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Debug Backend (No Reload)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "lumehaven.main:app",
+                "--host", "0.0.0.0",
+                "--port", "8000"
+            ],
+            "cwd": "${workspaceFolder}/packages/backend/src",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/packages/backend/src"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Debug Current Python File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${workspaceFolder}/packages/backend/src",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/packages/backend/src"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Debug pytest",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${workspaceFolder}/packages/backend/tests",
+                "-v"
+            ],
+            "cwd": "${workspaceFolder}/packages/backend",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/packages/backend/src"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

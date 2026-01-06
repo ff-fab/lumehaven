@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "lumehaven (root)"
+    },
+    {
+      "path": "packages/backend",
+      "name": "Backend (FastAPI)"
+    },
+    {
+      "path": "packages/frontend",
+      "name": "Frontend (React)"
+    },
+    {
+      "path": "docs",
+      "name": "Documentation (MkDocs)"
+    }
+  ]
+}

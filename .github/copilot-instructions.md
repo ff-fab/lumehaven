@@ -13,7 +13,7 @@ All major architectural decisions are documented in `docs/adr/`. **Follow these 
 ### Backend (ADR-001, ADR-002)
 | Component | Choice | Notes |
 |-----------|--------|-------|
-| Runtime | Python 3.12+ | |
+| Runtime | Python 3.14+
 | Framework | FastAPI | Async, good OpenAPI support |
 | Package Manager | uv | Fast, replaces pip/poetry |
 | Validation | pydantic v2 | PoC used v1, upgrade required |
@@ -66,15 +66,22 @@ class Signal:
 
 ```
 lumehaven/
+├── .devcontainer/            # Development container config
 ├── packages/
 │   ├── backend/              # Python BFF (FastAPI)
 │   │   ├── src/lumehaven/
+│   │   │   ├── main.py       # FastAPI app entry point
+│   │   │   ├── config.py     # Pydantic settings
+│   │   │   ├── core/         # Domain models (Signal, exceptions)
+│   │   │   ├── adapters/     # Smart home adapters (OpenHAB, etc.)
+│   │   │   ├── api/          # REST routes + SSE endpoints
+│   │   │   └── state/        # In-memory signal store
 │   │   ├── tests/
 │   │   │   ├── unit/         # pytest
 │   │   │   ├── integration/  # Robot Framework
 │   │   │   └── fixtures/
 │   │   └── pyproject.toml
-│   ├── frontend/             # React SPA (TypeScript)
+│   ├── frontend/             # React SPA (TypeScript) - TODO
 │   │   ├── src/
 │   │   ├── tests/
 │   │   └── package.json
@@ -180,11 +187,16 @@ gh pr create
 ## Development Commands
 
 ```bash
+# Devcontainer (recommended)
+# Open in VS Code, then: Ctrl+Shift+P → "Dev Containers: Reopen in Container"
+# Dependencies install automatically via post-create.sh
+
 # Backend
 cd packages/backend
 uv sync                      # Install dependencies
 uv run pytest               # Run unit tests
 uv run robot tests/integration  # Run Robot Framework tests
+uv run uvicorn lumehaven.main:app --reload  # Start dev server
 
 # Frontend
 cd packages/frontend
