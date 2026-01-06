@@ -13,7 +13,7 @@ All major architectural decisions are documented in `docs/adr/`. **Follow these 
 ### Backend (ADR-001, ADR-002)
 | Component | Choice | Notes |
 |-----------|--------|-------|
-| Runtime | Python 3.14+ | |
+| Runtime | Python 3.14+
 | Framework | FastAPI | Async, good OpenAPI support |
 | Package Manager | uv | Fast, replaces pip/poetry |
 | Validation | pydantic v2 | PoC used v1, upgrade required |
