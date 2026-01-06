@@ -62,7 +62,8 @@ repos:
     hooks:
       - id: mypy
         name: mypy (type check Python)
-        args: ['--strict', 'packages/backend/src/lumehaven/']
+        args: ['--strict']
+        files: ^packages/backend/src/lumehaven/
         additional_dependencies:
           - pydantic>=2.5.0
           - pydantic-settings>=2.1.0
