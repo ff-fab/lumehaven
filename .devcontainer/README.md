@@ -28,7 +28,7 @@ The Docker image for the development environment (Ubuntu-based with Python, Node
 
 1. **First time setup:**
    ```bash
-   code lumehaven.code-workspace
+   code .
    # Ctrl+Shift+P → "Dev Containers: Reopen in Container"
    ```
    - VS Code downloads/builds the Docker image
@@ -90,16 +90,6 @@ When you update tool rules:
 3. Rebuild container: Ctrl+Shift+P → "Dev Containers: Rebuild Container"
 
 Example: If you change `line-length = 88` in `pyproject.toml [tool.ruff]`, also update `"editor.rulers": [88]` in devcontainer.json.
-
-## Workspace File
-
-The `lumehaven.code-workspace` file (in repo root) is **separate** from the devcontainer configuration:
-
-- **Does NOT contain settings** — Those are in `.devcontainer/devcontainer.json`
-- **Only defines folder structure** — Shows Backend, Frontend, Docs as labeled folders in sidebar
-- **Optional but recommended** — Helps developers understand the monorepo structure
-
-You can develop without it, but `code lumehaven.code-workspace` provides a clearer view.
 
 ## Extensions
 

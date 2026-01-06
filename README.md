@@ -18,8 +18,8 @@ A smart home dashboard supporting common smart home frameworks. Currently suppor
 git clone https://github.com/ff-fab/lumehaven.git
 cd lumehaven
 
-# Open with workspace file (shows clear folder structure)
-code lumehaven.code-workspace
+# Open in VS Code
+code .
 
 # In VS Code: Ctrl+Shift+P → "Dev Containers: Reopen in Container"
 # DevContainer will start automatically, install dependencies, and configure everything
@@ -107,7 +107,6 @@ cd packages/backend && uv run mypy src/lumehaven       # Type check
 
 ```
 lumehaven/
-├── lumehaven.code-workspace    # Workspace file (clear folder structure)
 ├── .devcontainer/              # DevContainer configuration
 │   ├── devcontainer.json       # Container setup + VS Code settings
 │   ├── docker-compose.yml      # Docker Compose definition
