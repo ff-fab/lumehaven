@@ -209,6 +209,39 @@ mkdocs serve                # Preview docs locally
 mkdocs build                # Build static site
 ```
 
+## Git Workflow (GitHub Flow)
+
+**CRITICAL: Always follow this workflow. Never push directly to main.**
+
+1. **Create feature branch from main**
+   ```bash
+   git checkout main && git pull
+   git checkout -b feature/description  # or fix/, docs/, etc.
+   ```
+
+2. **Make commits with clear messages**
+   ```bash
+   git commit -m "feat: clear description of changes"
+   # Use conventional commits: feat:, fix:, docs:, refactor:, etc.
+   ```
+
+3. **Push to remote and create pull request**
+   ```bash
+   git push -u origin feature/description
+   # Then create PR on GitHub at provided URL
+   ```
+
+4. **Wait for review and CI checks**
+   - Pre-commit hooks must pass (or be bypassed with `--no-verify` only if necessary)
+   - Code review should be completed
+   - All CI checks should pass
+
+5. **Merge to main after approval**
+   - Squash merge preferred for clean history
+   - Delete branch after merge
+
+**Key Principle:** `main` branch is always deployable. All changes go through feature branches and PRs.
+
 ## ADR Quick Reference
 
 | ADR | Decision | Key Points |
