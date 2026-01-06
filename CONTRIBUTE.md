@@ -4,7 +4,8 @@ Thank you for contributing! Here's how to get started.
 
 ## Development Environment
 
-This project uses **VS Code DevContainers** as the exclusive development environment. This ensures all contributors work identically regardless of OS.
+This project uses **VS Code DevContainers** as the exclusive development environment.
+This ensures all contributors work identically regardless of OS.
 
 ### Quick Start (2 minutes)
 
@@ -20,6 +21,7 @@ code .
 ```
 
 ### What Gets Configured Automatically
+
 - ✓ All VS Code extensions (Python, Prettier, Ruff, etc.)
 - ✓ Python dependencies (uv sync --all-extras)
 - ✓ Node dependencies (bun install)
@@ -28,31 +30,42 @@ code .
 
 ## GitHub CLI Authentication
 
-By default, GitHub CLI uses SSH authentication from your host machine via VS Code's SSH forwarding:
+By default, GitHub CLI uses SSH authentication from your host machine via VS Code's SSH
+forwarding:
 
-**The container automatically mounts your SSH directory** (`~/.ssh` from host) with full access.
-If you have SSH keys configured on your host, `gh` should work out of the box on first use.
+**The container automatically mounts your SSH directory** (`~/.ssh` from host) with full
+access. If you have SSH keys configured on your host, `gh` should work out of the box on
+first use.
 
-**Why full access?** SSH needs to read your private keys AND write to `known_hosts` when connecting to new hosts (like github.com for the first time). This is safe because the container runs under your host's ssh-agent context.
+**Why full access?** SSH needs to read your private keys AND write to `known_hosts` when
+connecting to new hosts (like github.com for the first time). This is safe because the
+container runs under your host's ssh-agent context.
 
 **If SSH isn't configured on your host:**
+
 ```bash
 gh auth login
 # Prompts you to authenticate (creates a token in the container)
 ```
 
-**Security note:** The `~/.ssh` mount uses your host's keys—they're not copied into the container. When the devcontainer stops, nothing persists except `known_hosts` entries.
+**Security note:** The `~/.ssh` mount uses your host's keys—they're not copied into the
+container. When the devcontainer stops, nothing persists except `known_hosts` entries.
 
 ### Troubleshooting GitHub CLI
 
-- **"permission denied (publickey)"** → Add your SSH public key to GitHub at https://github.com/settings/keys (verify your host SSH key has correct permissions: `chmod 600 ~/.ssh/id_*`)
-- **"command not found: gh"** → Run `sudo apt update && sudo apt install -y gh` (GitHub CLI feature auto-installs, but sometimes needs refresh)
+- **"permission denied (publickey)"** → Add your SSH public key to GitHub at
+  https://github.com/settings/keys (verify your host SSH key has correct permissions:
+  `chmod 600 ~/.ssh/id_*`)
+- **"command not found: gh"** → Run `sudo apt update && sudo apt install -y gh` (GitHub
+  CLI feature auto-installs, but sometimes needs refresh)
 - **Token expired** → Run `gh auth login` again to refresh
-- **SSH not working in WSL** → Ensure SSH keys are in WSL `~/.ssh/` directory, not Windows home
+- **SSH not working in WSL** → Ensure SSH keys are in WSL `~/.ssh/` directory, not
+  Windows home
 
 ## Development Workflows
 
 ### Backend (Python/FastAPI)
+
 ```bash
 cd packages/backend
 
@@ -72,6 +85,7 @@ uv run mypy src/lumehaven
 ```
 
 ### Frontend (React/TypeScript)
+
 ```bash
 cd packages/frontend
 
@@ -90,7 +104,8 @@ bun run format
 
 ## Pre-commit Hooks (Optional but Recommended)
 
-Pre-commit hooks automatically check and fix code issues **before you commit**, preventing bad code from entering the repository.
+Pre-commit hooks automatically check and fix code issues **before you commit**,
+preventing bad code from entering the repository.
 
 ### Setup (One-time)
 
@@ -116,6 +131,7 @@ uv run pre-commit run --all-files
 ### How It Works
 
 When you run `git commit`, pre-commit hooks run automatically:
+
 - ✓ If checks pass → commit succeeds
 - ✓ If checks fail but can auto-fix → files are fixed, you re-stage and commit
 - ✗ If checks fail with manual fixes needed → commit blocked until fixed
@@ -123,6 +139,7 @@ When you run `git commit`, pre-commit hooks run automatically:
 ### Disable for Specific Commit
 
 If you need to bypass hooks temporarily:
+
 ```bash
 git commit --no-verify  # Not recommended, but exists
 ```
@@ -130,6 +147,7 @@ git commit --no-verify  # Not recommended, but exists
 ## Code Quality
 
 All formatters and linters are **auto-configured**:
+
 - **Prettier** — Formats JS, TS, JSON, Markdown, YAML (88-char line width)
 - **Ruff** — Lints and formats Python (88-char line width)
 - **mypy** — Type checking in strict mode
@@ -140,17 +158,20 @@ All formatters and linters are **auto-configured**:
 ## Git Workflow
 
 1. Create a feature branch from `main`
+
    ```bash
    git checkout main && git pull
    git checkout -b feature/my-feature
    ```
 
 2. Make changes and commit
+
    ```bash
    git commit -m "Clear, descriptive commit message"
    ```
 
 3. Open a pull request
+
    ```bash
    git push -u origin feature/my-feature
    gh pr create
@@ -167,7 +188,8 @@ All formatters and linters are **auto-configured**:
 
 ## Questions?
 
-- See [.devcontainer/README.md](.devcontainer/README.md) for technical DevContainer details
+- See [.devcontainer/README.md](.devcontainer/README.md) for technical DevContainer
+  details
 - See [packages/backend/README.md](packages/backend/README.md) for API development
 - Check [docs/adr/](docs/adr/) for architecture decisions
 - Open an issue if something isn't clear
