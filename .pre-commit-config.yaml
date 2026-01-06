@@ -16,6 +16,10 @@ repos:
         args: ['--unsafe']
       - id: check-json
         name: Check JSON syntax
+        exclude: |
+          (?x)^(
+            .devcontainer/devcontainer\.json
+          )$
       - id: check-toml
         name: Check TOML syntax
       - id: check-merge-conflict

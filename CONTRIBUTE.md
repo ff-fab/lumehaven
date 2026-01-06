@@ -64,25 +64,73 @@ container. When the devcontainer stops, nothing persists except `known_hosts` en
 
 ## Development Workflows
 
+### Understanding the Python Virtual Environment
+
+This project uses **uv** as the Python package manager. It automatically creates and
+manages a virtual environment at `/workspace/packages/backend/.venv/` without requiring
+manual activation.
+
+**How it works:**
+
+- On devcontainer startup, `uv sync --all-extras` creates `.venv/` with all dependencies
+- The devcontainer's `PATH` includes `.venv/bin/`, so Python commands automatically use
+  the venv
+- You don't see the "_(venv)_" prompt because uv manages it transparently
+
+**To verify the venv is active:**
+
+```bash
+which python    # Should return: /workspace/packages/backend/.venv/bin/python
+python --version
+pip list        # Shows installed packages in the venv
+```
+
+**When uv.lock gets updated:**
+
+- Automatically when you run `uv add <package>` or `uv add --dev <package>`
+- Manually when you run `uv lock --upgrade` (to update to latest compatible versions)
+- After any `uv sync` that brings in new dependencies
+- **Always commit uv.lock** to git (like package-lock.json or poetry.lock)
+
 ### Backend (Python/FastAPI)
 
 ```bash
 cd packages/backend
 
-# Install dependencies
+# Install/update dependencies (automatically runs after git pull)
 uv sync --all-extras
 
-# Start dev server (http://localhost:8000)
+# Add a new dependency
+uv add requests                # Production dependency
+uv add --dev pytest-debugpy   # Development dependency
+
+# Start dev server with auto-reload (http://localhost:8000)
 uv run uvicorn lumehaven.main:app --reload
 
-# Run tests
-uv run pytest tests/unit/
+# Run tests with pytest
+uv run pytest tests/
 
-# Format and lint
-uv run ruff format src/
-uv run ruff check src/
-uv run mypy src/lumehaven
+# Run specific test file with verbose output
+uv run pytest tests/unit/test_signal.py -v
+
+# Debug a failing test (drop into debugger on failure)
+uv run pytest tests/unit/ --pdb
+
+# Format and lint Python code
+uv run ruff format src/                  # Auto-format
+uv run ruff check src/ --fix             # Lint and fix violations
+uv run mypy src/lumehaven                # Type check with strict mode
+
+# Alternative: Use VS Code Debug Configs
+# Press F5 → Select "Debug Backend (FastAPI)" to start with debugger
+# VS Code automatically uses the venv at .venv/bin/python
 ```
+
+**About `uv run`:**
+
+- `uv run <command>` automatically uses the venv (most explicit way)
+- Directly typing `python`, `pytest`, etc. also works (PATH includes venv)
+- Both are equivalent—use whichever you prefer
 
 ### Frontend (React/TypeScript)
 

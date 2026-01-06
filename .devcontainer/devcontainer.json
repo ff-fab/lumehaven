@@ -12,9 +12,11 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
-  "mounts": [
-    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh"
-  ],
+  "mounts": ["source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh"],
+
+  "containerEnv": {
+    "PATH": "/workspace/packages/backend/.venv/bin:${PATH}"
+  },
 
   "customizations": {
     "vscode": {
@@ -116,10 +118,7 @@
     }
   },
 
-  "forwardPorts": [
-    8000,
-    5173
-  ],
+  "forwardPorts": [8000, 5173],
   "portsAttributes": {
     "8000": { "label": "Backend API", "onAutoForward": "notify" },
     "5173": { "label": "Frontend Dev", "onAutoForward": "notify" }
