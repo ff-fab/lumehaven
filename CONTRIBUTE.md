@@ -12,8 +12,8 @@ This project uses **VS Code DevContainers** as the exclusive development environ
 git clone https://github.com/ff-fab/lumehaven.git
 cd lumehaven
 
-# Open with workspace file (recommended)
-code lumehaven.code-workspace
+# Open in VS Code
+code .
 
 # Reopen in DevContainer: Ctrl+Shift+P → "Dev Containers: Reopen in Container"
 # Everything auto-configures. Ready to code!
@@ -25,14 +25,6 @@ code lumehaven.code-workspace
 - ✓ Node dependencies (bun install)
 - ✓ Formatters & linters (Prettier, Ruff, mypy)
 - ✓ Version number (from git tags)
-
-### Forgot the Workspace File?
-Don't worry. Both work identically:
-```bash
-code lumehaven.code-workspace  # Recommended (clearer sidebar)
-code .                         # Also works (less organized)
-```
-DevContainer applies all settings either way.
 
 ## GitHub CLI Authentication
 
