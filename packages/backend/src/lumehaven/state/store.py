@@ -12,6 +12,7 @@ Key design decisions:
 
 import asyncio
 import logging
+import time
 from collections.abc import AsyncGenerator
 from typing import Protocol, runtime_checkable
 
@@ -74,6 +75,8 @@ class SignalStore:
         self._signals: dict[str, Signal] = {}
         self._lock = asyncio.Lock()
         self._subscribers: set[asyncio.Queue[Signal]] = set()
+        # Track drops per subscriber: queue -> (drop_count, last_log_time)
+        self._drop_stats: dict[asyncio.Queue[Signal], tuple[int, float]] = {}
 
     async def get_all(self) -> dict[str, Signal]:
         """Get all stored signals.
@@ -153,10 +156,39 @@ class SignalStore:
         for queue in list(self._subscribers):
             try:
                 queue.put_nowait(signal)
+                # Reset drop stats on successful delivery
+                if queue in self._drop_stats:
+                    del self._drop_stats[queue]
             except asyncio.QueueFull:
-                logger.warning(
-                    f"Subscriber queue full, dropping update for {signal.id}"
-                )
+                self._log_drop_throttled(queue, signal.id)
+
+    # Log throttle interval in seconds (log at most once per interval per subscriber)
+    _DROP_LOG_INTERVAL = 10.0
+
+    def _log_drop_throttled(self, queue: asyncio.Queue[Signal], signal_id: str) -> None:
+        """Log dropped messages with rate limiting to prevent log flooding.
+
+        Logs immediately on first drop, then at most every _DROP_LOG_INTERVAL
+        seconds per subscriber, summarizing how many were dropped.
+        """
+        now = time.monotonic()
+        drop_count, last_log_time = self._drop_stats.get(queue, (0, 0.0))
+        drop_count += 1
+
+        if last_log_time == 0.0:
+            # First drop for this subscriber
+            logger.warning(f"Subscriber queue full, dropping update for {signal_id}")
+            self._drop_stats[queue] = (0, now)  # Reset count after logging
+        elif now - last_log_time >= self._DROP_LOG_INTERVAL:
+            # Time to log a summary
+            logger.warning(
+                f"Subscriber queue full, dropped {drop_count} updates "
+                f"in last {self._DROP_LOG_INTERVAL:.0f}s (latest: {signal_id})"
+            )
+            self._drop_stats[queue] = (0, now)  # Reset count after logging
+        else:
+            # Suppress log, just increment counter
+            self._drop_stats[queue] = (drop_count, last_log_time)
 
     def subscriber_count(self) -> int:
         """Get the number of active subscribers.
