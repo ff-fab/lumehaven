@@ -4,14 +4,14 @@ Configuration is loaded from environment variables and/or .env files.
 All settings have sensible defaults for local development.
 """
 
-from enum import Enum
+from enum import StrEnum
 from functools import lru_cache
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class SmartHomeType(str, Enum):
+class SmartHomeType(StrEnum):
     """Supported smart home system types."""
 
     OPENHAB = "openhab"
@@ -30,7 +30,13 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        # Look for .env in multiple locations (first found wins).
+        # Paths are relative to cwd, so we cover common run scenarios:
+        # - From workspace root: .env
+        # - From packages/backend: ../../.env
+        # - From packages/backend/src: ../../../.env
+        # Missing .env is fine — all settings have defaults
+        env_file=(".env", "../../.env", "../../../.env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
@@ -47,6 +53,9 @@ class Settings(BaseSettings):
     # Server settings
     host: str = "0.0.0.0"
     port: int = 8000
+
+    # Subscriber settings
+    subscriber_queue_size: int = 10000  # Max queued signals per SSE client
 
 
 @lru_cache

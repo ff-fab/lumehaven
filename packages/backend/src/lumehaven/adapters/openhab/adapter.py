@@ -16,7 +16,7 @@ from collections.abc import AsyncGenerator
 from typing import Any, Literal
 
 import httpx
-from ftfy import fix_encoding
+from ftfy import fix_encoding  # type: ignore[import-not-found]
 
 from lumehaven.adapters.openhab.units import (
     extract_unit_from_pattern,
@@ -27,6 +27,11 @@ from lumehaven.core.exceptions import SignalNotFoundError, SmartHomeConnectionEr
 from lumehaven.core.signal import Signal
 
 logger = logging.getLogger(__name__)
+
+# HTTP client configuration
+# Generous defaults for local network communication with OpenHAB
+REQUEST_TIMEOUT_SECONDS = 30.0
+CONNECT_TIMEOUT_SECONDS = 10.0
 
 # URL-encoded comma for query parameters
 COMMA = "%2C"
@@ -64,7 +69,10 @@ class OpenHABAdapter:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
                 base_url=self.base_url,
-                timeout=httpx.Timeout(30.0, connect=10.0),
+                timeout=httpx.Timeout(
+                    REQUEST_TIMEOUT_SECONDS,
+                    connect=CONNECT_TIMEOUT_SECONDS,
+                ),
             )
         return self._client
 
@@ -77,7 +85,11 @@ class OpenHABAdapter:
         # Create a new client with read timeout disabled for SSE
         return httpx.AsyncClient(
             base_url=self.base_url,
-            timeout=httpx.Timeout(30.0, connect=10.0, read=None),
+            timeout=httpx.Timeout(
+                REQUEST_TIMEOUT_SECONDS,
+                connect=CONNECT_TIMEOUT_SECONDS,
+                read=None,
+            ),
         )
 
     async def _ensure_initialized(self) -> None:
@@ -92,8 +104,10 @@ class OpenHABAdapter:
             client = await self._get_client()
             response = await client.get("/rest/")
             response.raise_for_status()
-            data = response.json()
-            return data.get("measurementSystem", "SI")
+            data: dict[str, Any] = response.json()
+            system = data.get("measurementSystem", "SI")
+            # OpenHAB only returns "SI" or "US", default to SI for safety
+            return system if system in ("SI", "US") else "SI"
         except httpx.HTTPError as e:
             raise SmartHomeConnectionError("openhab", self.base_url, e) from e
 
@@ -183,6 +197,7 @@ class OpenHABAdapter:
         if not self._item_metadata:
             await self.get_signals()
 
+        client: httpx.AsyncClient | None = None
         try:
             client = await self._get_sse_client()
 
@@ -224,7 +239,8 @@ class OpenHABAdapter:
             raise SmartHomeConnectionError("openhab", self.base_url, e) from e
         finally:
             # Clean up SSE client after subscription ends
-            await client.aclose()
+            if client is not None:
+                await client.aclose()
 
     def _extract_signal(self, item: dict[str, Any]) -> tuple[Signal, _ItemMetadata]:
         """Extract a Signal and metadata from an OpenHAB item response.
@@ -254,7 +270,7 @@ class OpenHABAdapter:
                 value=item["transformedState"],
                 unit="",
                 label=label,
-            ), _ItemMetadata(event_state_contains_unit=False)
+            ), _ItemMetadata(event_state_contains_unit=False, label=label)
 
         # DateTime items have no units
         if type_parts[0] == "DateTime":
@@ -263,7 +279,7 @@ class OpenHABAdapter:
                 value=state,
                 unit="",
                 label=label,
-            ), _ItemMetadata(event_state_contains_unit=False)
+            ), _ItemMetadata(event_state_contains_unit=False, label=label)
 
         # Check for custom unit in state description pattern
         state_desc = item.get("stateDescription", {})
@@ -282,6 +298,7 @@ class OpenHABAdapter:
                 format=fmt,
                 is_quantity_type=is_quantity_type,
                 event_state_contains_unit=True,
+                label=label,
             )
 
         # QuantityType: use default unit from measurement system
@@ -299,6 +316,7 @@ class OpenHABAdapter:
                 format="%s",
                 is_quantity_type=True,
                 event_state_contains_unit=True,
+                label=label,
             )
 
         # Rollershutter and Dimmer are percentage values
@@ -312,6 +330,7 @@ class OpenHABAdapter:
                 unit="%",
                 format="%d",
                 event_state_contains_unit=False,
+                label=label,
             )
 
         # Default: no unit
@@ -320,7 +339,7 @@ class OpenHABAdapter:
             value=state,
             unit="",
             label=label,
-        ), _ItemMetadata(event_state_contains_unit=False)
+        ), _ItemMetadata(event_state_contains_unit=False, label=label)
 
     def _process_event(self, item_name: str, payload: dict[str, Any]) -> Signal | None:
         """Process an SSE event payload into a Signal.
@@ -355,7 +374,7 @@ class OpenHABAdapter:
                 id=item_name,
                 value=value,
                 unit=metadata.unit,
-                label="",  # Label doesn't change, could cache separately
+                label=metadata.label,
             )
         except Exception:
             logger.exception(f"Failed to process event for {item_name}")
@@ -375,7 +394,13 @@ class _ItemMetadata:
     since events don't include the full item metadata.
     """
 
-    __slots__ = ("unit", "format", "is_quantity_type", "event_state_contains_unit")
+    __slots__ = (
+        "unit",
+        "format",
+        "is_quantity_type",
+        "event_state_contains_unit",
+        "label",
+    )
 
     def __init__(
         self,
@@ -383,8 +408,10 @@ class _ItemMetadata:
         format: str = "%s",
         is_quantity_type: bool = False,
         event_state_contains_unit: bool = True,
+        label: str = "",
     ) -> None:
         self.unit = unit
         self.format = format
         self.is_quantity_type = is_quantity_type
         self.event_state_contains_unit = event_state_contains_unit
+        self.label = label

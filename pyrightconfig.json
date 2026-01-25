@@ -1,0 +1,6 @@
+{
+  "extraPaths": ["packages/backend/src"],
+  "venvPath": "packages/backend",
+  "venv": ".venv",
+  "pythonVersion": "3.14"
+}

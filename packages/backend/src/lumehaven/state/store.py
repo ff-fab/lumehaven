@@ -15,6 +15,7 @@ import logging
 from collections.abc import AsyncGenerator
 from typing import Protocol, runtime_checkable
 
+from lumehaven.config import get_settings
 from lumehaven.core.signal import Signal
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class SignalStore:
     """In-memory implementation of signal storage.
 
     Thread-safe via asyncio locks. Suitable for single-instance
-    deployments (typical for Raspberry Pi dashboard).
+    deployments.
 
     For multi-instance deployments, swap this for a Redis-backed
     implementation using the same SignalStoreProtocol.
@@ -122,8 +123,13 @@ class SignalStore:
 
         Note:
             Caller must handle cleanup if breaking out of the generator.
+            Queue is bounded to prevent memory exhaustion from slow consumers.
+            When full, new updates are dropped (see publish()).
         """
-        queue: asyncio.Queue[Signal] = asyncio.Queue()
+        settings = get_settings()
+        queue: asyncio.Queue[Signal] = asyncio.Queue(
+            maxsize=settings.subscriber_queue_size
+        )
         self._subscribers.add(queue)
         try:
             while True:

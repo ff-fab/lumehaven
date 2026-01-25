@@ -81,7 +81,7 @@ def get_default_units(system: Literal["SI", "US"] = "SI") -> dict[str, str]:
     """
     if system == "US":
         # Start with SI, overlay US-specific units
-        return {**DEFAULT_UNITS["SI"], **DEFAULT_UNITS["US"]}
+        return DEFAULT_UNITS["SI"] | DEFAULT_UNITS["US"]
     return DEFAULT_UNITS["SI"].copy()
 
 

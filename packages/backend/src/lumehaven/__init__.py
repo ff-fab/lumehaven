@@ -2,7 +2,7 @@
 
 try:
     # Try to get version from generated version file (updated by setuptools_scm at build time)
-    from lumehaven._version import __version__  # type: ignore
+    from lumehaven._version import __version__
 except ImportError:
     try:
         # Fallback to installed package metadata
