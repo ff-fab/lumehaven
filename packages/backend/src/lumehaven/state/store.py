@@ -140,6 +140,8 @@ class SignalStore:
                 yield signal
         finally:
             self._subscribers.discard(queue)
+            # Clean up drop stats to prevent memory leak
+            self._drop_stats.pop(queue, None)
 
     async def publish(self, signal: Signal) -> None:
         """Publish a signal update to all subscribers.
@@ -172,20 +174,25 @@ class SignalStore:
         seconds per subscriber, summarizing how many were dropped.
         """
         now = time.monotonic()
-        drop_count, last_log_time = self._drop_stats.get(queue, (0, 0.0))
-        drop_count += 1
 
-        if last_log_time == 0.0:
+        if queue not in self._drop_stats:
             # First drop for this subscriber
             logger.warning(f"Subscriber queue full, dropping update for {signal_id}")
-            self._drop_stats[queue] = (0, now)  # Reset count after logging
-        elif now - last_log_time >= self._DROP_LOG_INTERVAL:
+            # Start tracking with zero pending drops and current time as last log
+            self._drop_stats[queue] = (0, now)
+            return
+
+        drop_count, last_log_time = self._drop_stats[queue]
+        drop_count += 1
+
+        if now - last_log_time >= self._DROP_LOG_INTERVAL:
             # Time to log a summary
             logger.warning(
                 f"Subscriber queue full, dropped {drop_count} updates "
                 f"in last {self._DROP_LOG_INTERVAL:.0f}s (latest: {signal_id})"
             )
-            self._drop_stats[queue] = (0, now)  # Reset count after logging
+            # Reset count after logging
+            self._drop_stats[queue] = (0, now)
         else:
             # Suppress log, just increment counter
             self._drop_stats[queue] = (drop_count, last_log_time)

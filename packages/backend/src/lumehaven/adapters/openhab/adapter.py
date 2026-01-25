@@ -7,7 +7,6 @@ It handles the complexity of OpenHAB's data model, including:
 - Transformed states
 - Special values (UNDEF, NULL)
 
-Ported from PoC: old/backend/home-observer/openhab.py
 """
 
 import json
