@@ -385,6 +385,14 @@ class OpenHABAdapter:
             await self._client.aclose()
             self._client = None
 
+    def is_connected(self) -> bool:
+        """Check if the adapter has an active connection.
+
+        Returns:
+            True if the HTTP client exists and is not closed.
+        """
+        return self._client is not None and not self._client.is_closed
+
 
 class _ItemMetadata:
     """Internal metadata for processing item events.

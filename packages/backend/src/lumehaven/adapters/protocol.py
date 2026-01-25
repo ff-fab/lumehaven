@@ -83,3 +83,14 @@ class SmartHomeAdapter(Protocol):
             ...     print(f"{signal.id}: {signal.value} {signal.unit}")
         """
         ...
+
+    def is_connected(self) -> bool:
+        """Check if the adapter has an active connection.
+
+        This is a lightweight, synchronous check used for health monitoring.
+        It does NOT make a network request - it only checks internal state.
+
+        Returns:
+            True if the adapter's client exists and is ready for requests.
+        """
+        ...

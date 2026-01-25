@@ -2,21 +2,22 @@
 
 ## Overview
 
-Restart of the home-dash smart home dashboard project from scratch, with clean architecture decisions and modern tooling.
+Restart of the home-dash smart home dashboard project from scratch, with clean
+architecture decisions and modern tooling.
 
 ## ✅ Phase 0: Foundation Decisions (Complete)
 
 All blocking architectural decisions have been made and documented as ADRs:
 
-| Decision | ADR | Summary |
-|----------|-----|---------|
-| Build System | Deferred | Start with uv + bun, add Bazel later |
-| Backend Runtime | [ADR-002](../adr/ADR-002-backend-runtime.md) | Python + FastAPI + uv |
-| State Management | [ADR-001](../adr/ADR-001-state-management.md) | In-memory, abstracted interface |
-| Frontend Stack | [ADR-004](../adr/ADR-004-frontend-stack.md) | React + Vite + TypeScript + bun |
-| Signal Abstraction | [ADR-005](../adr/ADR-005-signal-abstraction.md) | Minimal: id, value, unit, label |
-| Testing Strategy | [ADR-006](../adr/ADR-006-testing-strategy.md) | pytest + Robot Framework |
-| Documentation | [ADR-007](../adr/ADR-007-documentation-system.md) | MkDocs + Material |
+| Decision           | ADR                                               | Summary                              |
+| ------------------ | ------------------------------------------------- | ------------------------------------ |
+| Build System       | Deferred                                          | Start with uv + bun, add Bazel later |
+| Backend Runtime    | [ADR-002](../adr/ADR-002-backend-runtime.md)      | Python + FastAPI + uv                |
+| State Management   | [ADR-001](../adr/ADR-001-state-management.md)     | In-memory, abstracted interface      |
+| Frontend Stack     | [ADR-004](../adr/ADR-004-frontend-stack.md)       | React + Vite + TypeScript + bun      |
+| Signal Abstraction | [ADR-005](../adr/ADR-005-signal-abstraction.md)   | Minimal: id, value, unit, label      |
+| Testing Strategy   | [ADR-006](../adr/ADR-006-testing-strategy.md)     | pytest + Robot Framework             |
+| Documentation      | [ADR-007](../adr/ADR-007-documentation-system.md) | MkDocs + Material                    |
 
 ## 🚧 Phase 1: Project Setup (Current)
 
@@ -35,6 +36,11 @@ All blocking architectural decisions have been made and documented as ADRs:
 4. [ ] FastAPI endpoints (REST + SSE)
 5. [ ] Unit tests for parsing logic
 6. [ ] Robot Framework integration tests
+
+**Planning docs:**
+
+- [Multi-Adapter Support](02-multi-adapter-support.md) — Protocol hardening for future
+  HomeAssistant support
 
 ## Phase 3: Frontend Shell
 
