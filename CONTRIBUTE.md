@@ -91,8 +91,9 @@ pip list        # Shows installed packages in the venv
 - Manually when you run `uv lock --upgrade` (to update to latest compatible versions)
 - **Always commit uv.lock** to git (like package-lock.json or poetry.lock)
 
-_Note:_ `uv sync` installs dependencies based on the existing `uv.lock` file but does **not**
-update or modify `uv.lock` itself.
+_Note:_ `uv sync` installs dependencies based on the existing `uv.lock` file but does
+**not** update or modify `uv.lock` itself.
+
 ### Backend (Python/FastAPI)
 
 ```bash
@@ -132,6 +133,38 @@ uv run mypy src/lumehaven                # Type check with strict mode
 - `uv run <command>` automatically uses the venv (most explicit way)
 - Directly typing `python`, `pytest`, etc. also works (PATH includes venv)
 - Both are equivalent—use whichever you prefer
+
+#### Architectural Overview
+
+Here is a simple example based highlighting the signal flow for OpenHab as SmartHome and
+three consumers of a dashboard:
+
+```plaintext
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           LUMEHAVEN BACKEND                              │
+│                                                                          │
+│  ┌──────────────┐         ┌─────────────────────────────────────────┐   │
+│  │   OpenHAB    │         │            SignalStore                   │   │
+│  │   Adapter    │         │                                          │   │
+│  │              │ publish │  _subscribers = {                        │   │
+│  │ subscribe_   │────────▶│      Queue (PC browser),                 │   │
+│  │ events()     │         │      Queue (Raspberry Pi),               │   │
+│  └──────────────┘         │      Queue (Mobile phone),               │   │
+│        ▲                  │  }                                       │   │
+│        │                  │                                          │   │
+│        │ SSE              │  When publish() is called:               │   │
+│        │                  │    → puts Signal in ALL 3 queues         │   │
+│  ┌─────┴──────┐           └──────┬──────────┬──────────┬─────────────┘   │
+│  │  OpenHAB   │                  │          │          │                 │
+│  │  Server    │                  │ SSE      │ SSE      │ SSE             │
+│  └────────────┘                  ▼          ▼          ▼                 │
+└──────────────────────────────────┼──────────┼──────────┼─────────────────┘
+                                   │          │          │
+                              ┌────┴───┐ ┌────┴────┐ ┌───┴────┐
+                              │   PC   │ │ RasPi   │ │ Mobile │
+                              │Browser │ │ Panel   │ │  App   │
+                              └────────┘ └─────────┘ └────────┘
+```
 
 ### Frontend (React/TypeScript)
 

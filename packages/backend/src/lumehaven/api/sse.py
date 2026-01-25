@@ -42,7 +42,7 @@ async def signal_event_generator(
         async for signal in subscriber:
             yield {
                 "event": "signal",
-                "data": json.dumps(signal.to_dict()),
+                "data": json.dumps(signal.to_dict(), ensure_ascii=False),
             }
     except asyncio.CancelledError:
         logger.debug("SSE connection cancelled")
@@ -51,7 +51,7 @@ async def signal_event_generator(
         logger.debug("SSE subscriber cleaned up")
 
 
-@router.get("/api/signals/stream", tags=["signals"])
+@router.get("/api/events/signals", tags=["signals"])
 async def signal_stream(
     store: Annotated[SignalStore, Depends(get_signal_store)],
 ) -> EventSourceResponse:
