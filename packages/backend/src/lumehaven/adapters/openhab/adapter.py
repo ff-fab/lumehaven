@@ -15,7 +15,7 @@ from collections.abc import AsyncIterator
 from typing import Any, Literal
 
 import httpx
-from ftfy import fix_encoding  # type: ignore[import-not-found]
+from ftfy import fix_encoding
 
 from lumehaven.adapters.openhab.units import (
     extract_unit_from_pattern,
@@ -47,6 +47,7 @@ class OpenHABAdapter:
 
     Attributes:
         name: Unique identifier for this adapter instance.
+        prefix: Short prefix for signal ID namespacing.
         base_url: OpenHAB REST API base URL.
         tag: Optional tag to filter items.
     """
@@ -57,6 +58,7 @@ class OpenHABAdapter:
         tag: str = "",
         *,
         name: str | None = None,
+        prefix: str | None = None,
     ) -> None:
         """Initialize the OpenHAB adapter.
 
@@ -64,8 +66,10 @@ class OpenHABAdapter:
             base_url: Base URL for OpenHAB REST API (e.g., "http://localhost:8080").
             tag: Filter items by this tag (empty string = all items).
             name: Unique identifier for this adapter instance. Defaults to "openhab".
+            prefix: Short prefix for signal IDs. Defaults to "oh".
         """
         self._name = name or "openhab"
+        self._prefix = prefix or "oh"
         self.base_url = base_url.rstrip("/")
         self.tag = tag
         self._client: httpx.AsyncClient | None = None
@@ -81,6 +85,22 @@ class OpenHABAdapter:
     def adapter_type(self) -> str:
         """The type of smart home system: 'openhab'."""
         return "openhab"
+
+    @property
+    def prefix(self) -> str:
+        """Short prefix for signal ID namespacing."""
+        return self._prefix
+
+    def _prefixed_id(self, item_name: str) -> str:
+        """Create a namespaced signal ID from an OpenHAB item name.
+
+        Args:
+            item_name: The OpenHAB item name.
+
+        Returns:
+            Signal ID in format "prefix:item_name".
+        """
+        return f"{self._prefix}:{item_name}"
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create the HTTP client."""
@@ -284,7 +304,7 @@ class OpenHABAdapter:
         # If transformation was applied, use transformed state directly
         if "transformedState" in item:
             return Signal(
-                id=name,
+                id=self._prefixed_id(name),
                 value=item["transformedState"],
                 unit="",
                 label=label,
@@ -293,7 +313,7 @@ class OpenHABAdapter:
         # DateTime items have no units
         if type_parts[0] == "DateTime":
             return Signal(
-                id=name,
+                id=self._prefixed_id(name),
                 value=state,
                 unit="",
                 label=label,
@@ -307,7 +327,7 @@ class OpenHABAdapter:
             unit, fmt = extract_unit_from_pattern(pattern)
             value = format_value(state, unit, fmt, is_quantity_type)
             return Signal(
-                id=name,
+                id=self._prefixed_id(name),
                 value=value,
                 unit=unit,
                 label=label,
@@ -325,7 +345,7 @@ class OpenHABAdapter:
             unit = self._default_units.get(quantity_type, "")
             value = format_value(state, unit, "%s", is_quantity_type=True)
             return Signal(
-                id=name,
+                id=self._prefixed_id(name),
                 value=value,
                 unit=unit,
                 label=label,
@@ -340,7 +360,7 @@ class OpenHABAdapter:
         # Rollershutter and Dimmer are percentage values
         if type_parts[0] in ("Rollershutter", "Dimmer"):
             return Signal(
-                id=name,
+                id=self._prefixed_id(name),
                 value=state,
                 unit="%",
                 label=label,
@@ -353,7 +373,7 @@ class OpenHABAdapter:
 
         # Default: no unit
         return Signal(
-            id=name,
+            id=self._prefixed_id(name),
             value=state,
             unit="",
             label=label,
@@ -389,7 +409,7 @@ class OpenHABAdapter:
                 value = fix_encoding(payload.get("state", ""))
 
             return Signal(
-                id=item_name,
+                id=self._prefixed_id(item_name),
                 value=value,
                 unit=metadata.unit,
                 label=metadata.label,

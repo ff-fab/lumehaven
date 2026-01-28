@@ -107,27 +107,30 @@ pydantic-settings with nested models.
 
 ## Implementation Plan
 
-### Phase 1: Protocol Hardening (Do Now)
+### Phase 1: Protocol Hardening ✅ Complete
 
 Small changes that don't break anything:
 
-1. Add `name`, `adapter_type`, `close()` to protocol
-2. Implement in `OpenHABAdapter`
-3. Update health check to use `adapter.name` instead of `base_url`
-4. Fix `sync_from_smart_home` type hint to use protocol
+1. ✅ Add `name`, `adapter_type`, `prefix`, `close()` to protocol
+2. ✅ Implement in `OpenHABAdapter`
+3. ✅ Update health check to use `adapter.name` instead of `base_url`
+4. ✅ Fix `sync_from_smart_home` type hint to use protocol
 
-### Phase 2: ID Namespacing (Before HomeAssistant)
+### Phase 2: ID Namespacing ✅ Complete
 
-1. Add ID prefix logic to adapters or store
-2. Update `Signal` creation to include adapter prefix
-3. Ensure frontend handles prefixed IDs gracefully
+1. ✅ Add `prefix` property to protocol (default "oh" for OpenHAB)
+2. ✅ Add `_prefixed_id()` helper to OpenHABAdapter
+3. ✅ Update all Signal creations to use prefixed IDs (`prefix:item_name`)
+4. Frontend will receive prefixed IDs transparently
 
-### Phase 3: Multi-Adapter Orchestration (With HomeAssistant)
+### Phase 3: Multi-Adapter Orchestration ✅ Complete
 
-1. Design config schema for multiple adapters
-2. Refactor `main.py` lifespan to create adapter list
-3. Create sync task per adapter
-4. Update `app.state.adapters` usage
+1. ✅ YAML config schema with discriminated union (`AdapterConfig`)
+2. ✅ Env var fallback for simple single-adapter setups
+3. ✅ `AdapterManager` class with independent sync tasks
+4. ✅ Graceful degradation (start even if some adapters fail)
+5. ✅ Automatic retry with exponential backoff
+6. ✅ Health check uses `adapter_manager.states` for connection status
 
 ### Phase 4: HomeAssistant Adapter
 
@@ -137,19 +140,26 @@ Small changes that don't break anything:
 
 ---
 
+## Decisions Made
+
+1. **Signal ID format:** `prefix:item_name` (e.g., `oh:LivingRoom_Temperature`)
+
+2. **Where prefix is applied:** In the adapter, via `_prefixed_id()` helper
+
+3. **Prefix is user-controllable:** Via `prefix` parameter in adapter constructor
+   (default "oh" for OpenHAB, will be "ha" for HomeAssistant)
+
+---
+
 ## Open Questions
 
-1. **Should adapters own their ID prefix, or should the store apply it?**
-
-   - Adapter: cleaner separation, adapter knows its identity
-   - Store: centralized, easier to change strategy
-
-2. **How to handle adapter failure?**
+1. **How to handle adapter failure?**
 
    - If OpenHAB goes down, should HA signals still flow?
    - Independent tasks with isolated error handling?
+   - Independent tasks with isolated error handling?
 
-3. **Signal deduplication across adapters?**
+2. **Signal deduplication across adapters?**
    - Same physical sensor exposed in both systems?
    - User-configured aliases?
 

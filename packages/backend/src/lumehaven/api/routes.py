@@ -9,7 +9,6 @@ from typing import Annotated, Literal, Self
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, model_validator
 
-from lumehaven.adapters.protocol import SmartHomeAdapter
 from lumehaven.core.signal import Signal
 from lumehaven.state.store import SignalStore, get_signal_store
 
@@ -104,29 +103,26 @@ async def health_check(
     signals = await store.get_all()
     signal_count = len(signals)
 
-    # Get adapters from app state (supports single adapter or list)
-    adapters_raw = getattr(request.app.state, "adapters", None)
-    if adapters_raw is None:
-        # Backwards compatibility: check for single adapter
-        single_adapter = getattr(request.app.state, "adapter", None)
-        adapters_raw = [single_adapter] if single_adapter else []
+    # Get adapter manager from app state
+    adapter_manager = getattr(request.app.state, "adapter_manager", None)
 
     # Build adapter status list
     adapter_statuses: list[AdapterStatus] = []
     all_connected = True
-    for adapter in adapters_raw:
-        if not isinstance(adapter, SmartHomeAdapter):
-            continue
-        connected = adapter.is_connected()
-        if not connected:
-            all_connected = False
-        adapter_statuses.append(
-            AdapterStatus(
-                name=adapter.name,
-                type=adapter.adapter_type,
-                connected=connected,
+
+    if adapter_manager is not None:
+        for state in adapter_manager.states.values():
+            adapter = state.adapter
+            connected = state.connected
+            if not connected:
+                all_connected = False
+            adapter_statuses.append(
+                AdapterStatus(
+                    name=adapter.name,
+                    type=adapter.adapter_type,
+                    connected=connected,
+                )
             )
-        )
 
     # Determine health status
     has_adapters = len(adapter_statuses) > 0

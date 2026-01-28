@@ -36,6 +36,8 @@ class SmartHomeAdapter(Protocol):
         ...     def name(self) -> str: return "my-adapter"
         ...     @property
         ...     def adapter_type(self) -> str: return "custom"
+        ...     @property
+        ...     def prefix(self) -> str: return "my"
         ...     async def get_signals(self) -> dict[str, Signal]: ...
         ...     async def get_signal(self, signal_id: str) -> Signal: ...
         ...     async def subscribe_events(self) -> AsyncIterator[Signal]: ...
@@ -65,6 +67,20 @@ class SmartHomeAdapter(Protocol):
         Should be lowercase and match SmartHomeType enum values.
 
         Examples: "openhab", "homeassistant"
+        """
+        ...
+
+    @property
+    def prefix(self) -> str:
+        """Short prefix for signal ID namespacing.
+
+        All signal IDs from this adapter will be prefixed as "prefix:id".
+        Should be short and stable (changing it breaks existing references).
+
+        Each adapter type has a default (e.g., "oh" for OpenHAB, "ha" for
+        HomeAssistant), but users can override for multi-instance setups.
+
+        Examples: "oh", "ha", "oh2", "garage"
         """
         ...
 

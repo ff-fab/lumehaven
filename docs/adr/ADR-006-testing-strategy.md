@@ -7,51 +7,66 @@ Accepted
 ## Context
 
 Lumehaven needs a testing strategy that:
+
 1. Ensures reliability of the backend (BFF) which handles smart home API integration
 2. Validates the Signal abstraction and platform adapters (OpenHAB, later HomeAssistant)
 3. Supports iterative development with increasing sophistication over time
 4. Keeps frontend and E2E testing lightweight initially
 5. Enables future expansion without major rework
 
-The PoC had **zero tests** (noted in lessons learned), leading to fragile code and difficult refactoring. The complex parsing logic in `openhab.py` (unit extraction, value formatting, special states) is error-prone and needs thorough coverage.
+The PoC had **zero tests** (noted in lessons learned), leading to fragile code and
+difficult refactoring. The complex parsing logic in `openhab.py` (unit extraction, value
+formatting, special states) is error-prone and needs thorough coverage.
 
 Key constraints:
-- **Backend-first focus:** Core business logic lives in adapters and signal normalization
-- **Smart home mocking:** Need to simulate OpenHAB/HomeAssistant APIs without real instances
-- **Learning goal:** Robot Framework is of interest for its human-readable syntax and BDD-style capabilities
+
+- **Backend-first focus:** Core business logic lives in adapters and signal
+  normalization
+- **Smart home mocking:** Need to simulate OpenHAB/HomeAssistant APIs without real
+  instances
+- **Learning goal:** Robot Framework is of interest for its human-readable syntax and
+  BDD-style capabilities
 - **Lightweight start:** Don't over-engineer; add sophistication as needed
 
 ## Considered Options
 
 ### Option 1: pytest-Only Strategy
+
 Traditional Python testing with pytest for all backend tests.
 
 **Stack:**
+
 - Backend: pytest + pytest-asyncio + httpx (for FastAPI testing)
 - Frontend: Vitest (if needed later)
 - E2E: None initially, Playwright later
 
 **Pros:**
+
 - Familiar to most Python developers
 - Excellent IDE integration
 - Fast execution
 - Rich assertion library and fixtures
 
 **Cons:**
+
 - Tests can become code-heavy and hard to read for non-developers
 - No built-in support for BDD-style acceptance tests
 - Separate tooling needed for integration/acceptance layer
 
 ### Option 2: Robot Framework for Integration + pytest for Units
-Hybrid approach using Robot Framework for integration/acceptance tests and pytest for unit tests.
+
+Hybrid approach using Robot Framework for integration/acceptance tests and pytest for
+unit tests.
 
 **Stack:**
+
 - Backend Unit Tests: pytest
 - Backend Integration/Acceptance: Robot Framework + RESTinstance
 - Frontend: Vitest (lightweight, later)
 - E2E: Robot Framework + Browser Library (later)
 
 **Pros:**
+
 - Human-readable test cases for integration scenarios
 - Robot Framework's keyword-driven approach suits API testing
 - Same tool can grow into E2E testing
@@ -59,44 +74,53 @@ Hybrid approach using Robot Framework for integration/acceptance tests and pytes
 - RESTinstance library excellent for REST API testing
 
 **Cons:**
+
 - Two testing frameworks to maintain
 - Robot Framework has learning curve
 - Slightly more setup complexity
 
 ### Option 3: Robot Framework for Everything
+
 Use Robot Framework at all levels, including unit tests via Python libraries.
 
 **Stack:**
+
 - All testing: Robot Framework
 - Custom Python keywords for unit-level testing
 - RESTinstance for API testing
 - Browser Library for E2E
 
 **Pros:**
+
 - Single testing framework
 - Consistent syntax across all test levels
 - Business stakeholders can read all tests
 
 **Cons:**
+
 - Unit tests in RF are awkward compared to pytest
 - Slower test execution for unit tests
 - Fighting the tool at the unit level
 - Over-engineering for a personal project
 
 ### Option 4: Behavior-Driven with pytest-bdd
+
 Use pytest-bdd for Gherkin-style tests while staying in pytest ecosystem.
 
 **Stack:**
+
 - Backend: pytest + pytest-bdd
 - Frontend: Vitest
 - E2E: Playwright with pytest
 
 **Pros:**
+
 - Gherkin syntax for scenarios
 - Stays within pytest ecosystem
 - Good for acceptance criteria
 
 **Cons:**
+
 - pytest-bdd adds complexity without RF's keyword reusability
 - Less powerful than Robot Framework for complex scenarios
 - Gherkin can be verbose
@@ -129,6 +153,7 @@ Use **Option 2: Robot Framework for Integration + pytest for Units**
 **Location:** `packages/backend/tests/unit/`
 
 **What to test:**
+
 - Signal dataclass creation and validation
 - Unit extraction from OpenHAB patterns (`get_unit_from_pattern`)
 - Value formatting logic (`get_value_from_state`)
@@ -137,6 +162,7 @@ Use **Option 2: Robot Framework for Integration + pytest for Units**
 - Edge cases from real OpenHAB API responses
 
 **Example test structure:**
+
 ```python
 # tests/unit/test_signal.py
 import pytest
@@ -175,6 +201,7 @@ class TestOpenHABPatternParsing:
 ```
 
 **Fixtures for OpenHAB responses:**
+
 ```python
 # tests/conftest.py
 import pytest
@@ -201,12 +228,14 @@ def openhab_sse_events():
 **Location:** `packages/backend/tests/integration/`
 
 **What to test:**
+
 - Full adapter → Signal flow
 - FastAPI endpoints (REST API)
 - SSE event streaming
 - Mock smart home API interactions
 
 **Example Robot Framework test:**
+
 ```robot
 *** Settings ***
 Documentation    OpenHAB Adapter Integration Tests
@@ -222,7 +251,7 @@ ${MOCK_OPENHAB}   http://localhost:8081
 Get All Signals Returns Normalized Data
     [Documentation]    Verify that signals are properly normalized from OpenHAB
     [Tags]    integration    openhab
-    
+
     Given OpenHAB Has Temperature Item "TemperatureLiving" With State "21.5 °C"
     When I Request All Signals From Backend
     Then Response Status Should Be 200
@@ -232,7 +261,7 @@ Get All Signals Returns Normalized Data
 Handle OpenHAB Special States
     [Documentation]    UNDEF and NULL states should pass through unchanged
     [Tags]    integration    openhab    edge-case
-    
+
     Given OpenHAB Has Item "SensorOffline" With State "UNDEF"
     When I Request Signal "SensorOffline"
     Then Signal Value Should Be "UNDEF"
@@ -259,14 +288,15 @@ Then Signal "${name}" Should Have Value "${expected}"
 
 ### Frontend Testing (Lightweight)
 
-**Location:** `packages/frontend/tests/`
-**Framework:** Vitest (comes with Vite)
+**Location:** `packages/frontend/tests/` **Framework:** Vitest (comes with Vite)
 
 **Initial scope (minimal):**
+
 - Component smoke tests (renders without crashing)
 - Critical utility functions
 
 **Deferred:**
+
 - Complex component interaction tests
 - Visual regression testing
 - Accessibility testing
@@ -287,10 +317,11 @@ describe('SignalDisplay', () => {
 
 ### E2E Testing (Deferred)
 
-**Framework:** Robot Framework + Browser Library (Playwright-based)
-**When:** After frontend is stable (Phase 3+)
+**Framework:** Robot Framework + Browser Library (Playwright-based) **When:** After
+frontend is stable (Phase 3+)
 
 **Initial scope:**
+
 - Critical user journeys only
 - Dashboard loads and displays data
 - Real-time updates work
@@ -340,11 +371,14 @@ def get_item(item_name: str):
     return MOCK_ITEMS.get(item_name, {"error": "not found"})
 ```
 
-**Fixture data:** Store real (anonymized) API responses in `tests/fixtures/` for realistic testing.
+**Fixture data:** Store real (anonymized) API responses in `tests/fixtures/` for
+realistic testing.
 
 ### Test Data from PoC
 
-Leverage examples from [openhab-example-api-calls.md](../ll/openhab-example-api-calls.md):
+Leverage examples from
+[openhab-example-api-calls.md](../ll/openhab-example-api-calls.md):
+
 - 200+ real item types with various patterns
 - SSE event formats
 - Edge cases (transformed states, special values)
@@ -360,38 +394,42 @@ Leverage examples from [openhab-example-api-calls.md](../ll/openhab-example-api-
 
 ## Decision Matrix
 
-| Criterion | Option 1 (pytest only) | Option 2 (RF + pytest) | Option 3 (RF only) | Option 4 (pytest-bdd) |
-|-----------|------------------------|------------------------|--------------------|-----------------------|
-| Backend unit testing | 5 | 5 | 2 | 4 |
-| Integration testing | 3 | 5 | 5 | 3 |
-| Readability for scenarios | 2 | 5 | 5 | 4 |
-| Learning curve | 5 | 3 | 3 | 4 |
-| E2E extensibility | 3 | 5 | 5 | 4 |
-| Maintenance burden | 5 | 3 | 4 | 3 |
-| **Total** | **23** | **26** | **24** | **22** |
+| Criterion                 | Option 1 (pytest only) | Option 2 (RF + pytest) | Option 3 (RF only) | Option 4 (pytest-bdd) |
+| ------------------------- | ---------------------- | ---------------------- | ------------------ | --------------------- |
+| Backend unit testing      | 5                      | 5                      | 2                  | 4                     |
+| Integration testing       | 3                      | 5                      | 5                  | 3                     |
+| Readability for scenarios | 2                      | 5                      | 5                  | 4                     |
+| Learning curve            | 5                      | 3                      | 3                  | 4                     |
+| E2E extensibility         | 3                      | 5                      | 5                  | 4                     |
+| Maintenance burden        | 5                      | 3                      | 4                  | 3                     |
+| **Total**                 | **23**                 | **26**                 | **24**             | **22**                |
 
-*Scale: 1 (poor) to 5 (excellent)*
+_Scale: 1 (poor) to 5 (excellent)_
 
 ## Implementation Plan
 
 ### Phase 1: Foundation (Current Sprint)
+
 - [ ] Set up pytest with pytest-asyncio
 - [ ] Create test fixtures from PoC/OpenHAB examples
 - [ ] Unit tests for Signal model
 - [ ] Unit tests for pattern parsing logic
 
 ### Phase 2: Integration Layer
+
 - [ ] Install Robot Framework + RESTinstance
 - [ ] Create mock OpenHAB server
 - [ ] Integration tests for adapter → Signal flow
 - [ ] Integration tests for FastAPI endpoints
 
 ### Phase 3: Frontend Basics
+
 - [ ] Set up Vitest
 - [ ] Smoke tests for main components
 - [ ] Basic utility function tests
 
 ### Phase 4: E2E (Future)
+
 - [ ] Install Browser Library
 - [ ] Critical path E2E tests
 - [ ] CI integration for E2E suite
@@ -433,6 +471,7 @@ packages/
 ## Tooling Configuration
 
 ### pytest (pyproject.toml)
+
 ```toml
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
@@ -444,6 +483,7 @@ markers = [
 ```
 
 ### Robot Framework (robot.yaml or CLI)
+
 ```yaml
 # robot.yaml
 paths:
@@ -454,6 +494,7 @@ variables:
 ```
 
 ### CI Integration
+
 ```yaml
 # .github/workflows/test.yml (excerpt)
 jobs:
@@ -461,7 +502,7 @@ jobs:
     steps:
       - name: Run unit tests
         run: uv run pytest tests/unit -v --cov
-      
+
       - name: Run integration tests
         run: |
           uv run python -m tests.mocks.openhab_mock &
@@ -471,6 +512,7 @@ jobs:
 ## Consequences
 
 ### Positive
+
 - Thorough backend coverage where complexity lives
 - Human-readable integration tests serve as documentation
 - Clear path from unit tests to full E2E
@@ -478,15 +520,17 @@ jobs:
 - Lightweight frontend testing reduces early maintenance
 
 ### Negative
+
 - Two testing frameworks to learn and maintain
 - Robot Framework adds dependencies
 - Initial setup takes longer than pytest-only
 
 ### Risks & Mitigations
-| Risk | Mitigation |
-|------|------------|
-| RF learning curve | Start with simple API tests, grow complexity gradually |
-| Two frameworks diverge | Clear separation: pytest=units, RF=integration+ |
+
+| Risk                      | Mitigation                                                |
+| ------------------------- | --------------------------------------------------------- |
+| RF learning curve         | Start with simple API tests, grow complexity gradually    |
+| Two frameworks diverge    | Clear separation: pytest=units, RF=integration+           |
 | Mock drift from real APIs | Use fixtures from real API responses, update periodically |
 
 ## References
@@ -497,6 +541,7 @@ jobs:
 - pytest-asyncio: https://pytest-asyncio.readthedocs.io/
 - Vitest: https://vitest.dev/
 - PoC lessons: [docs/ll/00-lessons-from-poc.md](../ll/00-lessons-from-poc.md)
-- OpenHAB examples: [docs/ll/openhab-example-api-calls.md](../ll/openhab-example-api-calls.md)
+- OpenHAB examples:
+  [docs/ll/openhab-example-api-calls.md](../ll/openhab-example-api-calls.md)
 
-*January 5, 2026*
+_January 5, 2026_
