@@ -122,8 +122,8 @@ async def health_check(
             all_connected = False
         adapter_statuses.append(
             AdapterStatus(
-                name=getattr(adapter, "base_url", "unknown"),
-                type=type(adapter).__name__,
+                name=adapter.name,
+                type=adapter.adapter_type,
                 connected=connected,
             )
         )

@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from lumehaven import __version__
 from lumehaven.adapters.openhab import OpenHABAdapter
+from lumehaven.adapters.protocol import SmartHomeAdapter
 from lumehaven.api.routes import router as api_router
 from lumehaven.api.sse import router as sse_router
 from lumehaven.config import SmartHomeType, get_settings
@@ -28,7 +29,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def sync_from_smart_home(adapter: OpenHABAdapter) -> None:
+async def sync_from_smart_home(adapter: SmartHomeAdapter) -> None:
     """Background task to sync signals from smart home system.
 
     Subscribes to the adapter's event stream and publishes updates
@@ -40,7 +41,7 @@ async def sync_from_smart_home(adapter: OpenHABAdapter) -> None:
         async for signal in adapter.subscribe_events():
             await store.publish(signal)
     except Exception:
-        logger.exception("Error in smart home sync task")
+        logger.exception(f"Error in smart home sync task for adapter '{adapter.name}'")
         raise
 
 
@@ -57,9 +58,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
     # Create adapter based on configuration
     if settings.smart_home_type == SmartHomeType.OPENHAB:
-        adapter = OpenHABAdapter(
+        adapter: SmartHomeAdapter = OpenHABAdapter(
             base_url=settings.openhab_url,
             tag=settings.openhab_tag,
+            name="openhab",
         )
     else:
         raise NotImplementedError(
@@ -130,7 +132,7 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    import uvicorn
+    import uvicorn  # type: ignore[import-not-found]
 
     settings = get_settings()
     uvicorn.run(

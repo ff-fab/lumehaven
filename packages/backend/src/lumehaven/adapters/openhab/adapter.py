@@ -11,7 +11,7 @@ It handles the complexity of OpenHAB's data model, including:
 
 import json
 import logging
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncIterator
 from typing import Any, Literal
 
 import httpx
@@ -46,22 +46,41 @@ class OpenHABAdapter:
     Uses httpx for async HTTP and SSE communication.
 
     Attributes:
+        name: Unique identifier for this adapter instance.
         base_url: OpenHAB REST API base URL.
         tag: Optional tag to filter items.
     """
 
-    def __init__(self, base_url: str, tag: str = "") -> None:
+    def __init__(
+        self,
+        base_url: str,
+        tag: str = "",
+        *,
+        name: str | None = None,
+    ) -> None:
         """Initialize the OpenHAB adapter.
 
         Args:
             base_url: Base URL for OpenHAB REST API (e.g., "http://localhost:8080").
             tag: Filter items by this tag (empty string = all items).
+            name: Unique identifier for this adapter instance. Defaults to "openhab".
         """
+        self._name = name or "openhab"
         self.base_url = base_url.rstrip("/")
         self.tag = tag
         self._client: httpx.AsyncClient | None = None
         self._default_units: dict[str, str] = {}
         self._item_metadata: dict[str, _ItemMetadata] = {}
+
+    @property
+    def name(self) -> str:
+        """Unique identifier for this adapter instance."""
+        return self._name
+
+    @property
+    def adapter_type(self) -> str:
+        """The type of smart home system: 'openhab'."""
+        return "openhab"
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create the HTTP client."""
@@ -181,7 +200,7 @@ class OpenHABAdapter:
                 raise SignalNotFoundError(signal_id) from e
             raise SmartHomeConnectionError("openhab", self.base_url, e) from e
 
-    async def subscribe_events(self) -> AsyncGenerator[Signal]:
+    async def subscribe_events(self) -> AsyncIterator[Signal]:
         """Subscribe to OpenHAB state change events via SSE.
 
         Yields:

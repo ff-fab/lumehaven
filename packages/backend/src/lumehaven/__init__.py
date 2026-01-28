@@ -1,5 +1,7 @@
 """lumehaven - Smart home dashboard backend."""
 
+__version__: str
+
 try:
     # Try to get version from generated version file (updated by setuptools_scm at build time)
     from lumehaven._version import __version__
@@ -12,3 +14,5 @@ except ImportError:
     except Exception:
         # Last resort fallback
         __version__ = "0.0.0+unknown"
+
+__all__ = ["__version__"]
