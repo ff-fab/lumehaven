@@ -132,7 +132,7 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    import uvicorn  # type: ignore[import-not-found]
+    import uvicorn
 
     settings = get_settings()
     uvicorn.run(
