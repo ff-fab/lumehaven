@@ -11,11 +11,11 @@ It handles the complexity of OpenHAB's data model, including:
 
 import json
 import logging
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncIterator
 from typing import Any, Literal
 
 import httpx
-from ftfy import fix_encoding  # type: ignore[import-not-found]
+from ftfy import fix_encoding
 
 from lumehaven.adapters.openhab.units import (
     extract_unit_from_pattern,
@@ -46,22 +46,61 @@ class OpenHABAdapter:
     Uses httpx for async HTTP and SSE communication.
 
     Attributes:
+        name: Unique identifier for this adapter instance.
+        prefix: Short prefix for signal ID namespacing.
         base_url: OpenHAB REST API base URL.
         tag: Optional tag to filter items.
     """
 
-    def __init__(self, base_url: str, tag: str = "") -> None:
+    def __init__(
+        self,
+        base_url: str,
+        tag: str = "",
+        *,
+        name: str | None = None,
+        prefix: str | None = None,
+    ) -> None:
         """Initialize the OpenHAB adapter.
 
         Args:
             base_url: Base URL for OpenHAB REST API (e.g., "http://localhost:8080").
             tag: Filter items by this tag (empty string = all items).
+            name: Unique identifier for this adapter instance. Defaults to "openhab".
+            prefix: Short prefix for signal IDs. Defaults to "oh".
         """
+        self._name = name or "openhab"
+        self._prefix = prefix or "oh"
         self.base_url = base_url.rstrip("/")
         self.tag = tag
         self._client: httpx.AsyncClient | None = None
         self._default_units: dict[str, str] = {}
         self._item_metadata: dict[str, _ItemMetadata] = {}
+
+    @property
+    def name(self) -> str:
+        """Unique identifier for this adapter instance."""
+        return self._name
+
+    @property
+    def adapter_type(self) -> str:
+        """The type of smart home system: 'openhab'."""
+        return "openhab"
+
+    @property
+    def prefix(self) -> str:
+        """Short prefix for signal ID namespacing."""
+        return self._prefix
+
+    def _prefixed_id(self, item_name: str) -> str:
+        """Create a namespaced signal ID from an OpenHAB item name.
+
+        Args:
+            item_name: The OpenHAB item name.
+
+        Returns:
+            Signal ID in format "prefix:item_name".
+        """
+        return f"{self._prefix}:{item_name}"
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create the HTTP client."""
@@ -137,7 +176,8 @@ class OpenHABAdapter:
             for item in items_data:
                 signal, metadata = self._extract_signal(item)
                 signals[signal.id] = signal
-                self._item_metadata[signal.id] = metadata
+                # Key metadata by raw item name (not prefixed) for SSE event lookup
+                self._item_metadata[item["name"]] = metadata
 
             logger.info(f"Loaded {len(signals)} signals from OpenHAB")
             return signals
@@ -173,7 +213,8 @@ class OpenHABAdapter:
             item = response.json()
 
             signal, metadata = self._extract_signal(item)
-            self._item_metadata[signal.id] = metadata
+            # Key metadata by raw item name (not prefixed) for SSE event lookup
+            self._item_metadata[item["name"]] = metadata
             return signal
 
         except httpx.HTTPError as e:
@@ -181,7 +222,7 @@ class OpenHABAdapter:
                 raise SignalNotFoundError(signal_id) from e
             raise SmartHomeConnectionError("openhab", self.base_url, e) from e
 
-    async def subscribe_events(self) -> AsyncGenerator[Signal]:
+    async def subscribe_events(self) -> AsyncIterator[Signal]:
         """Subscribe to OpenHAB state change events via SSE.
 
         Yields:
@@ -265,7 +306,7 @@ class OpenHABAdapter:
         # If transformation was applied, use transformed state directly
         if "transformedState" in item:
             return Signal(
-                id=name,
+                id=self._prefixed_id(name),
                 value=item["transformedState"],
                 unit="",
                 label=label,
@@ -274,7 +315,7 @@ class OpenHABAdapter:
         # DateTime items have no units
         if type_parts[0] == "DateTime":
             return Signal(
-                id=name,
+                id=self._prefixed_id(name),
                 value=state,
                 unit="",
                 label=label,
@@ -288,7 +329,7 @@ class OpenHABAdapter:
             unit, fmt = extract_unit_from_pattern(pattern)
             value = format_value(state, unit, fmt, is_quantity_type)
             return Signal(
-                id=name,
+                id=self._prefixed_id(name),
                 value=value,
                 unit=unit,
                 label=label,
@@ -306,7 +347,7 @@ class OpenHABAdapter:
             unit = self._default_units.get(quantity_type, "")
             value = format_value(state, unit, "%s", is_quantity_type=True)
             return Signal(
-                id=name,
+                id=self._prefixed_id(name),
                 value=value,
                 unit=unit,
                 label=label,
@@ -321,7 +362,7 @@ class OpenHABAdapter:
         # Rollershutter and Dimmer are percentage values
         if type_parts[0] in ("Rollershutter", "Dimmer"):
             return Signal(
-                id=name,
+                id=self._prefixed_id(name),
                 value=state,
                 unit="%",
                 label=label,
@@ -334,7 +375,7 @@ class OpenHABAdapter:
 
         # Default: no unit
         return Signal(
-            id=name,
+            id=self._prefixed_id(name),
             value=state,
             unit="",
             label=label,
@@ -370,7 +411,7 @@ class OpenHABAdapter:
                 value = fix_encoding(payload.get("state", ""))
 
             return Signal(
-                id=item_name,
+                id=self._prefixed_id(item_name),
                 value=value,
                 unit=metadata.unit,
                 label=metadata.label,
@@ -384,6 +425,14 @@ class OpenHABAdapter:
         if self._client:
             await self._client.aclose()
             self._client = None
+
+    def is_connected(self) -> bool:
+        """Check if the adapter has an active connection.
+
+        Returns:
+            True if the HTTP client exists and is not closed.
+        """
+        return self._client is not None and not self._client.is_closed
 
 
 class _ItemMetadata:

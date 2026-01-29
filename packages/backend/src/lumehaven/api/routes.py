@@ -4,10 +4,10 @@ Defines the REST API and SSE endpoints for the lumehaven backend.
 """
 
 import logging
-from typing import Annotated
+from typing import Annotated, Literal, Self
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, model_validator
 
 from lumehaven.core.signal import Signal
 from lumehaven.state.store import SignalStore, get_signal_store
@@ -39,7 +39,7 @@ class SignalResponse(BaseModel):
     label: str
 
     @classmethod
-    def from_signal(cls, signal: Signal) -> SignalResponse:
+    def from_signal(cls, signal: Signal) -> Self:
         """Create from domain Signal."""
         return cls(
             id=signal.id,
@@ -55,13 +55,32 @@ class SignalsResponse(BaseModel):
     signals: list[SignalResponse]
     count: int
 
+    @model_validator(mode="after")
+    def validate_count_matches_signals(self) -> Self:
+        """Ensure count matches the actual number of signals."""
+        if self.count != len(self.signals):
+            raise ValueError(
+                f"count ({self.count}) does not match "
+                f"len(signals) ({len(self.signals)})"
+            )
+        return self
+
+
+class AdapterStatus(BaseModel):
+    """Status of a single smart home adapter."""
+
+    name: str
+    type: str
+    connected: bool
+
 
 class HealthResponse(BaseModel):
     """API response for health check."""
 
-    status: str
+    status: Literal["healthy", "degraded"]
     signal_count: int
     subscriber_count: int
+    adapters: list[AdapterStatus]
 
 
 # ---------------------------------------------------------------------------
@@ -71,17 +90,49 @@ class HealthResponse(BaseModel):
 
 @router.get("/health", response_model=HealthResponse, tags=["system"])
 async def health_check(
+    request: Request,
     store: Annotated[SignalStore, Depends(get_signal_store)],
 ) -> HealthResponse:
     """Health check endpoint.
 
     Returns service status and basic metrics.
+
+    Status is "healthy" when signals are loaded and all adapters are connected.
+    Status is "degraded" when signal_count is 0 or any adapter is disconnected.
     """
     signals = await store.get_all()
+    signal_count = len(signals)
+
+    # Get adapter manager from app state
+    adapter_manager = getattr(request.app.state, "adapter_manager", None)
+
+    # Build adapter status list
+    adapter_statuses: list[AdapterStatus] = []
+    all_connected = True
+
+    if adapter_manager is not None:
+        for state in adapter_manager.states.values():
+            adapter = state.adapter
+            connected = state.connected
+            if not connected:
+                all_connected = False
+            adapter_statuses.append(
+                AdapterStatus(
+                    name=adapter.name,
+                    type=adapter.adapter_type,
+                    connected=connected,
+                )
+            )
+
+    # Determine health status
+    has_adapters = len(adapter_statuses) > 0
+    is_healthy = signal_count > 0 and has_adapters and all_connected
+
     return HealthResponse(
-        status="healthy",
-        signal_count=len(signals),
+        status="healthy" if is_healthy else "degraded",
+        signal_count=signal_count,
         subscriber_count=store.subscriber_count(),
+        adapters=adapter_statuses,
     )
 
 

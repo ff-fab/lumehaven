@@ -3,11 +3,6 @@
 This module provides the SSE streaming endpoint that the frontend
 uses to receive real-time updates. It bridges the signal store's
 pub/sub mechanism with HTTP SSE.
-
-Key considerations (from PoC lessons):
-- Proper cleanup on client disconnect
-- JSON serialization of Signal objects
-- Heartbeat to keep connection alive (optional)
 """
 
 import asyncio

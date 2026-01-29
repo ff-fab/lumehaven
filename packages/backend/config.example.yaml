@@ -1,0 +1,30 @@
+# Lumehaven Configuration
+#
+# This file configures multiple smart home adapters.
+# If this file is not present, lumehaven uses environment variables
+# for single-adapter configuration.
+#
+# Environment variable interpolation: Use ${VAR_NAME} syntax
+# Missing variables are replaced with empty string.
+
+adapters:
+  # OpenHAB adapter example
+  - type: openhab
+    name: main-openhab # Unique identifier (appears in logs, health check)
+    prefix: oh # Short prefix for signal IDs (e.g., "oh:LivingRoom_Temp")
+    url: http://localhost:8080 # OpenHAB REST API URL
+    tag: Dashboard # Filter items by tag (empty = all items)
+
+  # Home Assistant adapter example (not yet implemented)
+  # - type: homeassistant
+  #   name: garage-ha
+  #   prefix: ha
+  #   url: http://localhost:8123
+  #   token: ${HA_TOKEN}  # Long-lived access token from HA
+
+# Multiple adapters of the same type are supported:
+# - type: openhab
+#   name: secondary-openhab
+#   prefix: oh2
+#   url: http://192.168.1.100:8080
+#   tag: Secondary

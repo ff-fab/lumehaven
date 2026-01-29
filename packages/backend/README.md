@@ -4,7 +4,7 @@ The Backend-For-Frontend (BFF) service for the lumehaven smart home dashboard.
 
 ## Architecture
 
-This backend acts as a normalizing layer between smart home systems (OpenHAB, HomeAssistant) 
+This backend acts as a normalizing layer between smart home systems (OpenHAB, HomeAssistant)
 and the React frontend. Key responsibilities:
 
 - **Signal Normalization**: Convert smart home data to a unified `Signal` model

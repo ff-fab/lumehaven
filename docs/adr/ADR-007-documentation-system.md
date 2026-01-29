@@ -7,6 +7,7 @@ Accepted
 ## Context
 
 Lumehaven needs a documentation system that:
+
 1. Hosts technical documentation (architecture, API, setup guides)
 2. Integrates with existing ADRs in `docs/adr/`
 3. Generates API documentation from code (Python docstrings, TypeScript types)
@@ -14,24 +15,29 @@ Lumehaven needs a documentation system that:
 5. Optionally supports requirements traceability for learning purposes
 
 Current documentation:
+
 - ADRs in `docs/adr/` (Markdown)
 - Lessons learned in `docs/ll/` (Markdown)
 - Planning docs in `docs/TODO/` (Markdown)
 
-The project is a learning exercise, so the documentation system should balance sophistication with practicality.
+The project is a learning exercise, so the documentation system should balance
+sophistication with practicality.
 
 ## Considered Options
 
 ### Option 1: Sphinx + MyST + sphinx-autodoc
+
 Python's mature documentation ecosystem with Markdown support.
 
 **Stack:**
+
 - Sphinx for site generation
 - MyST-Parser for Markdown support (instead of reStructuredText)
 - sphinx-autodoc for Python API docs
 - TypeDoc integration for TypeScript (separate or embedded)
 
 **Pros:**
+
 - Mature, battle-tested
 - Excellent Python integration (autodoc)
 - MyST allows Markdown while keeping Sphinx power
@@ -39,20 +45,24 @@ Python's mature documentation ecosystem with Markdown support.
 - Large ecosystem of extensions
 
 **Cons:**
+
 - Learning curve for Sphinx configuration
 - TypeScript integration is awkward (needs separate tooling)
 - Can feel heavyweight for smaller projects
 
 ### Option 2: MkDocs + mkdocstrings
+
 Simpler Python documentation with native Markdown.
 
 **Stack:**
+
 - MkDocs for site generation
 - Material for MkDocs theme
 - mkdocstrings for Python API docs
 - TypeDoc for TypeScript (separate)
 
 **Pros:**
+
 - Simple, Markdown-native
 - Beautiful Material theme out of the box
 - mkdocstrings handles Python docstrings well
@@ -60,66 +70,79 @@ Simpler Python documentation with native Markdown.
 - Good search built-in
 
 **Cons:**
+
 - Less powerful than Sphinx for complex docs
 - No requirements traceability extensions
 - Cross-referencing less sophisticated
 
 ### Option 3: Sphinx + sphinx-needs (Full Traceability)
+
 Sphinx with formal requirements management.
 
 **Stack:**
+
 - Sphinx + MyST
 - sphinx-needs for requirements/specs
 - sphinx-autodoc for Python
 - Traceability matrices
 
 **Pros:**
+
 - Formal requirements traceability
 - Links requirements → implementation → tests
 - Professional documentation practice
 - Learning opportunity for requirements engineering
 
 **Cons:**
+
 - Significant overhead for a personal project
 - sphinx-needs has steep learning curve
 - Over-engineering risk
 - Maintenance burden
 
 ### Option 4: Docusaurus
+
 React-based documentation site.
 
 **Stack:**
+
 - Docusaurus for site generation
 - MDX for enhanced Markdown
 - TypeDoc plugin for TypeScript
 
 **Pros:**
+
 - Modern, React-based
 - Great TypeScript integration
 - Beautiful default theme
 - Versioning built-in
 
 **Cons:**
+
 - JavaScript/React ecosystem (not Python-native)
 - Python API docs need separate solution
 - Overkill for this project size
 - Diverges from Python-centric stack
 
 ### Option 5: Minimal (Markdown + GitHub)
+
 Keep documentation as Markdown, rely on GitHub rendering.
 
 **Stack:**
+
 - Markdown files in `docs/`
 - GitHub's built-in rendering
 - Optional: GitHub Pages for hosting
 
 **Pros:**
+
 - Zero additional tooling
 - Works immediately
 - No build step
 - Lowest maintenance
 
 **Cons:**
+
 - No API doc generation
 - No search
 - Limited cross-referencing
@@ -130,6 +153,7 @@ Keep documentation as Markdown, rely on GitHub rendering.
 Use **Option 2: MkDocs + mkdocstrings** with the Material theme.
 
 This provides the right balance of:
+
 - Simplicity for a personal project
 - Native Markdown support (matches existing docs)
 - Good Python API documentation
@@ -214,18 +238,18 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started:
-    - Installation: getting-started/installation.md
-    - Configuration: getting-started/configuration.md
-    - Quick Start: getting-started/quickstart.md
+      - Installation: getting-started/installation.md
+      - Configuration: getting-started/configuration.md
+      - Quick Start: getting-started/quickstart.md
   - Architecture:
-    - Overview: architecture/overview.md
-    - Signal Abstraction: architecture/signal-abstraction.md
-    - Adapters: architecture/adapters.md
+      - Overview: architecture/overview.md
+      - Signal Abstraction: architecture/signal-abstraction.md
+      - Adapters: architecture/adapters.md
   - API Reference:
-    - Backend: api/backend/
+      - Backend: api/backend/
   - Development:
-    - Testing: development/testing.md
-    - Contributing: development/contributing.md
+      - Testing: development/testing.md
+      - Contributing: development/contributing.md
   - ADRs: adr/
   - Lessons Learned: ll/
 ```
@@ -233,34 +257,36 @@ nav:
 ### API Documentation Approach
 
 **Python (mkdocstrings):**
+
 ```markdown
 <!-- docs/api/backend/signal.md -->
+
 # Signal Model
 
-::: lumehaven.models.Signal
-    options:
-      show_root_heading: true
-      members_order: source
+::: lumehaven.models.Signal options: show_root_heading: true members_order: source
 ```
 
 **TypeScript (optional, deferred):**
+
 - Use TypeDoc to generate Markdown
 - Include in MkDocs site or link externally
 - Only add when frontend API surface stabilizes
 
 ### ADR Integration
 
-ADRs remain as Markdown in `docs/adr/` and are automatically included. Add an index page:
+ADRs remain as Markdown in `docs/adr/` and are automatically included. Add an index
+page:
 
 ```markdown
 <!-- docs/adr/index.md -->
+
 # Architecture Decision Records
 
-| ADR | Title | Status | Date |
-|-----|-------|--------|------|
+| ADR                                | Title            | Status   | Date       |
+| ---------------------------------- | ---------------- | -------- | ---------- |
 | [001](ADR-001-state-management.md) | State Management | Accepted | 2025-12-xx |
-| [002](ADR-002-backend-runtime.md) | Backend Runtime | Accepted | 2025-12-xx |
-| ... | ... | ... | ... |
+| [002](ADR-002-backend-runtime.md)  | Backend Runtime  | Accepted | 2025-12-xx |
+| ...                                | ...              | ...      | ...        |
 
 ## What is an ADR?
 
@@ -270,10 +296,12 @@ An Architecture Decision Record captures an important architectural decision...
 ### Deferred: Requirements Traceability
 
 If formal requirements traceability becomes valuable later:
+
 1. Migrate to Sphinx + sphinx-needs
 2. Or add a lightweight traceability table in Markdown
 
-For now, the linkage between ADRs → implementation → tests is informal but documented in ADRs themselves.
+For now, the linkage between ADRs → implementation → tests is informal but documented in
+ADRs themselves.
 
 ## Decision Drivers
 
@@ -286,22 +314,23 @@ For now, the linkage between ADRs → implementation → tests is informal but d
 
 ## Decision Matrix
 
-| Criterion | Option 1 (Sphinx) | Option 2 (MkDocs) | Option 3 (sphinx-needs) | Option 4 (Docusaurus) | Option 5 (Minimal) |
-|-----------|-------------------|-------------------|-------------------------|----------------------|-------------------|
-| Simplicity | 3 | 5 | 2 | 3 | 5 |
-| Markdown support | 4 | 5 | 4 | 5 | 5 |
-| Python API docs | 5 | 4 | 5 | 2 | 1 |
-| TypeScript docs | 2 | 2 | 2 | 5 | 1 |
-| Visual quality | 4 | 5 | 4 | 5 | 2 |
-| Maintenance | 3 | 5 | 2 | 3 | 5 |
-| Extensibility | 5 | 4 | 5 | 4 | 2 |
-| **Total** | **26** | **30** | **24** | **27** | **21** |
+| Criterion        | Option 1 (Sphinx) | Option 2 (MkDocs) | Option 3 (sphinx-needs) | Option 4 (Docusaurus) | Option 5 (Minimal) |
+| ---------------- | ----------------- | ----------------- | ----------------------- | --------------------- | ------------------ |
+| Simplicity       | 3                 | 5                 | 2                       | 3                     | 5                  |
+| Markdown support | 4                 | 5                 | 4                       | 5                     | 5                  |
+| Python API docs  | 5                 | 4                 | 5                       | 2                     | 1                  |
+| TypeScript docs  | 2                 | 2                 | 2                       | 5                     | 1                  |
+| Visual quality   | 4                 | 5                 | 4                       | 5                     | 2                  |
+| Maintenance      | 3                 | 5                 | 2                       | 3                     | 5                  |
+| Extensibility    | 5                 | 4                 | 5                       | 4                     | 2                  |
+| **Total**        | **26**            | **30**            | **24**                  | **27**                | **21**             |
 
-*Scale: 1 (poor) to 5 (excellent)*
+_Scale: 1 (poor) to 5 (excellent)_
 
 ## Implementation Plan
 
 ### Phase 1: Basic Setup
+
 - [ ] Install MkDocs + Material + mkdocstrings
 - [ ] Create `mkdocs.yml` configuration
 - [ ] Add `docs/index.md` home page
@@ -309,24 +338,28 @@ For now, the linkage between ADRs → implementation → tests is informal but d
 - [ ] Verify existing docs render correctly
 
 ### Phase 2: Structure
+
 - [ ] Create navigation structure
 - [ ] Add getting-started guides
 - [ ] Create architecture overview
 - [ ] Link ADRs to architecture docs
 
 ### Phase 3: API Documentation
+
 - [ ] Configure mkdocstrings for Python
 - [ ] Document Signal model
 - [ ] Document adapter interfaces
 - [ ] Add code examples
 
 ### Phase 4: Deployment (Optional)
+
 - [ ] GitHub Pages via GitHub Actions
 - [ ] Or local-only with `mkdocs serve`
 
 ## Tooling Configuration
 
 ### Dependencies (pyproject.toml)
+
 ```toml
 [project.optional-dependencies]
 docs = [
@@ -337,6 +370,7 @@ docs = [
 ```
 
 ### GitHub Actions (optional)
+
 ```yaml
 # .github/workflows/docs.yml
 name: Deploy Docs
@@ -360,6 +394,7 @@ jobs:
 ## Consequences
 
 ### Positive
+
 - Simple, Markdown-native workflow
 - Beautiful documentation with minimal effort
 - Good Python API documentation
@@ -367,16 +402,18 @@ jobs:
 - Fast iteration with `mkdocs serve`
 
 ### Negative
+
 - TypeScript API docs need separate handling
 - No built-in requirements traceability
 - Less powerful than Sphinx for complex cross-referencing
 
 ### Risks & Mitigations
-| Risk | Mitigation |
-|------|------------|
-| Need more power later | Sphinx migration is straightforward from Markdown |
-| TypeScript docs needed | Use TypeDoc separately, link from MkDocs |
-| Requirements traceability | Add lightweight table in Markdown if needed |
+
+| Risk                      | Mitigation                                        |
+| ------------------------- | ------------------------------------------------- |
+| Need more power later     | Sphinx migration is straightforward from Markdown |
+| TypeScript docs needed    | Use TypeDoc separately, link from MkDocs          |
+| Requirements traceability | Add lightweight table in Markdown if needed       |
 
 ## References
 
@@ -387,4 +424,4 @@ jobs:
 - Sphinx: https://www.sphinx-doc.org/ (alternative)
 - sphinx-needs: https://sphinx-needs.readthedocs.io/ (deferred option)
 
-*January 5, 2026*
+_January 5, 2026_

@@ -2,7 +2,7 @@
 
 import pytest
 
-from lumehaven.core.signal import Signal, is_undefined, UNDEFINED_VALUE, NULL_VALUE
+from lumehaven.core.signal import NULL_VALUE, UNDEFINED_VALUE, Signal, is_undefined
 
 
 class TestSignal:

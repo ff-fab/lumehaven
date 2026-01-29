@@ -68,6 +68,9 @@ repos:
           - fastapi>=0.109.0
           - httpx>=0.26.0
           - sse-starlette>=2.0.0
+          - uvicorn>=0.27.0
+          - ftfy>=6.1.0
+          - types-PyYAML>=6.0.0
 
 # Configuration options
 default_language_version:

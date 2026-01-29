@@ -7,8 +7,10 @@ Specific knowledge about OpenHAB's REST API discovered during PoC development.
 **Endpoint:** `{base}/rest/events/states`
 
 OpenHAB uses a two-step subscription:
+
 1. First SSE message contains a `connection_id`
-2. POST to `{base}/rest/events/states/{connection_id}` with JSON array of item names to subscribe
+2. POST to `{base}/rest/events/states/{connection_id}` with JSON array of item names to
+   subscribe
 
 ```python
 # From old/backend/home-observer/openhab.py
@@ -22,21 +24,26 @@ requests.post(f"{event_url}/{connection_id}", json=tagged_topics)
 OpenHAB returns states in various formats that need parsing:
 
 ### QuantityTypes (e.g., `Number:Temperature`)
+
 - State includes unit: `"23.5 °C"`
 - Need to split value from unit
 - Default units depend on measurement system (SI/US)
 
 ### Pattern-Based Formatting
+
 Items can have `stateDescription.pattern` like `"%.1f °C"` or `"%d %%"`
+
 - `%%` in pattern = literal `%` character
 - Format specifiers: `%s`, `%d`, `%.Nf`
 
 ### Special Values
+
 - `"UNDEF"` - Item has no value yet
 - `"NULL"` - Item explicitly set to null
 - These should be passed through, not parsed
 
 ### Type-Specific Behaviors
+
 ```python
 # DateTime - no units, ignore patterns
 if item_type[0] == "DateTime":
@@ -50,6 +57,7 @@ if item_type[0] in ("Rollershutter", "Dimmer"):
 ## Transformed States
 
 If an item has a transformation applied, OpenHAB returns `transformedState`:
+
 - Use this directly, don't try to parse units
 - Set `event_state_contains_unit=False`
 
@@ -58,6 +66,7 @@ If an item has a transformation applied, OpenHAB returns `transformedState`:
 **Endpoint:** `{base}/rest/`
 
 Root endpoint returns system info including `measurementSystem`:
+
 ```python
 response = requests.get(self.rest_url)
 resp_json = response.json()
@@ -67,11 +76,12 @@ return resp_json.get("measurementSystem", "SI")  # Default to SI
 ## Event Stream Payload
 
 SSE events contain JSON with:
+
 ```json
 {
   "ItemName": {
     "state": "23.5 °C",
-    "displayState": "24°"  // Optional, when transformation exists
+    "displayState": "24°" // Optional, when transformation exists
   }
 }
 ```
@@ -81,8 +91,9 @@ SSE events contain JSON with:
 
 ## Encoding Issues
 
-OpenHAB sometimes returns incorrectly encoded characters.
-PoC used `ftfy` library to fix:
+OpenHAB sometimes returns incorrectly encoded characters. PoC used `ftfy` library to
+fix:
+
 ```python
 from ftfy import fix_encoding
 value = fix_encoding(payload["state"])
@@ -93,6 +104,7 @@ Consider: May be avoidable with proper request headers (`Accept-Charset`).
 ## Useful Query Parameters
 
 For item listing:
+
 - `tags=TagName` - Filter by tag
 - `recursive=false` - Don't include group members
 - `fields=name,state,type,stateDescription,transformedState` - Limit response fields
@@ -106,6 +118,7 @@ Note: Comma must be URL-encoded as `%2C` in fields parameter.
 ## Rate Limiting Considerations
 
 The PoC implements periodic full refresh:
+
 ```python
 SMART_HOME_REFRESH_CYCLE: int = 120  # seconds
 ```

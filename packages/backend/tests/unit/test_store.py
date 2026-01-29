@@ -1,7 +1,8 @@
 """Unit tests for the SignalStore."""
 
-import pytest
 import asyncio
+
+import pytest
 
 from lumehaven.core.signal import Signal
 from lumehaven.state.store import SignalStore, reset_signal_store

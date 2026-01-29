@@ -1,8 +1,11 @@
 # lumehaven
 
-A smart home dashboard supporting common smart home frameworks. Currently supporting OpenHAB, with HomeAssistant support planned.
+A smart home dashboard supporting common smart home frameworks. Currently supporting
+OpenHAB, with HomeAssistant support planned.
 
-**Architecture:** Backend-for-Frontend (BFF) + Single Page Application (SPA) pattern. React frontend talks only to our backend, never directly to smart home APIs. Backend normalizes data (units, formatting) so the frontend stays lightweight.
+**Architecture:** Backend-for-Frontend (BFF) + Single Page Application (SPA) pattern.
+React frontend talks only to our backend, never directly to smart home APIs. Backend
+normalizes data (units, formatting) so the frontend stays lightweight.
 
 ## Quick Start
 
@@ -38,32 +41,34 @@ VS Code will notify you when ports are ready.
 
 This is a monorepo with three main components:
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Backend** | Python 3.14, FastAPI, uvicorn | Smart home BFF, data normalization, REST + SSE API |
-| **Frontend** | React 18+, TypeScript, Vite, bun | Dashboard UI for viewing/controlling devices |
-| **Documentation** | MkDocs | Project docs, architecture decisions, lessons learned |
+| Component         | Technology                       | Purpose                                               |
+| ----------------- | -------------------------------- | ----------------------------------------------------- |
+| **Backend**       | Python 3.14, FastAPI, uvicorn    | Smart home BFF, data normalization, REST + SSE API    |
+| **Frontend**      | React 18+, TypeScript, Vite, bun | Dashboard UI for viewing/controlling devices          |
+| **Documentation** | MkDocs                           | Project docs, architecture decisions, lessons learned |
 
 ## Development
 
-**Want to contribute?** See [CONTRIBUTE.md](CONTRIBUTE.md) for setup instructions using DevContainer.
+**Want to contribute?** See [CONTRIBUTE.md](CONTRIBUTE.md) for setup instructions using
+DevContainer.
 
 ## Architecture & Design Decisions
 
 All major architectural decisions are documented in [docs/adr/](docs/adr/):
 
-| ADR | Decision |
-|-----|----------|
-| [ADR-001](docs/adr/ADR-001-state-management.md) | In-memory state storage (abstracted interface for future Redis support) |
-| [ADR-002](docs/adr/ADR-002-backend-runtime.md) | Python 3.14 + FastAPI + uv package manager |
-| [ADR-004](docs/adr/ADR-004-frontend-stack.md) | React 18+ + TypeScript + Vite + bun |
-| [ADR-005](docs/adr/ADR-005-signal-abstraction.md) | Unified Signal model (id, value, unit, label) |
-| [ADR-006](docs/adr/ADR-006-testing-strategy.md) | pytest (unit) + Robot Framework (integration) |
-| [ADR-007](docs/adr/ADR-007-documentation-system.md) | MkDocs + Material theme |
+| ADR                                                 | Decision                                                                |
+| --------------------------------------------------- | ----------------------------------------------------------------------- |
+| [ADR-001](docs/adr/ADR-001-state-management.md)     | In-memory state storage (abstracted interface for future Redis support) |
+| [ADR-002](docs/adr/ADR-002-backend-runtime.md)      | Python 3.14 + FastAPI + uv package manager                              |
+| [ADR-004](docs/adr/ADR-004-frontend-stack.md)       | React 18+ + TypeScript + Vite + bun                                     |
+| [ADR-005](docs/adr/ADR-005-signal-abstraction.md)   | Unified Signal model (id, value, unit, label)                           |
+| [ADR-006](docs/adr/ADR-006-testing-strategy.md)     | pytest (unit) + Robot Framework (integration)                           |
+| [ADR-007](docs/adr/ADR-007-documentation-system.md) | MkDocs + Material theme                                                 |
 
 ## Key Concepts
 
 ### Signal Model
+
 The unified data model representing smart home signals:
 
 ```python
@@ -78,17 +83,20 @@ class Signal:
 **Principle:** Backend normalizes all data. Frontend just displays values.
 
 ### SSE Event Flow
+
 ```
 OpenHAB → [Server-Sent Events] → Backend (normalize) → [SSE] → Frontend (render)
 ```
 
-Backend extracts units from OpenHAB metadata, formats values consistently, fixes encoding issues. Frontend receives ready-to-display data.
+Backend extracts units from OpenHAB metadata, formats values consistently, fixes
+encoding issues. Frontend receives ready-to-display data.
 
 ## Common Commands
 
 See [CONTRIBUTE.md](CONTRIBUTE.md) for detailed development workflows.
 
 **Quick reference:**
+
 ```bash
 # Backend
 cd packages/backend && uv run pytest                    # Tests
@@ -138,19 +146,23 @@ lumehaven/
 ## Code Quality
 
 ### Formatting
+
 - **Python**: Ruff (88-char line length, double quotes)
 - **Frontend**: Prettier (88-char line length, single quotes)
 - **All files**: LF line endings (enforced via `.gitattributes`)
 
 ### Linting
+
 - **Python**: Ruff (comprehensive rule set)
 - **TypeScript**: ESLint
 
 ### Type Checking
+
 - **Python**: mypy (strict mode)
 - **TypeScript**: TypeScript compiler (strict mode)
 
-All tools are **auto-configured in DevContainer** via `.devcontainer/devcontainer.json`. Format on save is enabled by default.
+All tools are **auto-configured in DevContainer** via `.devcontainer/devcontainer.json`.
+Format on save is enabled by default.
 
 ## Versioning
 
@@ -169,12 +181,14 @@ See [VERSIONING.md](VERSIONING.md) for details.
 ## Testing
 
 ### Backend Unit Tests
+
 ```bash
 cd packages/backend
 uv run pytest tests/unit/ -v
 ```
 
 ### Backend Integration Tests (Robot Framework)
+
 ```bash
 cd packages/backend
 # Requires OpenHAB instance running
@@ -182,6 +196,7 @@ uv run robot tests/integration/api_tests.robot
 ```
 
 ### Frontend Tests
+
 ```bash
 cd packages/frontend
 bun test
@@ -198,7 +213,8 @@ See [docs/planning/](docs/planning/) for roadmap and active work.
 
 ## Documentation
 
-Full development guide: [docs/DEVELOPMENT-ENVIRONMENT.md](docs/DEVELOPMENT-ENVIRONMENT.md)
+Full development guide:
+[docs/DEVELOPMENT-ENVIRONMENT.md](docs/DEVELOPMENT-ENVIRONMENT.md)
 
 DevContainer guide: [.devcontainer/README.md](.devcontainer/README.md)
 

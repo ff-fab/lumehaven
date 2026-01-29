@@ -20,14 +20,5 @@
         "parser": "json"
       }
     }
-  ],
-  "ignore": [
-    "node_modules",
-    "dist",
-    "build",
-    "**/*.py",
-    "**/__pycache__",
-    ".venv",
-    "**/*.pyc"
   ]
 }
