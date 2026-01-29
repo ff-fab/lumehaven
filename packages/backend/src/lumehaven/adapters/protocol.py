@@ -64,7 +64,8 @@ class SmartHomeAdapter(Protocol):
         """The type of smart home system this adapter connects to.
 
         Used for UI grouping, icons, and type-specific behavior.
-        Should be lowercase and match SmartHomeType enum values.
+        Should be lowercase and must match the ``type`` discriminator
+        values defined in ``AdapterConfig``.
 
         Examples: "openhab", "homeassistant"
         """

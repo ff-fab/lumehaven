@@ -176,7 +176,8 @@ class OpenHABAdapter:
             for item in items_data:
                 signal, metadata = self._extract_signal(item)
                 signals[signal.id] = signal
-                self._item_metadata[signal.id] = metadata
+                # Key metadata by raw item name (not prefixed) for SSE event lookup
+                self._item_metadata[item["name"]] = metadata
 
             logger.info(f"Loaded {len(signals)} signals from OpenHAB")
             return signals
@@ -212,7 +213,8 @@ class OpenHABAdapter:
             item = response.json()
 
             signal, metadata = self._extract_signal(item)
-            self._item_metadata[signal.id] = metadata
+            # Key metadata by raw item name (not prefixed) for SSE event lookup
+            self._item_metadata[item["name"]] = metadata
             return signal
 
         except httpx.HTTPError as e:

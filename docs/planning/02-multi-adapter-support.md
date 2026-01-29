@@ -157,7 +157,6 @@ Small changes that don't break anything:
 
    - If OpenHAB goes down, should HA signals still flow?
    - Independent tasks with isolated error handling?
-   - Independent tasks with isolated error handling?
 
 2. **Signal deduplication across adapters?**
    - Same physical sensor exposed in both systems?

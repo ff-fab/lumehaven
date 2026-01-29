@@ -7,14 +7,14 @@ Configuration sources (in priority order):
 YAML files support environment variable interpolation: ${VAR_NAME}
 """
 
+from __future__ import annotations
+
 import os
 import re
+from collections.abc import Callable
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Literal
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict

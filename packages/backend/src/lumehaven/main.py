@@ -104,8 +104,18 @@ class AdapterManager:
     _retry_tasks: dict[str, asyncio.Task[None]] = field(default_factory=dict)
 
     def add(self, adapter: SmartHomeAdapter) -> None:
-        """Register an adapter for management."""
-        self.states[adapter.name] = AdapterState(adapter=adapter)
+        """Register an adapter for management.
+
+        Raises:
+            ValueError: If an adapter with the same name is already registered.
+        """
+        name = adapter.name
+        if name in self.states:
+            raise ValueError(
+                f"Duplicate adapter name '{name}' detected. "
+                "Adapter names must be unique. Check your adapter configuration."
+            )
+        self.states[name] = AdapterState(adapter=adapter)
 
     @property
     def adapters(self) -> list[SmartHomeAdapter]:
@@ -166,6 +176,15 @@ class AdapterManager:
             try:
                 async for signal in adapter.subscribe_events():
                     await store.publish(signal)
+
+                # Iterator completed normally (server closed stream)
+                # Treat as transient failure and reconnect with backoff
+                logger.debug(
+                    f"Adapter '{name}' event stream ended normally, reconnecting..."
+                )
+                state.connected = False
+                state.error = "Event stream closed by server"
+
             except asyncio.CancelledError:
                 raise
             except Exception as e:
@@ -173,26 +192,24 @@ class AdapterManager:
                 state.connected = False
                 state.error = str(e)
 
-                # Wait before reconnecting
-                await asyncio.sleep(state.retry_delay)
-                state.retry_delay = min(
-                    state.retry_delay * RETRY_BACKOFF_FACTOR,
-                    MAX_RETRY_DELAY,
-                )
+            # Wait before reconnecting (applies to both normal end and errors)
+            await asyncio.sleep(state.retry_delay)
+            state.retry_delay = min(
+                state.retry_delay * RETRY_BACKOFF_FACTOR,
+                MAX_RETRY_DELAY,
+            )
 
-                # Try to reconnect
-                try:
-                    signals = await adapter.get_signals()
-                    await store.set_many(signals)
-                    state.connected = True
-                    state.error = None
-                    state.retry_delay = INITIAL_RETRY_DELAY
-                    logger.info(f"Adapter '{name}' reconnected")
-                except Exception as reconnect_error:
-                    logger.error(
-                        f"Adapter '{name}' reconnect failed: {reconnect_error}"
-                    )
-                    # Loop will continue and try again
+            # Try to reconnect
+            try:
+                signals = await adapter.get_signals()
+                await store.set_many(signals)
+                state.connected = True
+                state.error = None
+                state.retry_delay = INITIAL_RETRY_DELAY
+                logger.info(f"Adapter '{name}' reconnected")
+            except Exception as reconnect_error:
+                logger.error(f"Adapter '{name}' reconnect failed: {reconnect_error}")
+                # Loop will continue and try again
 
     def _schedule_retry(self, name: str) -> None:
         """Schedule a retry for a failed adapter."""
