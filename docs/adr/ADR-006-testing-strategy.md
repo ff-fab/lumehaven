@@ -533,6 +533,11 @@ jobs:
 | Two frameworks diverge    | Clear separation: pytest=units, RF=integration+           |
 | Mock drift from real APIs | Use fixtures from real API responses, update periodically |
 
+## Related Documents
+
+- **[Test Strategy](../testing/00-index.md)** — Detailed implementation guide for this
+  ADR, covering test design techniques, coverage targets, and tooling configuration.
+
 ## References
 
 - Robot Framework: https://robotframework.org/
