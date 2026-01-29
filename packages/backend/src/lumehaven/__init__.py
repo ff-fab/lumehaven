@@ -3,7 +3,8 @@
 __version__: str
 
 try:
-    # Try to get version from generated version file (updated by setuptools_scm at build time)
+    # Try to get version from generated version file
+    # (updated by setuptools_scm at build time)
     from lumehaven._version import __version__
 except ImportError:
     try:

@@ -7,6 +7,15 @@ echo "🏠 Setting up lumehaven development environment..."
 # Backend setup
 echo "📦 Setting up Python backend..."
 cd /workspace/packages/backend
+
+# Check if venv exists but has broken symlinks (stale uv cache)
+if [ -d ".venv" ]; then
+    if ! uv pip check &>/dev/null; then
+        echo "⚠️  Detected stale venv (broken symlinks), recreating..."
+        rm -rf .venv
+    fi
+fi
+
 uv sync --all-extras
 echo "✅ Backend dependencies installed"
 
