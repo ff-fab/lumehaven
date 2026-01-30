@@ -5,12 +5,25 @@ applyTo: 'packages/backend/tests/**/*.py, **/*.robot'
 
 # Testing Instructions
 
+> **Full Strategy:** See [docs/testing/](../../docs/testing/00-index.md) for
+> comprehensive test design techniques, coverage targets, and tooling configuration.
+
 ## Test Strategy (ADR-006)
 
 | Layer       | Tool                           | Location             |
 | ----------- | ------------------------------ | -------------------- |
 | Unit        | pytest + pytest-asyncio        | `tests/unit/`        |
 | Integration | Robot Framework + RESTinstance | `tests/integration/` |
+
+## Coverage Requirements
+
+| Risk Level | Line | Branch | Components         |
+| ---------- | ---- | ------ | ------------------ |
+| Critical   | ≥90% | ≥85%   | adapters, manager  |
+| High       | ≥85% | ≥80%   | config, store      |
+| Medium/Low | ≥80% | ≥70%   | API routes, models |
+
+Run with coverage: `uv run pytest --cov=lumehaven --cov-branch`
 
 ## Test Structure
 
@@ -32,12 +45,12 @@ def test_parse_value_extracts_unit():
 
 ### Naming Convention
 
-Name tests: `test_<method>_<scenario>_<expected>`
+Name tests descriptively: `test_<unit>_<behavior>_<condition>`
 
 ```python
-def test_parse_value_with_percentage_returns_tuple(): ...
-def test_get_signal_with_invalid_id_raises_not_found(): ...
-def test_adapter_connect_when_offline_retries(): ...
+def test_parse_value_extracts_unit_from_quantity(): ...
+def test_signal_store_raises_not_found_for_invalid_id(): ...
+def test_adapter_manager_schedules_retry_when_connection_fails(): ...
 ```
 
 ### Assertions
@@ -59,7 +72,7 @@ Always test critical edge cases:
 
 - Empty inputs and None values
 - Invalid data types
-- Boundary conditions
+- Boundary conditions (use BVA)
 - Error conditions and exceptions
 
 ## pytest Patterns
@@ -70,16 +83,21 @@ Always test critical edge cases:
 def sample_signal():
     return Signal(id="temp_1", value="21.5", unit="°C")
 
-# Async tests need the marker
-@pytest.mark.asyncio
-async def test_async_operation():
-    result = await some_async_function()
-    assert result is not None
 
-# Use parametrize for multiple cases
+# Async tests auto-detected (asyncio_mode = "auto")
+# No @pytest.mark.asyncio decorator needed!
+async def test_store_publishes_to_subscribers():
+    store = SignalStore()
+    result = await store.get("test:id")
+    assert result is None
+
+
+# Use parametrize for equivalence classes
 @pytest.mark.parametrize("input,expected", [
-    ("21.5 °C", ("21.5", "°C")),
-    ("100 %", ("100", "%")),
+    ("21.5 °C", ("21.5", "°C")),   # Quantity type
+    ("100 %", ("100", "%")),       # Percentage
+    ("ON", ("ON", None)),          # Switch state
+    ("UNDEF", (None, None)),       # Special value
 ])
 def test_parse_value(input, expected):
     assert parse_value(input) == expected
@@ -100,6 +118,42 @@ Get All Signals Returns List
 
 ## Test Organization
 
-- One test file per module: `test_signal.py` tests `signal.py`
-- Fixtures in `conftest.py`
-- Integration tests focus on API contracts, not implementation
+```
+tests/
+├── conftest.py              # Shared fixtures (signal_factory)
+├── fixtures/                # Test data modules (import, don't conftest)
+│   ├── openhab_responses.py
+│   └── signals.py
+├── unit/
+│   ├── conftest.py          # Unit-specific (mock_adapter)
+│   └── adapters/            # Mirror source structure
+│       └── test_manager.py
+└── integration/
+    └── conftest.py          # Integration-specific (server startup)
+```
+
+- **Mirror source structure:** `test_manager.py` tests `manager.py`
+- **Hierarchical conftest.py:** Scope fixtures to where they're needed
+- **fixtures/ for data:** Import test data, don't put in conftest
+
+## Sociable Unit Tests
+
+Mock external I/O, use real lightweight dependencies:
+
+```python
+# ✅ Good: Real store, mocked adapter
+async def test_manager_loads_signals(mock_adapter, signal_store):
+    manager = AdapterManager()
+    manager.add(mock_adapter)
+    await manager.start_all()
+
+    signals = await signal_store.get_all()
+    assert len(signals) > 0
+
+
+# ❌ Bad: Over-mocked, tests nothing
+def test_store_set(mock_store):
+    mock_store.set.return_value = None
+    mock_store.set(signal)
+    mock_store.set.assert_called_once()  # Proves nothing
+```

@@ -115,7 +115,7 @@
         "tamasfe.even-better-toml",
         "robocorp.robotframework-lsp",
         "dbaeumer.vscode-eslt",
-        "prettier.prettier-vscode",
+        "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",
         "GitHub.copilot",
         "GitHub.copilot-chat",
