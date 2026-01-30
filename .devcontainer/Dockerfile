@@ -7,7 +7,9 @@ FROM mcr.microsoft.com/devcontainers/python:3.14
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install additional system dependencies FIRST (ensures curl/bash are available)
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+# Remove Yarn apt source - we use bun, and Yarn's GPG key causes apt-get failures
+RUN rm -f /etc/apt/sources.list.d/yarn.list \
+    && apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
         # Required for bun installation
         curl \

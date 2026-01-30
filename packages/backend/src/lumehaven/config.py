@@ -11,10 +11,9 @@ from __future__ import annotations
 
 import os
 import re
-from collections.abc import Callable
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -65,32 +64,6 @@ AdapterConfig = Annotated[
     OpenHABAdapterConfig | HomeAssistantAdapterConfig,
     Field(discriminator="type"),
 ]
-
-# Registry mapping adapter type to factory function.
-# Factory functions are registered by adapter modules to avoid circular imports.
-# Key: type string (e.g., "openhab"), Value: callable that creates an adapter.
-# Using Any for flexibility - each factory takes its specific config subtype.
-ADAPTER_FACTORIES: dict[str, Callable[..., Any]] = {}
-
-
-def register_adapter_factory(
-    adapter_type: str,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """Decorator to register an adapter factory function.
-
-    Usage in adapter module:
-        @register_adapter_factory("openhab")
-        def create_openhab_adapter(config: OpenHABAdapterConfig) -> OpenHABAdapter:
-            return OpenHABAdapter(...)
-    """
-
-    def decorator(
-        factory: Callable[..., Any],
-    ) -> Callable[..., Any]:
-        ADAPTER_FACTORIES[adapter_type] = factory
-        return factory
-
-    return decorator
 
 
 # -----------------------------------------------------------------------------
