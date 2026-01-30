@@ -7,8 +7,8 @@ This package provides:
 
 To add a new adapter:
 1. Create the adapter module (e.g., adapters/homeassistant/)
-2. Add @register_adapter_factory decorator to its factory function
-3. Import the module below to trigger registration
+2. Implement a _register() function that adds your factory to ADAPTER_FACTORIES
+3. Import the module and call _register() at the bottom of this file
 """
 
 from __future__ import annotations
@@ -29,32 +29,12 @@ if TYPE_CHECKING:
 ADAPTER_FACTORIES: dict[str, Callable[..., Any]] = {}
 
 
-def register_adapter_factory(
-    adapter_type: str,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """Decorator to register an adapter factory function.
-
-    Usage in adapter module:
-        @register_adapter_factory("openhab")
-        def create_openhab_adapter(config: OpenHABAdapterConfig) -> OpenHABAdapter:
-            return OpenHABAdapter(...)
-    """
-
-    def decorator(
-        factory: Callable[..., Any],
-    ) -> Callable[..., Any]:
-        ADAPTER_FACTORIES[adapter_type] = factory
-        return factory
-
-    return decorator
-
-
 def create_adapter(config: AdapterConfig) -> SmartHomeAdapter:
     """Create an adapter instance from configuration.
 
     Uses the ADAPTER_FACTORIES registry to find the appropriate factory
     function based on the config's type field. Adapters register themselves
-    via the @register_adapter_factory decorator when their module is imported.
+    by implementing a _register() function that's called during module init.
 
     Args:
         config: Adapter configuration (discriminated by type field).
@@ -78,8 +58,8 @@ def create_adapter(config: AdapterConfig) -> SmartHomeAdapter:
     return adapter
 
 
-# Import adapter modules to trigger factory registration.
-# Each module uses @register_adapter_factory to self-register.
+# Import adapter modules and trigger factory registration.
+# Each module implements a _register() function that adds its factory to the registry.
 # NOTE: Must be after registry definition to avoid circular import.
 from lumehaven.adapters import openhab as _openhab  # noqa: F401, E402
 
@@ -94,5 +74,4 @@ __all__ = [
     "ADAPTER_FACTORIES",
     "SmartHomeAdapter",
     "create_adapter",
-    "register_adapter_factory",
 ]
