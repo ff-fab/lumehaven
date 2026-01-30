@@ -48,7 +48,7 @@ The agent should:
   documents.
 - Regularly review and refine the plan based on progress and any new information.
 
-The agend shall not:
+The agent shall not:
 
 - Make changes to the codebase outside of docs/planning or docs/adr without explicit
   user instruction.
