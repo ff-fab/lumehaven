@@ -34,7 +34,8 @@ lumehaven/
 ├── docs/
 │   ├── adr/                  # Architecture Decision Records (authoritative)
 │   ├── ll/                   # Lessons learned from PoC
-│   └── planning/             # Roadmap, decision tracker
+│   ├── planning/             # Roadmap, decision tracker
+│   └── TODO/                 # Technical debt, deferred items
 └── old/                      # PoC reference (do not modify)
 ```
 
