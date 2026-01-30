@@ -20,7 +20,7 @@ All major decisions are documented in `docs/adr/`. **Follow these decisions:**
 | 004 | Frontend Stack     | React + Vite + TypeScript + bun               |
 | 005 | Signal Abstraction | Minimal: `id`, `value`, `unit`, `label`       |
 | 006 | Testing            | pytest (unit) + Robot Framework (integration) |
-| 007 | Documentation      | MkDocs + Material + mkdocstrings              |
+| 007 | Documentation      | Zensical + mkdocstrings (modern, performant)  |
 
 Create new ADRs for any major changes or decisions.
 
