@@ -11,8 +11,12 @@
 | **Integration Tests** | Robot Framework + RESTinstance            | Human-readable API scenarios  |
 | **E2E Tests**         | Robot Framework + Browser Library         | Browser automation (deferred) |
 | **Coverage**          | pytest-cov (coverage.py)                  | Line and branch coverage      |
-| **Complexity**        | radon, xenon, flake8-cognitive-complexity | Code complexity metrics       |
-| **Quality Platform**  | SonarQube                                 | Unified dashboard (planned)   |
+| **Complexity**        | radon, xenon, flake8-cognitive-complexity | Code complexity metrics[^1]   |
+
+[^1]:
+    Ruff supports cyclomatic complexity (C901) but not cognitive complexity.
+    flake8-cognitive-complexity is required for cognitive complexity checks. | **Quality
+    Platform** | SonarQube | Unified dashboard (planned) |
 
 ---
 
@@ -73,7 +77,7 @@ exclude_lines = [
     "raise NotImplementedError",
     "@abstractmethod",
     "def __repr__",
-    "if __name__ == .__main__.:",
+    "if __name__ == \"__main__\":",
 ]
 fail_under = 80
 show_missing = true
@@ -181,17 +185,19 @@ uv run flake8 --max-cognitive-complexity=15 src/lumehaven
 ### .pre-commit-config.yaml
 
 ```yaml
+# NOTE: Version numbers below are examples. Always check /.pre-commit-config.yaml
+# for current versions used in the project.
 repos:
   # Existing hooks (ruff, mypy, etc.)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.0
+    rev: v0.14.0 # See /.pre-commit-config.yaml for current version
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+    rev: v1.15.0 # See /.pre-commit-config.yaml for current version
     hooks:
       - id: mypy
         additional_dependencies: [pydantic, fastapi]
@@ -509,7 +515,8 @@ sonar.organization=ff-fab
 sonar.sources=src/lumehaven
 sonar.tests=tests
 sonar.python.coverage.reportPaths=coverage.xml
-sonar.python.version=3.12
+# NOTE: Aligned with pyproject.toml requires-python = ">=3.14"
+sonar.python.version=3.14
 ```
 
 **CI step (for later):**
@@ -551,8 +558,8 @@ dev = [
     # Type checking
     "mypy>=1.8.0",
 
-    # Linting
-    "ruff>=0.4.0",
+    # Linting (see /.pre-commit-config.yaml for pinned version)
+    "ruff>=0.14.0",
 
     # Pre-commit
     "pre-commit>=4.0.0",
