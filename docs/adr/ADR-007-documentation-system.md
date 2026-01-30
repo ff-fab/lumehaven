@@ -148,17 +148,65 @@ Keep documentation as Markdown, rely on GitHub rendering.
 - Limited cross-referencing
 - No unified site
 
+### Option 6: Zensical (Modern successor to MkDocs)
+
+Next-generation static site generator built by the Material for MkDocs team.
+
+**Stack:**
+
+- Zensical for site generation (modern rewrite addressing MkDocs limitations)
+- Native backward compatibility with Material for MkDocs projects
+- Built-in search engine (Disco) and differential build engine (ZRX)
+- mkdocstrings for Python API docs (actively maintained by core Zensical team)
+- TypeDoc for TypeScript (separate)
+
+**Pros:**
+
+- Actively maintained by Material for MkDocs creators (as of November 2025)
+- Backward compatible with existing MkDocs/Material projects (minimal migration)
+- Modern architecture: 5x faster rebuilds with differential builds
+- Better search experience (Disco engine) and performance
+- Endorsed by FastAPI ecosystem
+- Addresses architectural limitations of MkDocs
+- Full Open Source (MIT licensed), free for all use cases
+- Module system for extensibility (planned early 2026)
+
+**Cons:**
+
+- Newer project (released November 2025), smaller community
+- Some advanced MkDocs plugins not yet supported (roadmap: early 2026)
+- Requires minor configuration updates from existing projects (usually none needed)
+
 ## Decision
 
-Use **Option 2: MkDocs + mkdocstrings** with the Material theme.
+**Changed (January 2026):** Use **Option 6: Zensical** instead of Option 2.
 
-This provides the right balance of:
+### Rationale for Change
 
-- Simplicity for a personal project
-- Native Markdown support (matches existing docs)
-- Good Python API documentation
-- Beautiful, functional output
-- Easy to set up and maintain
+Since the original decision, critical information emerged:
+
+- **MkDocs core is unmaintained** since August 2024 (no releases in over 1.5 years as of
+  January 2026)
+- **Supply chain risk:** Issues and pull requests accumulating; considered a supply
+  chain risk by the Material for MkDocs team
+- **Zensical released November 2025** by the creators of Material for MkDocs
+  specifically to address MkDocs' architectural limitations
+- **Backward compatible:** Existing MkDocs/Material projects work with minimal or no
+  changes
+- **Modern foundation:** Built with performance and extensibility in mind from first
+  principles
+
+### Benefits of Zensical
+
+- **Future-proof:** Actively maintained with clear roadmap through 2026+
+- **Performance:** 5x faster rebuilds via differential build engine (ZRX)
+- **Better DX:** Faster development feedback loops for large documentation projects
+- **Ecosystem:** Growing support; endorsed by FastAPI and other major projects
+- **Low migration cost:** Backward compatible with Material for MkDocs configuration
+- **Open Source:** MIT licensed, no proprietary dependencies
+
+This maintains the original decision's spirit (simplicity + good output) while
+eliminating supply chain risk.
 
 ### Documentation Structure
 
@@ -193,10 +241,12 @@ docs/
     └── ...
 ```
 
-### MkDocs Configuration
+### Zensical Configuration
+
+Zensical uses the same `mkdocs.yml` format as MkDocs, making migration seamless:
 
 ```yaml
-# mkdocs.yml
+# mkdocs.yml (compatible with both MkDocs and Zensical)
 site_name: Lumehaven
 site_description: Smart Home Dashboard
 repo_url: https://github.com/ff-fab/lumehaven
@@ -256,7 +306,10 @@ nav:
 
 ### API Documentation Approach
 
-**Python (mkdocstrings):**
+**Python (mkdocstrings with Zensical):**
+
+mkdocstrings is actively maintained by Timothée Mazzucotelli, who joined the Zensical
+team in November 2025 to ensure seamless API documentation.
 
 ```markdown
 <!-- docs/api/backend/signal.md -->
@@ -314,18 +367,25 @@ ADRs themselves.
 
 ## Decision Matrix
 
-| Criterion        | Option 1 (Sphinx) | Option 2 (MkDocs) | Option 3 (sphinx-needs) | Option 4 (Docusaurus) | Option 5 (Minimal) |
-| ---------------- | ----------------- | ----------------- | ----------------------- | --------------------- | ------------------ |
-| Simplicity       | 3                 | 5                 | 2                       | 3                     | 5                  |
-| Markdown support | 4                 | 5                 | 4                       | 5                     | 5                  |
-| Python API docs  | 5                 | 4                 | 5                       | 2                     | 1                  |
-| TypeScript docs  | 2                 | 2                 | 2                       | 5                     | 1                  |
-| Visual quality   | 4                 | 5                 | 4                       | 5                     | 2                  |
-| Maintenance      | 3                 | 5                 | 2                       | 3                     | 5                  |
-| Extensibility    | 5                 | 4                 | 5                       | 4                     | 2                  |
-| **Total**        | **26**            | **30**            | **24**                  | **27**                | **21**             |
+| Criterion        | Option 1 (Sphinx) | Option 2 (MkDocs) | Option 3 (sphinx-needs) | Option 4 (Docusaurus) | Option 5 (Minimal) | Option 6 (Zensical) |
+| ---------------- | ----------------- | ----------------- | ----------------------- | --------------------- | ------------------ | ------------------- |
+| Simplicity       | 3                 | 5                 | 2                       | 3                     | 5                  | 5                   |
+| Markdown support | 4                 | 5                 | 4                       | 5                     | 5                  | 5                   |
+| Python API docs  | 5                 | 4                 | 5                       | 2                     | 1                  | 4                   |
+| TypeScript docs  | 2                 | 2                 | 2                       | 5                     | 1                  | 2                   |
+| Visual quality   | 4                 | 5                 | 4                       | 5                     | 2                  | 5                   |
+| Maintenance      | 3                 | 2                 | 2                       | 3                     | 5                  | 5                   |
+| Performance      | 3                 | 3                 | 3                       | 3                     | 5                  | 5                   |
+| Extensibility    | 5                 | 4                 | 5                       | 4                     | 2                  | 5                   |
+| **Total**        | **29**            | **30**            | **27**                  | **30**                | **26**             | **36**              |
 
 _Scale: 1 (poor) to 5 (excellent)_
+
+**Key differences in Option 6 (Zensical):**
+
+- **Maintenance:** 5 (actively maintained, Nov 2025 release)
+- **Performance:** 5 (5x faster builds, differential rebuilds)
+- **Extensibility:** 5 (modern module system, better than MkDocs)
 
 ## Implementation Plan
 
