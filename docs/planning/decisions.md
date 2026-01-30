@@ -44,9 +44,10 @@ Tracking architectural decisions for lumehaven. Completed decisions have ADRs in
 
 ### ~~D7: Documentation System~~ → ADR-007 ✓
 
-- **Decision:** MkDocs + Material theme + mkdocstrings for Python API docs
+- **Decision:** Zensical (successor to MkDocs) + mkdocstrings for Python API docs
 - **Status:** Accepted - see `docs/adr/ADR-007-documentation-system.md`
-- **Rationale:** Markdown-native, simple, beautiful output, good Python integration
+- **Rationale:** Modern, actively maintained, 5x faster builds, backward compatible with
+  Material for MkDocs
 
 ## 🔜 Pending Decisions (Pre-Production)
 
@@ -72,21 +73,36 @@ These decisions can be made during implementation when needed.
 
 ## 📋 Future Considerations
 
-These will be addressed after core functionality is complete.
+These will be addressed after core functionality is complete (Phase 5+).
 
-### D11: Multi-Adapter & HomeAssistant Support
+### ✅ D11: Multi-Adapter Support (Implemented)
 
-- **Planning doc:** [`02-multi-adapter-support.md`](02-multi-adapter-support.md)
-- **When to add?** - After OpenHAB adapter is stable
-- **Key issues:** Signal ID collisions, protocol additions, config schema
-- **Phases:** Protocol hardening → ID namespacing → Orchestration → HA adapter
+- **Status:** Completed - Multi-adapter protocol hardening implemented
+- **Current state:** OpenHAB adapter stable with multi-adapter support
+- **What's done:** Signal ID namespacing, protocol extensions, adapter orchestration
 
-### D12: Authentication
+### D12: HomeAssistant Support
+
+- **When to add?** - Phase 5 (Maintenance & Future Development)
+- **Scope:** Add HA adapter following established multi-adapter patterns
+- **Dependencies:** Relies on completed D11 (multi-adapter protocol)
+
+### D13: Authentication
 
 - **Single user/household assumed?**
 - **Network security model (LAN-only?)**
 
-### D13: Mobile Support
+### D14: Mobile Support
 
 - **PWA features**
 - **Responsive design requirements**
+
+### D15: Frontend Performance Optimization
+
+- **When to add?** - After frontend has meaningful complexity
+- **Topics:** Memoization, code splitting, lazy loading
+
+### D16: Security Patterns
+
+- **When to add?** - Before deployment/production
+- **Topics:** Input validation, auth patterns, CSRF protection
