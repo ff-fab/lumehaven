@@ -40,6 +40,7 @@
 
         // Python formatting and linting
         "[python]": {
+          "editor.rulers": [88],
           "editor.defaultFormatter": "charliermarsh.ruff",
           "editor.formatOnSave": true,
           "editor.codeActionsOnSave": {

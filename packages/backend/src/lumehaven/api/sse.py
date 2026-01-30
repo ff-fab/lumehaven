@@ -55,9 +55,10 @@ async def signal_stream(
     Clients receive 'signal' events whenever a signal value changes.
     Events are JSON-encoded Signal objects.
 
-    Example event:
+    Example event::
+
         event: signal
-        data: {"id": "temp_sensor", "value": "21.5", "unit": "°C", "label": "Temperature"}
+        data: {"id": "temp", "value": "21.5", "unit": "°C", ...}
 
     Returns:
         SSE response that streams until client disconnects.
