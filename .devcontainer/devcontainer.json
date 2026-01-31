@@ -130,7 +130,13 @@
           "**/build": true
         },
 
-        // Don't hide coverage reports in explorer (gitignored but useful)
+        // Hide intermediate coverage files
+        "files.exclude": {
+          "**/.coverage": true,
+          "**/coverage.xml": true
+        },
+
+        // Show gitignored files like htmlcov/ in explorer
         "explorer.excludeGitIgnore": false
       },
       "extensions": [
