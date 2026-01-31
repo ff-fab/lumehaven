@@ -68,7 +68,7 @@ def _get_threshold(module_path: str) -> tuple[int, int]:
     for pattern in COVERAGE_THRESHOLDS:
         if pattern == "__default__":
             continue
-        prefix = pattern.rstrip(".py").rstrip("/")
+        prefix = pattern.removesuffix(".py").rstrip("/")
         if normalized.startswith(prefix) and len(pattern) > best_len:
             best_match = pattern
             best_len = len(pattern)

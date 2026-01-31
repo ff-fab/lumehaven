@@ -152,7 +152,7 @@ def get_threshold_for_module(module_path: str) -> tuple[int, int]:
         if pattern == "__default__":
             continue
         # Check if pattern is a prefix (directory match)
-        prefix = pattern.rstrip(".py").rstrip("/")
+        prefix = pattern.removesuffix(".py").rstrip("/")
         if normalized.startswith(prefix) and len(pattern) > best_match_len:
             best_match = pattern
             best_match_len = len(pattern)
@@ -278,8 +278,12 @@ def main() -> int:
     modules = extract_module_coverage(data)
 
     if not modules:
-        print("Warning: No modules found in coverage data", file=sys.stderr)
-        return 0
+        print("Error: No modules found in coverage data", file=sys.stderr)
+        print("This usually means:", file=sys.stderr)
+        print("  - Misconfigured --cov target", file=sys.stderr)
+        print("  - No code was executed during tests", file=sys.stderr)
+        print("  - Coverage source path doesn't match actual code", file=sys.stderr)
+        return 2
 
     # Check thresholds
     violations = check_thresholds(modules)
