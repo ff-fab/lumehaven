@@ -1,0 +1,1 @@
+"""OpenHAB adapter unit tests."""

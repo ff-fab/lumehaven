@@ -76,3 +76,21 @@ lumehaven/
    - Delete branch after merge
 
 **Key Principle:** `main` is always deployable. All changes go through PRs.
+
+## Test Coverage Thresholds
+
+Per-module coverage thresholds are enforced based on risk levels (see
+`docs/testing/03-coverage-strategy.md`).
+
+**Threshold locations (keep in sync when updating):**
+
+1. `packages/backend/tests/conftest.py` — `COVERAGE_THRESHOLDS` dict (pytest hook)
+2. `packages/backend/scripts/check_coverage_thresholds.py` — `THRESHOLDS` dict
+   (standalone)
+
+| Risk Level | Line | Branch | Modules                                              |
+| ---------- | ---- | ------ | ---------------------------------------------------- |
+| Critical   | 90%  | 85%    | `adapters/openhab/adapter.py`, `adapters/manager.py` |
+| High       | 85%  | 80%    | `config.py`, `state/store.py`                        |
+| Medium     | 80%  | 75%    | `api/routes.py`, `api/sse.py`                        |
+| Default    | 80%  | 70%    | All other modules                                    |
