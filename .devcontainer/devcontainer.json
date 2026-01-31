@@ -98,6 +98,28 @@
         "python.linting.mypyEnabled": true,
         "python.analysis.typeCheckingMode": "strict",
 
+        // Python testing (pytest)
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestArgs": ["tests", "-v", "--tb=short"],
+        "python.testing.cwd": "${workspaceFolder}/packages/backend",
+
+        // Coverage Gutters - gutter icons + subtle ruler indicators
+        "coverage-gutters.coverageFileNames": [
+          "coverage.xml",
+          "lcov.info",
+          "coverage/lcov.info"
+        ],
+        "coverage-gutters.showGutterCoverage": true,
+        "coverage-gutters.showLineCoverage": false,
+        "coverage-gutters.showRulerCoverage": true,
+        // Theme-matched colors: green (comments) = covered, orange (strings) = uncovered
+        // Gutter uses full opacity, ruler uses subtle 0.3 opacity
+        "coverage-gutters.highlightdark": "rgba(106, 153, 85, 0.3)",
+        "coverage-gutters.highlightlight": "rgba(106, 153, 85, 0.3)",
+        "coverage-gutters.noHighlightDark": "rgba(206, 145, 120, 0.3)",
+        "coverage-gutters.noHighlightLight": "rgba(206, 145, 120, 0.3)",
+
         // Search and exclude patterns
         "search.exclude": {
           "**/__pycache__": true,
@@ -106,7 +128,10 @@
           "**/.venv": true,
           "**/.mypy_cache": true,
           "**/build": true
-        }
+        },
+
+        // Don't hide coverage reports in explorer (gitignored but useful)
+        "explorer.excludeGitIgnore": false
       },
       "extensions": [
         "ms-python.python",
@@ -114,12 +139,14 @@
         "charliermarsh.ruff",
         "tamasfe.even-better-toml",
         "robocorp.robotframework-lsp",
-        "dbaeumer.vscode-eslt",
+        "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",
         "GitHub.copilot",
         "GitHub.copilot-chat",
-        "eamodio.gitlens"
+        "eamodio.gitlens",
+        "ryanluker.vscode-coverage-gutters",
+        "task.vscode-task"
       ]
     }
   },

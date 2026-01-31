@@ -95,20 +95,18 @@ encoding issues. Frontend receives ready-to-display data.
 
 See [CONTRIBUTE.md](CONTRIBUTE.md) for detailed development workflows.
 
-**Quick reference:**
+**Quick reference (via [Taskfile](https://taskfile.dev)):**
 
 ```bash
-# Backend
-cd packages/backend && uv run pytest                    # Tests
-cd packages/backend && uv run uvicorn lumehaven.main:app --reload  # Dev server
-
-# Frontend
-cd packages/frontend && bun run dev                     # Dev server
-
-# Code quality (auto-configured on save in DevContainer)
-cd packages/backend && uv run ruff check src/          # Lint
-cd packages/backend && uv run ruff format src/         # Format
-cd packages/backend && uv run mypy src/lumehaven       # Type check
+task test              # Run all tests (backend + frontend)
+task test:be           # Backend tests only
+task test:fe           # Frontend tests only
+task dev:be            # Start backend dev server
+task dev:fe            # Start frontend dev server
+task lint              # Lint all code
+task lint:fix          # Auto-fix lint issues
+task check             # Run all checks (lint + typecheck + test)
+task --list            # Show all available tasks
 ```
 
 ## Project Structure
