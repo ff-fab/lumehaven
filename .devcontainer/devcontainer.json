@@ -128,7 +128,10 @@
           "**/.venv": true,
           "**/.mypy_cache": true,
           "**/build": true
-        }
+        },
+
+        // Don't hide coverage reports in explorer (gitignored but useful)
+        "explorer.excludeGitIgnore": false
       },
       "extensions": [
         "ms-python.python",
