@@ -3,7 +3,7 @@
 These fixtures represent real (anonymized) OpenHAB API responses to ensure
 tests cover actual API shapes and edge cases.
 
-Source: docs/ll/openhab-example-api-calls.md (anonymized real data)
+Source: anonymized real data from OpenHAB 5.0.1 instance
 """
 
 # =============================================================================
