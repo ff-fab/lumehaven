@@ -35,10 +35,7 @@ class TestExceptionHierarchy:
     def test_all_exceptions_inherit_from_lumehaven_error(
         self, exception_class: type
     ) -> None:
-        """All custom exceptions inherit from LumehavenError.
-
-        This enables catching all lumehaven errors with a single except clause.
-        """
+        """All custom exceptions inherit from LumehavenError."""
         assert issubclass(exception_class, LumehavenError)
 
 
@@ -49,11 +46,6 @@ class TestLumehavenError:
         """LumehavenError can be raised with a message."""
         with pytest.raises(LumehavenError, match="test error"):
             raise LumehavenError("test error")
-
-    def test_can_catch_derived_exceptions(self) -> None:
-        """Catching LumehavenError also catches derived exceptions."""
-        with pytest.raises(LumehavenError):
-            raise SignalNotFoundError("test_signal")
 
 
 class TestSignalNotFoundError:
@@ -70,11 +62,6 @@ class TestSignalNotFoundError:
         error = SignalNotFoundError("living_room_temp")
 
         assert str(error) == "Signal not found: living_room_temp"
-
-    def test_can_be_raised_and_matched(self) -> None:
-        """SignalNotFoundError can be raised and pattern-matched."""
-        with pytest.raises(SignalNotFoundError, match="living_room_temp"):
-            raise SignalNotFoundError("living_room_temp")
 
 
 class TestSmartHomeConnectionError:
@@ -143,8 +130,3 @@ class TestAdapterError:
         error = AdapterError(adapter="openhab", message="Invalid item state")
 
         assert str(error) == "[openhab] Invalid item state"
-
-    def test_can_be_raised_and_matched(self) -> None:
-        """AdapterError can be raised and pattern-matched."""
-        with pytest.raises(AdapterError, match=r"\[openhab\] test"):
-            raise AdapterError(adapter="openhab", message="test")
