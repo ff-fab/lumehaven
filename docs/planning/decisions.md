@@ -8,7 +8,7 @@ Tracking architectural decisions for lumehaven. Completed decisions have ADRs in
 ### ~~D1: Build System Choice~~ → Deferred
 
 - **Decision:** Start with native tooling (uv + bun), add Bazel later
-- **Status:** Resolved - see `docs/planning/00-project-approach.md`
+- **Status:** Resolved
 
 ### ~~D2: Backend Language/Runtime~~ → ADR-002 ✓
 
@@ -106,3 +106,24 @@ These will be addressed after core functionality is complete (Phase 5+).
 
 - **When to add?** - Before deployment/production
 - **Topics:** Input validation, auth patterns, CSRF protection
+
+### D17: Rust Backend Rewrite
+
+- **Source:** ADR-002 (Backend Runtime)
+- **When to consider?** - After Python version is stable and feature-complete
+- **Rationale:** Lower memory footprint for Raspberry Pi; learning opportunity
+- **Path:** StateStore abstraction (ADR-001) makes incremental rewrite feasible
+
+### D18: Signal Model Enrichment
+
+- **Source:** ADR-005 (Signal Abstraction)
+- **When to consider?** - When UI needs type-aware rendering or backend calculations
+- **Candidates:** `signal_type`, `device_class`, `last_updated` fields
+- **Path:** Backward-compatible dataclass extension
+
+### D19: Preact Migration
+
+- **Source:** ADR-004 (Frontend Stack)
+- **When to consider?** - If bundle size becomes a concern
+- **Rationale:** 3KB vs 40KB; API-compatible with React
+- **Path:** Vite aliasing (minimal config change)
