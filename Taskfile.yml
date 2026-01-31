@@ -40,14 +40,12 @@ tasks:
     desc: Run all frontend tests
     dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - echo "Frontend tests not yet implemented"
-      # - bun test
+      - bun test
 
   test:e2e:
     desc: Run E2E tests (browser + full stack)
     cmds:
-      - echo "E2E tests deferred per ADR-006"
-      # - task: test:e2e:run
+      - task: test:e2e:run
 
   # ===========================================================================
   # Backend Test Tasks
@@ -100,15 +98,13 @@ tasks:
     desc: Run frontend unit tests
     dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - echo "Frontend unit tests not yet implemented"
-      # - bun test
+      - bun test
 
   test:fe:cov:
     desc: Run frontend tests with coverage
     dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - echo "Frontend coverage not yet implemented"
-      # - bun test --coverage
+      - bun test --coverage
 
   # ===========================================================================
   # Combined Coverage
@@ -152,22 +148,19 @@ tasks:
     desc: Run frontend linting (eslint)
     dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - echo "Frontend linting not yet implemented"
-      # - bun run lint
+      - bun run lint
 
   lint:fe:fix:
     desc: Fix frontend linting issues automatically
     dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - echo "Frontend linting not yet implemented"
-      # - bun run lint:fix
+      - bun run lint:fix
 
   typecheck:fe:
     desc: Run frontend type checking (tsc)
     dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - echo "Frontend typecheck not yet implemented"
-      # - bun run typecheck
+      - bun run typecheck
 
   # ===========================================================================
   # Combined Lint & Check
@@ -218,8 +211,7 @@ tasks:
     desc: Start frontend dev server
     dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - echo "Frontend dev server not yet implemented"
-      # - bun run dev
+      - bun run dev
 
   # ===========================================================================
   # Dependency Management
@@ -275,8 +267,7 @@ tasks:
     desc: CI frontend test task with coverage
     dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - echo "Frontend CI tests not yet implemented"
-      # - bun test --coverage
+      - bun test --coverage
 
   ci:lint:
     desc: CI lint task (strict, no fixes)
@@ -296,6 +287,5 @@ tasks:
     desc: CI frontend lint task (strict)
     dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - echo "Frontend CI lint not yet implemented"
-      # - bun run lint
-      # - bun run typecheck
+      - bun run lint
+      - bun run typecheck
