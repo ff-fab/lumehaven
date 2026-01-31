@@ -15,6 +15,51 @@ applyTo: 'packages/backend/tests/**/*.py, **/*.robot'
 | Unit        | pytest + pytest-asyncio        | `tests/unit/`        |
 | Integration | Robot Framework + RESTinstance | `tests/integration/` |
 
+## Test Technique Documentation
+
+**Every test must document the test design technique(s) used.** This ensures
+traceability to ISTQB principles and helps reviewers understand why specific test cases
+were chosen.
+
+### Module-Level Docstring
+
+Document techniques used across the test module:
+
+```python
+"""Unit tests for adapters/manager.py — Adapter lifecycle management.
+
+Test Techniques Used:
+- State Transition Testing: Adapter lifecycle states (stopped → starting → running)
+- Boundary Value Analysis: Retry delays at INITIAL (5s) and MAX (300s)
+- Condition Coverage: Error handling branches
+"""
+```
+
+### Class/Function-Level Documentation
+
+For non-obvious technique choices, document at the test level:
+
+```python
+def test_frozen_immutability(self) -> None:
+    """Signal is frozen — mutation raises FrozenInstanceError.
+
+    Technique: Error Guessing — anticipating specific failure mode.
+    """
+```
+
+### Common Techniques Reference
+
+| Technique                     | When to Use                                    |
+| ----------------------------- | ---------------------------------------------- |
+| **Specification-based**       | Verifying contracts, constructors, interfaces  |
+| **Equivalence Partitioning**  | Input domains with equivalent behavior classes |
+| **Boundary Value Analysis**   | Numeric limits, timeouts, thresholds           |
+| **Decision Table**            | Multiple conditions → outcomes mapping         |
+| **State Transition**          | Lifecycle, connection states, FSMs             |
+| **Branch/Condition Coverage** | Boolean expressions, if/else paths             |
+| **Error Guessing**            | Anticipating specific failure modes            |
+| **Round-trip Testing**        | Serialization/deserialization fidelity         |
+
 ## Coverage Requirements
 
 | Risk Level | Line | Branch | Components         |

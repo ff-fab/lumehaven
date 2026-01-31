@@ -70,14 +70,17 @@ Based on test strategy risk assessment:
 - [x] Validate setup with empty test run
 - [x] Add per-module coverage threshold validation (pytest hook + standalone script)
 
-### Phase 1: Core Models (Low Risk, Foundation)
+### ✅ Phase 1: Core Models (Complete)
 
 **Goal:** Establish test patterns and validate infrastructure
 
-| Step | File                 | What to Test                              |
-| ---- | -------------------- | ----------------------------------------- |
-| 1.1  | `core/signal.py`     | Signal dataclass validation, immutability |
-| 1.2  | `core/exceptions.py` | Custom exception hierarchy                |
+| Step | File                 | Tests | Coverage | Techniques Used                                   |
+| ---- | -------------------- | ----- | -------- | ------------------------------------------------- |
+| 1.1  | `core/signal.py`     | 20    | 100%     | Specification, Round-trip, Decision Table, Branch |
+| 1.2  | `core/exceptions.py` | 16    | 100%     | Structural Verification, Specification, Condition |
+
+**Key outcome:** Test technique documentation pattern established — every test module
+documents techniques in module docstring, individual tests document non-obvious choices.
 
 ### Phase 2: State Layer (High Risk)
 
