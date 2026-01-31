@@ -97,42 +97,40 @@ _Note:_ `uv sync` installs dependencies based on the existing `uv.lock` file but
 ### Backend (Python/FastAPI)
 
 ```bash
-cd packages/backend
-
 # Install/update dependencies (run after git pull if pyproject.toml or uv.lock changed)
-uv sync --all-extras
+task sync:be
 
-# Add a new dependency
+# Add a new dependency (still use uv directly for this)
 uv add requests                # Production dependency
 uv add --dev pytest-debugpy   # Development dependency
 
 # Start dev server with auto-reload (http://localhost:8000)
-uv run uvicorn lumehaven.main:app --reload
+task dev:be
 
-# Run tests with pytest
-uv run pytest tests/
+# Run all backend tests
+task test:be
 
-# Run specific test file with verbose output
-uv run pytest tests/unit/test_signal.py -v
+# Run unit tests only (fast, every change)
+task test:be:unit
 
-# Debug a failing test (drop into debugger on failure)
-uv run pytest tests/unit/ --pdb
+# Run tests with coverage report
+task test:be:cov
 
 # Format and lint Python code
-uv run ruff format src/                  # Auto-format
-uv run ruff check src/ --fix             # Lint and fix violations
-uv run mypy src/lumehaven                # Type check with strict mode
+task lint:be:fix              # Auto-format and fix lint issues
+task lint:be                  # Check only (no fixes)
+task typecheck:be             # Type check with mypy
+
+# Run all checks (lint + typecheck + test)
+task check
 
 # Alternative: Use VS Code Debug Configs
 # Press F5 → Select "Debug Backend (FastAPI)" to start with debugger
 # VS Code automatically uses the venv at .venv/bin/python
 ```
 
-**About `uv run`:**
-
-- `uv run <command>` automatically uses the venv (most explicit way)
-- Directly typing `python`, `pytest`, etc. also works (PATH includes venv)
-- Both are equivalent—use whichever you prefer
+**Note:** Tasks are defined in `Taskfile.yml`. Run `task --list` to see all available
+tasks.
 
 #### Architectural Overview
 
@@ -169,19 +167,17 @@ three consumers of a dashboard:
 ### Frontend (React/TypeScript)
 
 ```bash
-cd packages/frontend
-
 # Install dependencies
-bun install
+task sync:fe
 
 # Start dev server (http://localhost:5173)
-bun run dev
+task dev:fe
 
 # Run tests
-bun test
+task test:fe
 
-# Format
-bun run format
+# Format and lint
+task lint:fe:fix
 ```
 
 ## Pre-commit Hooks (Optional but Recommended)

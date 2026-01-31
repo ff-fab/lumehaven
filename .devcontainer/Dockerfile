@@ -42,6 +42,9 @@ RUN curl -fsSL https://bun.sh/install | bash \
     && mv /root/.bun/bin/bunx /usr/local/bin/ \
     && rm -rf /root/.bun
 
+# Install go-task (task runner - https://taskfile.dev)
+RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+
 # Configure uv to use project-local virtual environments
 ENV UV_PROJECT_ENVIRONMENT="/workspace/packages/backend/.venv"
 
@@ -54,4 +57,4 @@ RUN mkdir -p /home/vscode/.vscode-server /home/vscode/.vscode-server/extensions 
     && chown -R vscode:vscode /home/vscode/.vscode-server
 
 # Verify installations
-RUN uv --version && bun --version && python --version
+RUN uv --version && bun --version && python --version && task --version

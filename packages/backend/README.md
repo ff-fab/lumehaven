@@ -55,50 +55,53 @@ tests/
 ### Setup
 
 ```bash
-# Install dependencies
-uv sync
-
-# Install with dev dependencies
-uv sync --all-extras
+# Install dependencies (including dev dependencies)
+task sync:be
 ```
 
 ### Running
 
 ```bash
 # Development server with hot reload
-uv run uvicorn lumehaven.main:app --reload --host 0.0.0.0 --port 8000
-
-# Or via Python
-uv run python -m lumehaven.main
+task dev:be
 ```
 
 ### Testing
 
 ```bash
-# Run all unit tests
-uv run pytest tests/unit
+# Run all backend tests (unit + integration)
+task test:be
 
-# Run with coverage
-uv run pytest tests/unit --cov=lumehaven --cov-report=html
+# Run unit tests only (fast feedback)
+task test:be:unit
 
-# Run specific test file
-uv run pytest tests/unit/test_signal.py -v
+# Run with coverage report
+task test:be:cov
 
-# Run Robot Framework integration tests
-uv run robot tests/integration
+# Run with HTML coverage report (opens in browser)
+task test:be:cov:html
+
+# Run integration tests (Robot Framework)
+task test:be:integration
+
+# Check coverage thresholds
+task test:be:thresholds
 ```
 
 ### Code Quality
 
 ```bash
-# Linting
-uv run ruff check src tests
+# Lint and format check
+task lint:be
 
-# Format code
-uv run ruff format src tests
+# Auto-fix lint and format issues
+task lint:be:fix
 
 # Type checking
-uv run mypy src
+task typecheck:be
+
+# Run all checks (lint + typecheck + test)
+task check
 ```
 
 ## Configuration

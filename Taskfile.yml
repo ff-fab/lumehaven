@@ -1,0 +1,301 @@
+# https://taskfile.dev
+# Cross-platform task runner for lumehaven
+#
+# Usage:
+#   task                  # List available tasks
+#   task test             # Run all tests (backend + frontend)
+#   task test:be          # Run backend tests only
+#   task test:fe          # Run frontend tests only
+#   task test:cov         # Run all tests with coverage
+
+version: '3'
+
+vars:
+  BACKEND_DIR: packages/backend
+  FRONTEND_DIR: packages/frontend
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  # ===========================================================================
+  # Test Tasks - Top Level
+  # ===========================================================================
+
+  test:
+    desc: Run all tests (backend + frontend)
+    cmds:
+      - task: test:be
+      - task: test:fe
+
+  test:be:
+    desc: Run all backend tests (unit + integration)
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run pytest tests/ -v --tb=short
+
+  test:fe:
+    desc: Run all frontend tests
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - echo "Frontend tests not yet implemented"
+      # - bun test
+
+  test:e2e:
+    desc: Run E2E tests (browser + full stack)
+    cmds:
+      - echo "E2E tests deferred per ADR-006"
+      # - task: test:e2e:run
+
+  # ===========================================================================
+  # Backend Test Tasks
+  # ===========================================================================
+
+  test:be:unit:
+    desc: Run backend unit tests only (fast, every change)
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run pytest tests/unit/ -v --tb=short
+
+  test:be:integration:
+    desc: Run backend integration tests (Robot Framework)
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run robot tests/integration/
+
+  test:be:cov:
+    desc: Run backend tests with coverage (terminal + XML for IDE)
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run pytest tests/ --cov=lumehaven --cov-branch --cov-report=term-missing --cov-report=xml
+
+  test:be:cov:html:
+    desc: Run backend tests with HTML coverage report
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run pytest tests/ --cov=lumehaven --cov-branch --cov-report=html --cov-report=term
+      - cmd: '{{if eq OS "darwin"}}open{{else}}xdg-open{{end}} htmlcov/index.html'
+        ignore_error: true
+
+  test:be:thresholds:
+    desc: Check per-module coverage thresholds
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run pytest tests/ --cov=lumehaven --cov-branch --cov-report=json -q
+      - uv run python scripts/check_coverage_thresholds.py --verbose
+
+  test:be:watch:
+    desc: Run backend unit tests in watch mode
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run pytest-watch tests/unit/ -- -v --tb=short
+
+  # ===========================================================================
+  # Frontend Test Tasks
+  # ===========================================================================
+
+  test:fe:unit:
+    desc: Run frontend unit tests
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - echo "Frontend unit tests not yet implemented"
+      # - bun test
+
+  test:fe:cov:
+    desc: Run frontend tests with coverage
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - echo "Frontend coverage not yet implemented"
+      # - bun test --coverage
+
+  # ===========================================================================
+  # Combined Coverage
+  # ===========================================================================
+
+  test:cov:
+    desc: Run all tests with coverage
+    cmds:
+      - task: test:be:cov
+      - task: test:fe:cov
+
+  # ===========================================================================
+  # Backend Lint & Typecheck
+  # ===========================================================================
+
+  lint:be:
+    desc: Run backend linting (ruff check + format check)
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run ruff check src/ tests/
+      - uv run ruff format --check src/ tests/
+
+  lint:be:fix:
+    desc: Fix backend linting issues automatically
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run ruff check --fix src/ tests/
+      - uv run ruff format src/ tests/
+
+  typecheck:be:
+    desc: Run backend type checking (mypy)
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run mypy src/
+
+  # ===========================================================================
+  # Frontend Lint & Typecheck
+  # ===========================================================================
+
+  lint:fe:
+    desc: Run frontend linting (eslint)
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - echo "Frontend linting not yet implemented"
+      # - bun run lint
+
+  lint:fe:fix:
+    desc: Fix frontend linting issues automatically
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - echo "Frontend linting not yet implemented"
+      # - bun run lint:fix
+
+  typecheck:fe:
+    desc: Run frontend type checking (tsc)
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - echo "Frontend typecheck not yet implemented"
+      # - bun run typecheck
+
+  # ===========================================================================
+  # Combined Lint & Check
+  # ===========================================================================
+
+  lint:
+    desc: Run all linting (backend + frontend)
+    cmds:
+      - task: lint:be
+      - task: lint:fe
+
+  lint:fix:
+    desc: Fix all linting issues
+    cmds:
+      - task: lint:be:fix
+      - task: lint:fe:fix
+
+  typecheck:
+    desc: Run all type checking (backend + frontend)
+    cmds:
+      - task: typecheck:be
+      - task: typecheck:fe
+
+  check:
+    desc: Run all checks (lint + typecheck + test)
+    cmds:
+      - task: lint
+      - task: typecheck
+      - task: test
+
+  # ===========================================================================
+  # Development Servers
+  # ===========================================================================
+
+  dev:
+    desc: Start all dev servers (backend + frontend)
+    deps:
+      - dev:be
+      - dev:fe
+
+  dev:be:
+    desc: Start backend dev server with hot reload
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run uvicorn lumehaven.main:app --reload --host 0.0.0.0 --port 8000
+
+  dev:fe:
+    desc: Start frontend dev server
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - echo "Frontend dev server not yet implemented"
+      # - bun run dev
+
+  # ===========================================================================
+  # Dependency Management
+  # ===========================================================================
+
+  sync:
+    desc: Sync all dependencies (backend + frontend)
+    cmds:
+      - task: sync:be
+      - task: sync:fe
+
+  sync:be:
+    desc: Sync backend dependencies
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv sync --group dev
+
+  sync:fe:
+    desc: Sync frontend dependencies
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - bun install
+
+  # ===========================================================================
+  # Code Quality
+  # ===========================================================================
+
+  complexity:
+    desc: Check code complexity (radon) - backend only
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run radon cc src/lumehaven --average --show-complexity
+      - uv run xenon src/lumehaven --max-absolute B --max-modules A --max-average A
+
+  # ===========================================================================
+  # CI Tasks (used in GitHub Actions)
+  # ===========================================================================
+
+  ci:test:
+    desc: CI test task with coverage and threshold validation
+    cmds:
+      - task: ci:test:be
+      # - task: ci:test:fe  # Enable when frontend tests exist
+
+  ci:test:be:
+    desc: CI backend test task with coverage
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run pytest tests/ --cov=lumehaven --cov-branch --cov-report=xml --cov-report=json --cov-report=term
+      - uv run python scripts/check_coverage_thresholds.py
+
+  ci:test:fe:
+    desc: CI frontend test task with coverage
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - echo "Frontend CI tests not yet implemented"
+      # - bun test --coverage
+
+  ci:lint:
+    desc: CI lint task (strict, no fixes)
+    cmds:
+      - task: ci:lint:be
+      # - task: ci:lint:fe  # Enable when frontend linting is set up
+
+  ci:lint:be:
+    desc: CI backend lint task (strict)
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run ruff check src/ tests/
+      - uv run ruff format --check src/ tests/
+      - uv run mypy src/
+
+  ci:lint:fe:
+    desc: CI frontend lint task (strict)
+    dir: '{{.FRONTEND_DIR}}'
+    cmds:
+      - echo "Frontend CI lint not yet implemented"
+      # - bun run lint
+      # - bun run typecheck
