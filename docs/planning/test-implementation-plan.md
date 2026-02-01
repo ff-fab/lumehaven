@@ -132,8 +132,8 @@ type-only placeholders.
 **Key outcome:** Comprehensive pattern parsing via Equivalence Partitioning (float/int/
 string/percent formats). Banker's rounding edge cases documented with BVA. Decision
 Table for `format_value()` condition combinations. Encoding edge cases tested
-(double-encoded UTF-8, CJK symbols, Unicode normalization scenarios). Real OpenHAB
-fixture data integrated.
+(double-encoded UTF-8, CJK symbols, Unicode normalization scenarios). Test inputs
+derived from shared OpenHAB fixtures (`tests/fixtures/openhab_responses.py`).
 
 ### Phase 6: OpenHAB Adapter (Critical Risk)
 

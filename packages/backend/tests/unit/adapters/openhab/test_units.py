@@ -19,6 +19,13 @@ from lumehaven.adapters.openhab.units import (
     format_value,
     get_default_units,
 )
+from tests.fixtures.openhab_responses import (
+    DIMMER_ITEM,
+    ENERGY_ITEM,
+    POWER_ITEM,
+    TEMPERATURE_ITEM,
+    UNDEF_ITEM,
+)
 
 # =============================================================================
 # Tests
@@ -640,46 +647,43 @@ class TestFormatValueDecisionTable:
 
 
 class TestFormatValueRealOpenHABData:
-    """Tests using real OpenHAB item patterns from fixtures.
+    """Tests using real OpenHAB item data from shared fixtures.
 
     Technique: Specification-based Testing — real-world data verification.
+
+    These tests import fixture data from tests/fixtures/openhab_responses.py
+    to ensure inputs stay coupled to the canonical mock data. Expected outputs
+    are specified in the test (they define the contract we're verifying).
     """
 
-    def test_temperature_item(self) -> None:
-        """Format temperature from TEMPERATURE_ITEM fixture."""
-        # state: "21.5 °C", pattern: "%.1f °C"
-        unit, format_str = extract_unit_from_pattern("%.1f °C")
-        result = format_value("21.5 °C", unit, format_str, is_quantity_type=True)
+    @pytest.mark.parametrize(
+        ("fixture", "expected_value"),
+        [
+            (TEMPERATURE_ITEM, "21.5"),
+            (DIMMER_ITEM, "75"),
+            (POWER_ITEM, "1250"),
+            (ENERGY_ITEM, "12345.67"),
+        ],
+        ids=["temperature", "dimmer", "power", "energy"],
+    )
+    def test_formats_fixture_item(self, fixture: dict, expected_value: str) -> None:
+        """Format real OpenHAB items produces expected output."""
+        state = fixture["state"]
+        pattern = fixture["stateDescription"]["pattern"]
+        is_quantity = fixture["type"].startswith("Number:")
 
-        assert result == "21.5"
+        unit, format_str = extract_unit_from_pattern(pattern)
+        result = format_value(state, unit, format_str, is_quantity_type=is_quantity)
 
-    def test_dimmer_item(self) -> None:
-        """Format dimmer percentage from DIMMER_ITEM fixture."""
-        # state: "75", pattern: "%d %%"
-        unit, format_str = extract_unit_from_pattern("%d %%")
-        result = format_value("75", unit, format_str, is_quantity_type=False)
-
-        assert result == "75"
-
-    def test_power_item(self) -> None:
-        """Format power from POWER_ITEM fixture."""
-        # state: "1250 W", pattern: "%d W"
-        unit, format_str = extract_unit_from_pattern("%d W")
-        result = format_value("1250 W", unit, format_str, is_quantity_type=True)
-
-        assert result == "1250"
-
-    def test_energy_item(self) -> None:
-        """Format energy from ENERGY_ITEM fixture."""
-        # state: "12345.67 kWh", pattern: "%.2f kWh"
-        unit, format_str = extract_unit_from_pattern("%.2f kWh")
-        result = format_value("12345.67 kWh", unit, format_str, is_quantity_type=True)
-
-        assert result == "12345.67"
+        assert result == expected_value
 
     def test_undef_item(self) -> None:
-        """Format UNDEF state from UNDEF_ITEM fixture."""
-        result = format_value("UNDEF", "°C", "%.1f", is_quantity_type=True)
+        """UNDEF state from fixture is preserved regardless of formatting."""
+        state = UNDEF_ITEM["state"]
+        is_quantity = UNDEF_ITEM["type"].startswith("Number:")
+
+        # UNDEF_ITEM has no stateDescription, use typical temperature pattern
+        result = format_value(state, "°C", "%.1f", is_quantity_type=is_quantity)
 
         assert result == "UNDEF"
 
