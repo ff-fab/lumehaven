@@ -654,14 +654,17 @@ class TestQueueOverflow:
         # Let subscriber drain queue, which makes room for more
         can_resume.set()
 
-        # Wait for subscriber to process queued items so queue has room
-        # The subscriber processes items when resumed, we need to wait for queue space
+        # Wait for subscriber to start processing (verify it's still active)
         await wait_for_condition(
             lambda: store.get_metrics()["subscribers"]["total"] > 0,
             timeout=0.5,
-            description="subscriber processing",
+            description="subscriber still active",
         )
-        await asyncio.sleep(0.05)  # Brief pause for queue to drain
+        # Yield to event loop so subscriber can process queued items.
+        # Note: This is a coordination yield, not a state verification wait.
+        # We can't observe queue space directly; the subsequent publish + assert
+        # verifies the intended behavior (slow status cleared on success).
+        await asyncio.sleep(0.01)
 
         # Now publish another - this should succeed and clear drop_stats
         await store.publish(Signal(id="sig_4", value="4", unit="", label=""))

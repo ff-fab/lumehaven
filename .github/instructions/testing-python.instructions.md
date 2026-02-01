@@ -9,7 +9,7 @@ applyTo: 'packages/backend/tests/**/*.py, **/*.robot'
 > comprehensive test design techniques, coverage targets, and tooling configuration.
 >
 > **New Test Files:** Use
-> [Test File Template](../../docs/testing/06-test-file-template.md) — copy-paste
+> [Test File Template](../../docs/testing/06-test-file-template-python.md) — copy-paste
 > starting point with all conventions pre-applied.
 
 ## Test Strategy (ADR-006)
