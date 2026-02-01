@@ -166,37 +166,44 @@ class TestDiscriminatedUnion:
     | (missing)      | ValidationError           |
     """
 
-    def test_openhab_type_creates_openhab_config(self) -> None:
-        """type='openhab' routes to OpenHABAdapterConfig."""
+    @pytest.mark.parametrize(
+        ("input_factory", "expected_model", "expected_error", "error_match"),
+        [
+            (valid_openhab_config, OpenHABAdapterConfig, None, None),
+            (valid_homeassistant_config, HomeAssistantAdapterConfig, None, None),
+            (
+                lambda: {"type": "invalid", "name": "test"},
+                None,
+                ValidationError,
+                "Input tag 'invalid' found",
+            ),
+            (
+                lambda: {"name": "test", "url": "http://localhost"},
+                None,
+                ValidationError,
+                "Unable to extract tag",
+            ),
+        ],
+        ids=["openhab-routes", "homeassistant-routes", "invalid-type", "missing-type"],
+    )
+    def test_discriminated_union_routing(
+        self,
+        input_factory: Any,
+        expected_model: type[AdapterConfig] | None,
+        expected_error: type[Exception] | None,
+        error_match: str | None,
+    ) -> None:
+        """Parametrized decision table for AdapterConfig discriminated union."""
         adapter_type = TypeAdapter(AdapterConfig)
+        payload = input_factory()
 
-        config = adapter_type.validate_python(valid_openhab_config())
-
-        assert isinstance(config, OpenHABAdapterConfig)
-        assert config.type == "openhab"
-
-    def test_homeassistant_type_creates_homeassistant_config(self) -> None:
-        """type='homeassistant' routes to HomeAssistantAdapterConfig."""
-        adapter_type = TypeAdapter(AdapterConfig)
-
-        config = adapter_type.validate_python(valid_homeassistant_config())
-
-        assert isinstance(config, HomeAssistantAdapterConfig)
-        assert config.type == "homeassistant"
-
-    def test_invalid_type_raises_validation_error(self) -> None:
-        """Unknown type value raises ValidationError."""
-        adapter_type = TypeAdapter(AdapterConfig)
-
-        with pytest.raises(ValidationError, match="Input tag 'invalid' found"):
-            adapter_type.validate_python({"type": "invalid", "name": "test"})
-
-    def test_missing_type_raises_validation_error(self) -> None:
-        """Missing type field raises ValidationError."""
-        adapter_type = TypeAdapter(AdapterConfig)
-
-        with pytest.raises(ValidationError, match="Unable to extract tag"):
-            adapter_type.validate_python({"name": "test", "url": "http://localhost"})
+        if expected_error is not None:
+            with pytest.raises(expected_error, match=error_match):
+                adapter_type.validate_python(payload)
+        else:
+            config = adapter_type.validate_python(payload)
+            assert isinstance(config, expected_model)
+            assert config.type == payload["type"]
 
 
 class TestEnvVarExpansion:
@@ -300,7 +307,8 @@ class TestFindConfigFile:
     """Tests for _find_config_file path resolution.
 
     Technique: Specification-based Testing — verifying file discovery
-    in expected locations and None return when not found.
+    in expected locations (current dir, ../../, ../../../) and None
+    return when not found.
     """
 
     def test_finds_file_in_current_directory(self, tmp_path: Path) -> None:
@@ -317,6 +325,34 @@ class TestFindConfigFile:
 
         assert result is not None
         assert result.name == "config.yaml"
+
+    def test_finds_file_in_grandparent_directory(self, tmp_path: Path) -> None:
+        """Finds config file via ../../ path (packages/backend → project root).
+
+        The function searches three paths in order:
+        1. Current directory
+        2. ../../ (for running from packages/backend/)
+        3. ../../../ (for running from packages/backend/src/)
+
+        This test verifies the ../../ fallback works correctly.
+        """
+        # Create nested structure simulating packages/backend/
+        nested_dir = tmp_path / "packages" / "backend"
+        nested_dir.mkdir(parents=True)
+
+        # Config file in project root (grandparent of working dir)
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("adapters: []")
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(nested_dir)
+            result = _find_config_file("config.yaml")
+        finally:
+            os.chdir(original_cwd)
+
+        assert result is not None
+        assert result == config_file.resolve()
 
     def test_returns_none_when_not_found(self, tmp_path: Path) -> None:
         """Returns None when config file doesn't exist."""

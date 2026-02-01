@@ -100,12 +100,13 @@ cancellation handling. Queue overflow and throttled logging paths fully tested.
 
 | Step | File        | Tests | Coverage | Techniques Used                                       |
 | ---- | ----------- | ----- | -------- | ----------------------------------------------------- |
-| 3.1  | `config.py` | 37    | 100%     | Specification, Decision Table, Branch, Error Guessing |
+| 3.1  | `config.py` | 36    | 100%     | Specification, Decision Table, Branch, Error Guessing |
 
-**Key outcome:** Discriminated union routing verified via Decision Table technique.
-Environment variable expansion tested with Branch Coverage for all type dispatch paths.
-YAML loading error cases exhaustively tested with Error Guessing. Shared fixtures
-(`reset_settings_cache`, `tmp_config_file`) added to `tests/fixtures/config.py`.
+**Key outcome:** Discriminated union routing verified via Decision Table technique
+(parametrized). Environment variable expansion tested with Branch Coverage for all type
+dispatch paths. YAML loading error cases exhaustively tested with Error Guessing. Path
+search fallback (../../) explicitly verified. Shared fixtures (`reset_settings_cache`,
+`tmp_config_file`) added to `tests/fixtures/config.py`.
 
 ### Phase 4: Adapter Protocol (Low Risk)
 
