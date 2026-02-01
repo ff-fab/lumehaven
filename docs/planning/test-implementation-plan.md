@@ -121,13 +121,19 @@ implementations (CompliantAdapter, MissingMethodAdapter, MissingPropertyAdapter)
 coverage exclusion for Protocol ellipsis stubs (`...`) in pyproject.toml since these are
 type-only placeholders.
 
-### Phase 5: OpenHAB Units (Medium Risk)
+### ✅ Phase 5: OpenHAB Units (Complete)
 
 **Goal:** Test parsing logic (high complexity, many edge cases)
 
-| Step | File                        | What to Test                           |
-| ---- | --------------------------- | -------------------------------------- |
-| 5.1  | `adapters/openhab/units.py` | Unit extraction, value formatting, BVA |
+| Step | File                        | Tests | Coverage | Techniques Used                                            |
+| ---- | --------------------------- | ----- | -------- | ---------------------------------------------------------- |
+| 5.1  | `adapters/openhab/units.py` | 85    | 100%     | Equivalence Partitioning, BVA, Decision Table, Error Guess |
+
+**Key outcome:** Comprehensive pattern parsing via Equivalence Partitioning (float/int/
+string/percent formats). Banker's rounding edge cases documented with BVA. Decision
+Table for `format_value()` condition combinations. Encoding edge cases tested
+(double-encoded UTF-8, CJK symbols, Unicode normalization scenarios). Real OpenHAB
+fixture data integrated.
 
 ### Phase 6: OpenHAB Adapter (Critical Risk)
 
