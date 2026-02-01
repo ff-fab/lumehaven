@@ -105,6 +105,7 @@ class Settings(BaseSettings):
 
     # Subscriber settings
     subscriber_queue_size: int = 10000
+    drop_log_interval: float = 10.0  # Seconds between "queue full" warnings
 
     # Config file path (if using YAML)
     config_file: str = "config.yaml"

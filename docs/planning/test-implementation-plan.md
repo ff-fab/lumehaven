@@ -82,13 +82,17 @@ Based on test strategy risk assessment:
 **Key outcome:** Test technique documentation pattern established — every test module
 documents techniques in module docstring, individual tests document non-obvious choices.
 
-### Phase 2: State Layer (High Risk)
+### ✅ Phase 2: State Layer (Complete)
 
 **Goal:** Test the data backbone with sociable unit approach
 
-| Step | File             | What to Test                            |
-| ---- | ---------------- | --------------------------------------- |
-| 2.1  | `state/store.py` | SignalStore CRUD, subscription, publish |
+| Step | File             | Tests | Coverage | Techniques Used                                   |
+| ---- | ---------------- | ----- | -------- | ------------------------------------------------- |
+| 2.1  | `state/store.py` | 25    | 93%      | Specification, State Transition, Branch, Protocol |
+
+**Key outcome:** Async testing patterns established — proper generator cleanup with
+`aclose()`, use of `asyncio.Event()` for synchronization, `contextlib.suppress()` for
+cancellation handling. Queue overflow and throttled logging paths fully tested.
 
 ### Phase 3: Configuration (High Risk)
 

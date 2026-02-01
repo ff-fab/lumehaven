@@ -63,17 +63,28 @@ lumehaven/
    # Use conventional commits: feat:, fix:, docs:, refactor:, etc.
    ```
 
-3. **Push and create pull request**
+3. Ensure all tests pass and coverage thresholds are met
+
+   - Pre-commit hooks must pass
+   - Unit tests must pass
+   - Test coverage thresholds must be met
+
+   ```bash
+   task test:be        # Run backend tests
+   task test:fe        # Run frontend tests
+   ```
+
+   Note:
+
+   - shared fixtures (in tests/fixtures/) should be used to avoid duplication
+   - always ensure tests incl. fixtures, documentation and feature are in sync
+
+4. **Push and create pull request**
 
    ```bash
    git push -u origin feature/description
    gh pr create
    ```
-
-4. **Merge after review**
-   - Pre-commit hooks must pass
-   - Squash merge preferred
-   - Delete branch after merge
 
 **Key Principle:** `main` is always deployable. All changes go through PRs.
 

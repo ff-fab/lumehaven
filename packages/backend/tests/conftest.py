@@ -14,13 +14,16 @@ from __future__ import annotations
 
 import json
 import sys
-from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
 
 from lumehaven.core.signal import Signal
+
+# Add tests directory to path so test utilities can be imported
+# e.g., `from tests.fixtures.async_utils import wait_for_condition`
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 if TYPE_CHECKING:
     from pytest import Session
@@ -165,26 +168,6 @@ def pytest_sessionfinish(session: Session, exitstatus: int) -> None:
 
 
 @pytest.fixture
-def signal_factory() -> Generator[object]:
-    """Factory fixture for creating test signals with sensible defaults.
-
-    Usage:
-        def test_something(signal_factory):
-            signal = signal_factory(id="temp", value="21.5", unit="°C")
-    """
-
-    def _create_signal(
-        id: str = "test_signal",
-        value: str = "100",
-        unit: str = "",
-        label: str = "",
-    ) -> Signal:
-        return Signal(id=id, value=value, unit=unit, label=label)
-
-    yield _create_signal
-
-
-@pytest.fixture
 def sample_temperature_signal() -> Signal:
     """A typical temperature signal for testing."""
     return Signal(
@@ -209,26 +192,15 @@ def sample_switch_signal() -> Signal:
 @pytest.fixture
 def sample_signals(
     sample_temperature_signal: Signal, sample_switch_signal: Signal
-) -> list[Signal]:
-    """Collection of sample signals for bulk operations."""
-    return [sample_temperature_signal, sample_switch_signal]
+) -> dict[str, Signal]:
+    """Collection of sample signals for bulk operations.
 
-
-# =============================================================================
-# Async Fixtures
-# =============================================================================
-
-
-@pytest.fixture
-async def async_signal_factory() -> AsyncGenerator[object]:
-    """Async version of signal factory for async test contexts."""
-
-    def _create_signal(
-        id: str = "test_signal",
-        value: str = "100",
-        unit: str = "",
-        label: str = "",
-    ) -> Signal:
-        return Signal(id=id, value=value, unit=unit, label=label)
-
-    yield _create_signal
+    Returns dict keyed by signal ID to match production APIs:
+    - SignalStore.get_all() -> dict[str, Signal]
+    - SignalStore.set_many(signals: dict[str, Signal])
+    - SmartHomeAdapter.get_signals() -> dict[str, Signal]
+    """
+    return {
+        sample_temperature_signal.id: sample_temperature_signal,
+        sample_switch_signal.id: sample_switch_signal,
+    }

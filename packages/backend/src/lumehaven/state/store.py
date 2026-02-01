@@ -164,15 +164,14 @@ class SignalStore:
             except asyncio.QueueFull:
                 self._log_drop_throttled(queue, signal.id)
 
-    # Log throttle interval in seconds (log at most once per interval per subscriber)
-    _DROP_LOG_INTERVAL = 10.0
-
     def _log_drop_throttled(self, queue: asyncio.Queue[Signal], signal_id: str) -> None:
         """Log dropped messages with rate limiting to prevent log flooding.
 
-        Logs immediately on first drop, then at most every _DROP_LOG_INTERVAL
+        Logs immediately on first drop, then at most every drop_log_interval
         seconds per subscriber, summarizing how many were dropped.
         """
+        settings = get_settings()
+        drop_log_interval = settings.drop_log_interval
         now = time.monotonic()
 
         if queue not in self._drop_stats:
@@ -185,11 +184,11 @@ class SignalStore:
         drop_count, last_log_time = self._drop_stats[queue]
         drop_count += 1
 
-        if now - last_log_time >= self._DROP_LOG_INTERVAL:
+        if now - last_log_time >= drop_log_interval:
             # Time to log a summary
             logger.warning(
                 f"Subscriber queue full, dropped {drop_count} updates "
-                f"in last {self._DROP_LOG_INTERVAL:.0f}s (latest: {signal_id})"
+                f"in last {drop_log_interval:.0f}s (latest: {signal_id})"
             )
             # Reset count after logging
             self._drop_stats[queue] = (0, now)
@@ -204,6 +203,27 @@ class SignalStore:
             Number of subscribers.
         """
         return len(self._subscribers)
+
+    def get_metrics(self) -> dict[str, dict[str, int]]:
+        """Get store metrics for monitoring and debugging.
+
+        Returns a structured dictionary with current store state,
+        useful for dashboards, health checks, and testing.
+
+        Returns:
+            Dictionary with metrics grouped by category:
+            - subscribers: total count and slow (backpressured) count
+            - signals: count of stored signals
+        """
+        return {
+            "subscribers": {
+                "total": len(self._subscribers),
+                "slow": len(self._drop_stats),
+            },
+            "signals": {
+                "stored": len(self._signals),
+            },
+        }
 
 
 # Singleton instance
