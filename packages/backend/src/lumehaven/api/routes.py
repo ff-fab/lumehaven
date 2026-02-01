@@ -83,6 +83,17 @@ class HealthResponse(BaseModel):
     adapters: list[AdapterStatus]
 
 
+class MetricsResponse(BaseModel):
+    """API response for internal metrics.
+
+    Structured metrics for monitoring dashboards and debugging.
+    Future: May be replaced with Prometheus-format /metrics endpoint.
+    """
+
+    subscribers: dict[str, int]
+    signals: dict[str, int]
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -133,6 +144,27 @@ async def health_check(
         signal_count=signal_count,
         subscriber_count=store.subscriber_count(),
         adapters=adapter_statuses,
+    )
+
+
+@router.get("/metrics", response_model=MetricsResponse, tags=["system"])
+async def metrics(
+    store: Annotated[SignalStore, Depends(get_signal_store)],
+) -> MetricsResponse:
+    """Internal metrics for monitoring.
+
+    Returns store metrics useful for dashboards and debugging:
+    - subscribers.total: Number of active SSE subscribers
+    - subscribers.slow: Subscribers experiencing backpressure (dropped messages)
+    - signals.stored: Number of signals in the store
+
+    Note: This returns JSON. For Prometheus scraping, a future endpoint
+    will provide metrics in Prometheus text format.
+    """
+    store_metrics = store.get_metrics()
+    return MetricsResponse(
+        subscribers=store_metrics["subscribers"],
+        signals=store_metrics["signals"],
     )
 
 

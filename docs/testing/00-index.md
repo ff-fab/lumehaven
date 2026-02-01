@@ -33,6 +33,8 @@
    markers
 5. [Tooling & Configuration](05-tooling-configuration.md) — pytest, Robot Framework, CI
    setup
+6. [Test File Template](06-test-file-template-python.md) — Ready-to-copy template with
+   all conventions
 
 ## Current State
 

@@ -72,6 +72,8 @@ All blocking architectural decisions have been made and documented as ADRs:
 
 | Task                        | Status |
 | --------------------------- | ------ |
+| Add SBOM functionality      | ❌     |
+| Prometheus metrics endpoint | ❌     |
 | Weather forecast display    | ❌     |
 | Temperature monitoring      | ❌     |
 | Camera/media integration    | ❌     |
