@@ -46,6 +46,15 @@ All blocking architectural decisions have been made and documented as ADRs:
 | Set up Zensical documentation site      | ❌      |
 | Add mkdocstrings for API documentation  | ❌      |
 
+## ⏳ Phase 2b (Interrupt): Implement Beads
+
+| Task                                   | Status |
+| -------------------------------------- | ------ |
+| Install beads CLI\* for agent planning | ❌     |
+| Integrate beads and transfer roadmap   | ❌     |
+
+\*) https://github.com/steveyegge/beads
+
 ## ⏳ Phase 3: Frontend Implementation
 
 | Task                                        | Status |
