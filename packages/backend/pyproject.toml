@@ -69,6 +69,7 @@ exclude_lines = [
     "@abstractmethod",
     "def __repr__",
     'if __name__ == "__main__":',
+    "^\\s*\\.\\.\\.$",  # Protocol ellipsis stubs
 ]
 fail_under = 80
 show_missing = true
