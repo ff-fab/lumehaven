@@ -94,13 +94,18 @@ documents techniques in module docstring, individual tests document non-obvious 
 `aclose()`, use of `asyncio.Event()` for synchronization, `contextlib.suppress()` for
 cancellation handling. Queue overflow and throttled logging paths fully tested.
 
-### Phase 3: Configuration (High Risk)
+### ✅ Phase 3: Configuration (Complete)
 
 **Goal:** Test startup-critical config parsing
 
-| Step | File        | What to Test                                            |
-| ---- | ----------- | ------------------------------------------------------- |
-| 3.1  | `config.py` | Environment loading, YAML parsing, discriminated unions |
+| Step | File        | Tests | Coverage | Techniques Used                                       |
+| ---- | ----------- | ----- | -------- | ----------------------------------------------------- |
+| 3.1  | `config.py` | 37    | 100%     | Specification, Decision Table, Branch, Error Guessing |
+
+**Key outcome:** Discriminated union routing verified via Decision Table technique.
+Environment variable expansion tested with Branch Coverage for all type dispatch paths.
+YAML loading error cases exhaustively tested with Error Guessing. Shared fixtures
+(`reset_settings_cache`, `tmp_config_file`) added to `tests/fixtures/config.py`.
 
 ### Phase 4: Adapter Protocol (Low Risk)
 
