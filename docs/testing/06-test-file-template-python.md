@@ -19,6 +19,9 @@
 
 ## Complete Template
 
+Note that big headlines (embraced in `===`) are only to divide the test file in major
+sections. They are not to be used to highlight individual test classes.
+
 ```python
 """Unit tests for <module_path> — <brief description>.
 

@@ -25,6 +25,13 @@ from lumehaven.core.signal import Signal
 # e.g., `from tests.fixtures.async_utils import wait_for_condition`
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Import shared fixtures from fixtures/ to make them available to all tests
+# pytest_plugins would be cleaner but requires package structure changes
+from tests.fixtures.config import (  # noqa: E402, F401
+    _reset_settings_cache,
+    tmp_config_file,
+)
+
 if TYPE_CHECKING:
     from pytest import Session
 
