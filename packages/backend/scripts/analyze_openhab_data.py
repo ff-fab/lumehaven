@@ -326,6 +326,7 @@ def parse_sse_events(path: Path, report: AnalysisReport) -> None:
                 if len(info.example_payloads) < 5:
                     info.example_payloads.append(payload)
             except json.JSONDecodeError:
+                # Skip malformed JSON lines silently - common in SSE logs
                 pass
 
 

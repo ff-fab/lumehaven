@@ -1,9 +1,21 @@
 #!/bin/bash
-# filepath: /workspace/record_event_stream.sh
+# filepath: packages/backend/tests/fixtures/scripts/record_oh_event_stream.sh
 # Records OpenHAB SSE events using the exact adapter flow
+#
+# Usage:
+#   OPENHAB_URL=http://your-openhab:8080 ./record_oh_event_stream.sh
+#   ./record_oh_event_stream.sh  # Prompts for URL if not set
 
-OPENHAB_URL="http://192.168.12.202:8080"
-DURATION=300  # 5 minutes
+# Check for environment variable, otherwise prompt user
+if [ -z "$OPENHAB_URL" ]; then
+    read -rp "Enter OpenHAB URL (e.g., http://192.168.1.100:8080): " OPENHAB_URL
+    if [ -z "$OPENHAB_URL" ]; then
+        echo "Error: No URL provided. Set OPENHAB_URL or enter when prompted."
+        exit 1
+    fi
+fi
+
+DURATION="${DURATION:-300}"  # 5 minutes default, also configurable
 
 echo "=== OpenHAB SSE Event Recorder ==="
 echo "URL: $OPENHAB_URL"
@@ -13,6 +25,12 @@ echo ""
 # Step 1: Fetch item names
 echo "Step 1: Fetching item names..."
 ITEMS_JSON=$(curl -s "${OPENHAB_URL}/rest/items?fields=name")
+if [ -z "$ITEMS_JSON" ] || [ "$ITEMS_JSON" = "[]" ]; then
+    echo "Error: Could not fetch items from $OPENHAB_URL"
+    echo "Check that OpenHAB is running and accessible."
+    exit 1
+fi
+
 ITEM_NAMES=$(echo "$ITEMS_JSON" | python3 -c "
 import sys, json
 items = json.load(sys.stdin)
@@ -30,15 +48,15 @@ echo "Recording to /tmp/openhab_sse_events.log"
 echo "Press Ctrl+C to stop early"
 echo "---"
 
-python3 << 'PYTHON_SCRIPT'
+python3 - "$OPENHAB_URL" "$DURATION" << 'PYTHON_SCRIPT'
 import json
 import sys
 import time
-import signal
 from urllib.request import urlopen, Request
 
-OPENHAB_URL = "http://192.168.12.202:8080"
-DURATION = 300
+# Get configuration from command line arguments
+OPENHAB_URL = sys.argv[1]
+DURATION = int(sys.argv[2]) if len(sys.argv) > 2 else 300
 OUTPUT_FILE = "/tmp/openhab_sse_events.log"
 
 # Get item names

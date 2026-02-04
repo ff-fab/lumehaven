@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json as json_module
 import re
+from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING
 
 import httpx
@@ -32,7 +33,7 @@ class AsyncIteratorByteStream(httpx.AsyncByteStream):
     def __init__(self, lines: list[bytes]) -> None:
         self._lines = lines
 
-    async def __aiter__(self):  # noqa: ANN204
+    async def __aiter__(self) -> AsyncIterator[bytes]:
         for line in self._lines:
             yield line
 
