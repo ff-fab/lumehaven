@@ -153,7 +153,9 @@ class TestGetSignal:
         signal = await adapter.get_signal("LivingRoom_Temperature")
 
         assert signal.id == "oh:LivingRoom_Temperature"
+        assert signal.value == "21.5"
         assert signal.unit == "°C"
+        assert signal.label == "Living Room Temperature"
 
     async def test_raises_not_found_for_missing_item(
         self,

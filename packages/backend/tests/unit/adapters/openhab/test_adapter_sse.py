@@ -41,7 +41,6 @@ class TestSubscribeEvents:
     """Tests for SSE event subscription.
 
     Technique: State Transition Testing — SSE connection lifecycle.
-    Note: These tests are more complex due to async generator behavior.
     """
 
     async def test_loads_metadata_if_not_present(

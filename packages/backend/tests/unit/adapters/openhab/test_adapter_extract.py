@@ -222,13 +222,13 @@ class TestExtractSignalEdgeCases:
     Technique: Error Guessing — anticipating specific failure modes.
     """
 
-    def test_empty_label_uses_name(self, adapter: OpenHABAdapter) -> None:
-        """Items with empty label use name as label."""
+    def test_empty_label_falls_back_to_name(self, adapter: OpenHABAdapter) -> None:
+        """Items with empty label fall back to using name as label."""
         adapter._default_units = {}
 
         signal, _ = adapter._extract_signal(NO_LABEL_ITEM)
 
-        assert signal.label == ""  # Current behavior preserves empty label
+        assert signal.label == NO_LABEL_ITEM["name"]
 
     def test_special_states_preserved(self, adapter: OpenHABAdapter) -> None:
         """UNDEF and NULL states are preserved as-is."""

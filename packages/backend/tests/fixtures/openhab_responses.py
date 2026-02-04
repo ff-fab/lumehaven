@@ -531,10 +531,6 @@ ALL_ITEMS = [
     DATETIME_ITEM,
     UNDEF_ITEM,
     NULL_ITEM,
-]
-
-# Extended items including new types from analysis
-ALL_ITEMS_EXTENDED = ALL_ITEMS + [
     PLAYER_ITEM,
     GROUP_ITEM,
     COLOR_ITEM,

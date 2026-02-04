@@ -4,14 +4,13 @@ Covers:
 - Constructor behavior and defaults
 - Connection state management
 - Client lifecycle (open/close)
-- _ItemMetadata dataclass
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from lumehaven.adapters.openhab.adapter import OpenHABAdapter, _ItemMetadata
+from lumehaven.adapters.openhab.adapter import OpenHABAdapter
 
 if TYPE_CHECKING:
     from pytest_httpx import HTTPXMock
@@ -46,14 +45,6 @@ class TestAdapterInit:
         assert adapter.prefix == "co"
         assert adapter.base_url == "http://custom:9090"  # trailing slash stripped
         assert adapter.tag == "MyTag"
-
-    def test_prefixed_id_generation(self) -> None:
-        """Prefixed IDs follow the format 'prefix:item_name'."""
-        adapter = OpenHABAdapter(base_url="http://openhab:8080", prefix="oh")
-
-        result = adapter._prefixed_id("LivingRoom_Temperature")
-
-        assert result == "oh:LivingRoom_Temperature"
 
 
 class TestAdapterLifecycle:
@@ -103,36 +94,3 @@ class TestAdapterLifecycle:
         await adapter.close()  # Should not raise
 
         assert not adapter.is_connected()
-
-
-class TestItemMetadata:
-    """Tests for _ItemMetadata dataclass.
-
-    Technique: Specification-based Testing — verifying metadata structure.
-    """
-
-    def test_default_values(self) -> None:
-        """Metadata has sensible defaults."""
-        metadata = _ItemMetadata()
-
-        assert metadata.unit == ""
-        assert metadata.format == "%s"
-        assert not metadata.is_quantity_type
-        assert metadata.event_state_contains_unit
-        assert metadata.label == ""
-
-    def test_custom_values(self) -> None:
-        """Metadata accepts custom values."""
-        metadata = _ItemMetadata(
-            unit="°C",
-            format="%.1f",
-            is_quantity_type=True,
-            event_state_contains_unit=True,
-            label="Temperature",
-        )
-
-        assert metadata.unit == "°C"
-        assert metadata.format == "%.1f"
-        assert metadata.is_quantity_type
-        assert metadata.event_state_contains_unit
-        assert metadata.label == "Temperature"
