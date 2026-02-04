@@ -182,10 +182,6 @@ NULL_ITEM = {
     "groupNames": [],
 }
 
-# =============================================================================
-# New Item Types (discovered from live data + OpenHAB 5.x docs)
-# =============================================================================
-
 # Player item - media player control (PLAY, PAUSE, NEXT, PREVIOUS, REWIND, FASTFORWARD)
 PLAYER_ITEM = {
     "link": "http://openhab:8080/rest/items/MediaRoom_Player",
@@ -246,7 +242,53 @@ LOCATION_ITEM = {
 # Image item - base64 encoded image data
 IMAGE_ITEM = {
     "link": "http://openhab:8080/rest/items/Camera_Snapshot",
-    "state": "data:image/png;base64,iVBORw0KGgoAAAANS...",
+    "state": (
+        "data:image/png;base64,"
+        "iVBORw0KGgoAAAANSUhEUgAAANwAAADcCAYAAAAbWs+BAAAAAXNSR0IArs4c6QAAAARnQU1BAACx"
+        "jwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAGHaVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAAA"
+        "ADw/eHBhY2tldCBiZWdpbj0n77u/JyBpZD0nVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkJz8+DQo8"
+        "eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIj48cmRmOlJERiB4bWxuczpyZGY9Imh0"
+        "dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPjxyZGY6RGVzY3JpcHRp"
+        "b24gcmRmOmFib3V0PSJ1dWlkOmZhZjViZGQ1LWJhM2QtMTFkYS1hZDMxLWQzM2Q3NTE4MmYxYiIg"
+        "eG1sbnM6dGlmZj0iaHR0cDovL25zLmFkb2JlLmNvbS90aWZmLzEuMC8iPjx0aWZmOk9yaWVudGF0"
+        "aW9uPjE8L3RpZmY6T3JpZW50YXRpb24+PC9yZGY6RGVzY3JpcHRpb24+PC9yZGY6UkRGPjwveDp4"
+        "bXBtZXRhPg0KPD94cGFja2V0IGVuZD0ndyc/PiyUmAsAAAe8SURBVHhe7d1tc9NKG4bhe2UnTRQh"
+        "lL6xgwUMjz//x89/d5pS2hDHcuydrcftIqNobQFcmu1Oo8ZM4qdOMNMztnVypJss90nAW4amba6t"
+        "/rp9IVFaE6fAO5WVNKFYrqQFE9frB7BwV1So5AeSFre5Irg4M6UFNLDRf75Le9/jAJEBd1XTF9K"
+        "CqcvVo3gMBHTPj0+fbJ6BIdJmIJC+kpR9xe1eEJwmExSo338dlGLJwSHyQyj3CPF9GAx+3IEh0kl"
+        "NerSE0m2iJGO4DCpYZR7oD59u4hRjuAwOVNUF39Q0r3qF1AIDgVISlprF5/efl0rgkMRhqnlQ+3j"
+        "k6qnlgSHYph6del7hfS1pP705SoQHIpiknbxWT4gXt9IR3AoTBz258ILJZ1Vt4hCcCiOKSjqQrv4"
+        "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 ycoSL3B"
+        "abiMwz4kVitRhKqDG4+Jdyyeoo oCxVB2c2jHBMK1GKuoPTcDmGfUisVqII1QenPMa uy4kVitRAK"
+        "oPTjk4RjhMbRHBmaSQ3nMDcrDZYgJTvk84tz8A1NbRHCWg2OEw9QWEZzl4BjhMbVHBASVYVnDsv2"
+        "FiiwnOJBnFYWKLCU7jAMd+HCa2mOBMkhF7cZjYYoKTDe++pcStdjCtxQQnSezFYWqLCS7d/gNMZz"
+        "HBASVYVnDsv2FiiwnOJBnFYWKLCU7jAMd+HCb0F34aoxaselDGAAAAAElFTkSuQmCC"
+    ),
     "type": "Image",
     "name": "Camera_Snapshot",
     "label": "Camera Snapshot",
