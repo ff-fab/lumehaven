@@ -135,21 +135,34 @@ Table for `format_value()` condition combinations. Encoding edge cases tested
 (double-encoded UTF-8, CJK symbols, Unicode normalization scenarios). Test inputs
 derived from shared OpenHAB fixtures (`tests/fixtures/openhab_responses.py`).
 
-### Phase 6: OpenHAB Adapter (Critical Risk)
+### ✅ Phase 6: OpenHAB Adapter (Complete)
 
 **Goal:** Most complex component, state transitions, external I/O mocking
 
-| Step | File                          | What to Test                          |
-| ---- | ----------------------------- | ------------------------------------- |
-| 6.1  | `adapters/openhab/adapter.py` | Parsing, SSE handling, error recovery |
+| Step | File                          | Tests | Coverage | Techniques Used                                              |
+| ---- | ----------------------------- | ----- | -------- | ------------------------------------------------------------ |
+| 6.1  | `adapters/openhab/adapter.py` | 40    | 91%      | State Transition, Specification, Branch, Error Guessing, BVA |
 
-### Phase 7: Adapter Manager (Critical Risk)
+**Key outcome:** Adapter tests split into 5 focused modules (init, api, extract,
+process, sse) for maintainability. External I/O mocked via `respx` for HTTP and
+AsyncIterator mocks for SSE. Connection state transitions verified. Error recovery
+tested via Error Guessing. Shared fixtures in `tests/unit/adapters/openhab/conftest.py`
+and `tests/fixtures/openhab_sse.py`.
+
+### ✅ Phase 7: Adapter Manager (Complete)
 
 **Goal:** Lifecycle state machine testing
 
-| Step | File                  | What to Test                                  |
-| ---- | --------------------- | --------------------------------------------- |
-| 7.1  | `adapters/manager.py` | State transitions, retry logic, BVA on delays |
+| Step | File                  | Tests | Coverage | Techniques Used                                      |
+| ---- | --------------------- | ----- | -------- | ---------------------------------------------------- |
+| 7.1  | `adapters/manager.py` | 28    | 91%      | State Transition, BVA, Specification, Error Guessing |
+
+**Key outcome:** State transitions verified (disconnected→connected, connection failure,
+stop_all cleanup). Retry delay exponential backoff tested with BVA at boundary points
+(INITIAL=5s, mid-range, MAX=300s). MockAdapter class implements SmartHomeAdapter
+protocol with configurable failure modes. Sociable unit tests use real SignalStore with
+injected mock adapters. Test classes organized by functionality: Registration,
+Lifecycle, RetryLogic, SyncBehavior, MultipleAdapters.
 
 ### Phase 8: API Layer (Medium Risk)
 

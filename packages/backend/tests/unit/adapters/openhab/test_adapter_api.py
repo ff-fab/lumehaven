@@ -16,7 +16,7 @@ import httpx
 import pytest
 
 from lumehaven.adapters.openhab.adapter import OpenHABAdapter
-from lumehaven.core.exceptions import SignalNotFoundError, SmartHomeConnectionError
+from lumehaven.core.exceptions import SmartHomeConnectionError
 from tests.fixtures.openhab_responses import ALL_ITEMS, TEMPERATURE_ITEM
 
 if TYPE_CHECKING:
@@ -157,13 +157,13 @@ class TestGetSignal:
         assert signal.unit == "°C"
         assert signal.label == "Living Room Temperature"
 
-    async def test_raises_not_found_for_missing_item(
+    async def test_returns_none_for_missing_item(
         self,
         adapter: OpenHABAdapter,
         mock_root_response: dict,
         httpx_mock: HTTPXMock,
     ) -> None:
-        """Raises SignalNotFoundError for 404 response."""
+        """Returns None for 404 response (item not found)."""
         httpx_mock.add_response(
             url="http://openhab:8080/rest/", json=mock_root_response
         )
@@ -172,10 +172,9 @@ class TestGetSignal:
             status_code=404,
         )
 
-        with pytest.raises(SignalNotFoundError) as exc_info:
-            await adapter.get_signal("NonExistent")
+        result = await adapter.get_signal("NonExistent")
 
-        assert "NonExistent" in str(exc_info.value)
+        assert result is None
 
 
 class TestGetSignalHTTPStatusError:

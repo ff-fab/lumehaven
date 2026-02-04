@@ -22,7 +22,7 @@ from lumehaven.adapters.openhab.units import (
     format_value,
     get_default_units,
 )
-from lumehaven.core.exceptions import SignalNotFoundError, SmartHomeConnectionError
+from lumehaven.core.exceptions import SmartHomeConnectionError
 from lumehaven.core.signal import Signal
 
 logger = logging.getLogger(__name__)
@@ -185,17 +185,16 @@ class OpenHABAdapter:
         except httpx.HTTPError as e:
             raise SmartHomeConnectionError("openhab", self.base_url, e) from e
 
-    async def get_signal(self, signal_id: str) -> Signal:
+    async def get_signal(self, signal_id: str) -> Signal | None:
         """Retrieve a specific signal from OpenHAB.
 
         Args:
             signal_id: The OpenHAB item name.
 
         Returns:
-            Signal object for the item.
+            Signal object for the item, or None if not found.
 
         Raises:
-            SignalNotFoundError: If the item doesn't exist.
             SmartHomeConnectionError: If connection fails.
         """
         await self._ensure_initialized()
@@ -207,7 +206,7 @@ class OpenHABAdapter:
             )
 
             if response.status_code == 404:
-                raise SignalNotFoundError(signal_id)
+                return None
 
             response.raise_for_status()
             item = response.json()

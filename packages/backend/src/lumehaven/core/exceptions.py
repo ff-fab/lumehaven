@@ -2,7 +2,6 @@
 
 Exception hierarchy:
     LumehavenError (base)
-    ├── SignalNotFoundError
     ├── SmartHomeConnectionError
     └── AdapterError
 """
@@ -16,18 +15,6 @@ class LumehavenError(Exception):
     """
 
     pass
-
-
-class SignalNotFoundError(LumehavenError):
-    """Raised when a requested signal does not exist.
-
-    Attributes:
-        signal_id: The ID of the signal that was not found.
-    """
-
-    def __init__(self, signal_id: str) -> None:
-        self.signal_id = signal_id
-        super().__init__(f"Signal not found: {signal_id}")
 
 
 class SmartHomeConnectionError(LumehavenError):

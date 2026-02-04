@@ -50,6 +50,13 @@ class AdapterManager:
     """Manages multiple adapters with independent lifecycle.
 
     Handles startup, sync tasks, retry logic, and graceful shutdown.
+
+    Args:
+        initial_retry_delay: Initial delay before first retry (default: 5.0s).
+        max_retry_delay: Maximum delay cap for exponential backoff (default: 300s).
+        retry_backoff_factor: Multiplier for exponential backoff (default: 2.0).
+
+    These parameters can be overridden for testing with shorter delays.
     """
 
     states: dict[str, AdapterState] = field(default_factory=dict)
@@ -58,6 +65,10 @@ class AdapterManager:
         default=lambda: None,  # type: ignore[assignment]
         repr=False,
     )
+    # Configurable retry settings (injectable for testing)
+    initial_retry_delay: float = field(default=INITIAL_RETRY_DELAY)
+    max_retry_delay: float = field(default=MAX_RETRY_DELAY)
+    retry_backoff_factor: float = field(default=RETRY_BACKOFF_FACTOR)
 
     def __post_init__(self) -> None:
         """Initialize store getter after dataclass init."""
@@ -82,7 +93,10 @@ class AdapterManager:
                 f"Duplicate adapter name '{name}' detected. "
                 "Adapter names must be unique. Check your adapter configuration."
             )
-        self.states[name] = AdapterState(adapter=adapter)
+        self.states[name] = AdapterState(
+            adapter=adapter,
+            retry_delay=self.initial_retry_delay,
+        )
 
     @property
     def adapters(self) -> list[SmartHomeAdapter]:
@@ -125,7 +139,7 @@ class AdapterManager:
             )
             state.connected = True
             state.error = None
-            state.retry_delay = INITIAL_RETRY_DELAY
+            state.retry_delay = self.initial_retry_delay
 
         except Exception as e:
             logger.error(f"Adapter '{name}' failed to connect: {e}")
@@ -162,8 +176,8 @@ class AdapterManager:
             # Wait before reconnecting (applies to both normal end and errors)
             await asyncio.sleep(state.retry_delay)
             state.retry_delay = min(
-                state.retry_delay * RETRY_BACKOFF_FACTOR,
-                MAX_RETRY_DELAY,
+                state.retry_delay * self.retry_backoff_factor,
+                self.max_retry_delay,
             )
 
             # Try to reconnect
@@ -172,7 +186,7 @@ class AdapterManager:
                 await store.set_many(signals)
                 state.connected = True
                 state.error = None
-                state.retry_delay = INITIAL_RETRY_DELAY
+                state.retry_delay = self.initial_retry_delay
                 logger.info(f"Adapter '{name}' reconnected")
             except Exception as reconnect_error:
                 logger.error(f"Adapter '{name}' reconnect failed: {reconnect_error}")
@@ -187,8 +201,8 @@ class AdapterManager:
             state = self.states[name]
             await asyncio.sleep(state.retry_delay)
             state.retry_delay = min(
-                state.retry_delay * RETRY_BACKOFF_FACTOR,
-                MAX_RETRY_DELAY,
+                state.retry_delay * self.retry_backoff_factor,
+                self.max_retry_delay,
             )
             del self._retry_tasks[name]
             await self._start_adapter(name, state, self._get_store())

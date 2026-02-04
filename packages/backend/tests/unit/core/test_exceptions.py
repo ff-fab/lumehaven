@@ -11,7 +11,6 @@ import pytest
 from lumehaven.core.exceptions import (
     AdapterError,
     LumehavenError,
-    SignalNotFoundError,
     SmartHomeConnectionError,
 )
 
@@ -26,11 +25,10 @@ class TestExceptionHierarchy:
     @pytest.mark.parametrize(
         "exception_class",
         [
-            SignalNotFoundError,
             SmartHomeConnectionError,
             AdapterError,
         ],
-        ids=["SignalNotFoundError", "SmartHomeConnectionError", "AdapterError"],
+        ids=["SmartHomeConnectionError", "AdapterError"],
     )
     def test_all_exceptions_inherit_from_lumehaven_error(
         self, exception_class: type
@@ -46,22 +44,6 @@ class TestLumehavenError:
         """LumehavenError can be raised with a message."""
         with pytest.raises(LumehavenError, match="test error"):
             raise LumehavenError("test error")
-
-
-class TestSignalNotFoundError:
-    """Specification-based tests for SignalNotFoundError."""
-
-    def test_stores_signal_id(self) -> None:
-        """SignalNotFoundError stores the signal_id attribute."""
-        error = SignalNotFoundError("living_room_temp")
-
-        assert error.signal_id == "living_room_temp"
-
-    def test_message_format(self) -> None:
-        """SignalNotFoundError generates correct message format."""
-        error = SignalNotFoundError("living_room_temp")
-
-        assert str(error) == "Signal not found: living_room_temp"
 
 
 class TestSmartHomeConnectionError:

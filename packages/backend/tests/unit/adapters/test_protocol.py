@@ -74,7 +74,7 @@ class MissingMethodAdapter:
     async def get_signals(self) -> dict[str, Signal]:
         return {}
 
-    async def get_signal(self, signal_id: str) -> Signal:
+    async def get_signal(self, signal_id: str) -> Signal | None:
         return Signal(id=signal_id, value="test")
 
     def subscribe_events(self) -> AsyncIterator[Signal]:
@@ -108,7 +108,7 @@ class MissingPropertyAdapter:
     async def get_signals(self) -> dict[str, Signal]:
         return {}
 
-    async def get_signal(self, signal_id: str) -> Signal:
+    async def get_signal(self, signal_id: str) -> Signal | None:
         return Signal(id=signal_id, value="test")
 
     def subscribe_events(self) -> AsyncIterator[Signal]:
