@@ -218,8 +218,6 @@ class OpenHABAdapter:
             return signal
 
         except httpx.HTTPError as e:
-            if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 404:
-                raise SignalNotFoundError(signal_id) from e
             raise SmartHomeConnectionError("openhab", self.base_url, e) from e
 
     async def subscribe_events(self) -> AsyncIterator[Signal]:
@@ -295,7 +293,7 @@ class OpenHABAdapter:
             Tuple of (Signal, ItemMetadata for event processing).
         """
         name = item["name"]
-        label = item.get("label", "")
+        label = item.get("label") or name  # Fall back to name if label is empty
         state = item.get("state", "")
         item_type = item.get("type", "")
 
