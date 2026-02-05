@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING
 
 from httpx import AsyncClient
 
-from lumehaven.core.signal import Signal
 from lumehaven.state.store import SignalStore
+from tests.fixtures.signals import create_signal
 from tests.unit.api.conftest import MockAdapter, MockAdapterManager, MockAdapterState
 
 if TYPE_CHECKING:
@@ -45,8 +45,7 @@ class TestHealthStatus:
         Condition: signal_count > 0 AND has_adapters AND all_connected → healthy
         """
         # Arrange — add signals to store
-        signal = Signal(id="test:temp", value="21.5", unit="°C", label="Temperature")
-        await signal_store.set(signal)
+        await signal_store.set(create_signal(id="test:temp"))
 
         # Arrange — add connected adapter
         adapter = mock_adapter_factory(_name="openhab", _adapter_type="openhab")
@@ -97,8 +96,7 @@ class TestHealthStatus:
         Condition: has_adapters == False → degraded
         """
         # Arrange — signals exist but no adapters
-        signal = Signal(id="test:temp", value="21.5", unit="°C", label="Temperature")
-        await signal_store.set(signal)
+        await signal_store.set(create_signal(id="test:temp"))
         # mock_adapter_manager.states is empty by default
 
         # Act
@@ -122,8 +120,7 @@ class TestHealthStatus:
         Condition: all_connected == False → degraded
         """
         # Arrange — signals and adapter, but adapter disconnected
-        signal = Signal(id="test:temp", value="21.5", unit="°C", label="Temperature")
-        await signal_store.set(signal)
+        await signal_store.set(create_signal(id="test:temp"))
 
         adapter = mock_adapter_factory(_name="openhab", _adapter_type="openhab")
         mock_adapter_manager.states["openhab"] = MockAdapterState(
@@ -151,8 +148,7 @@ class TestHealthStatus:
         Condition: Multiple adapters, one disconnected → degraded
         """
         # Arrange
-        signal = Signal(id="test:temp", value="21.5", unit="°C", label="Temperature")
-        await signal_store.set(signal)
+        await signal_store.set(create_signal(id="test:temp"))
 
         connected_adapter = mock_adapter_factory(
             _name="openhab", _adapter_type="openhab"
@@ -191,8 +187,7 @@ class TestHealthResponse:
         """Health response includes correct signal_count."""
         # Arrange — add 3 signals
         for i in range(3):
-            signal = Signal(id=f"test:sig_{i}", value=str(i), unit="", label=f"Sig {i}")
-            await signal_store.set(signal)
+            await signal_store.set(create_signal(id=f"test:sig_{i}"))
 
         # Act
         response = await async_client.get("/health")
