@@ -20,7 +20,6 @@ import pytest
 from httpx import AsyncClient
 
 from lumehaven.api.sse import signal_event_generator
-from lumehaven.core.signal import Signal
 from lumehaven.state.store import SignalStore
 from tests.fixtures.async_utils import wait_for_condition
 from tests.fixtures.signals import create_signal
@@ -62,7 +61,7 @@ class TestSSEEventFormat:
         try:
             await asyncio.wait_for(collector_task, timeout=1.0)
         except TimeoutError:
-            pass
+            pytest.fail("Timed out waiting for SSE event")
         finally:
             collector_task.cancel()
             publisher_task.cancel()
@@ -81,7 +80,7 @@ class TestSSEEventFormat:
     ) -> None:
         """Event data is JSON-encoded Signal with all fields."""
         # Arrange
-        signal = Signal(
+        signal = create_signal(
             id="test:temp",
             value="21.5",
             unit="°C",
@@ -110,7 +109,7 @@ class TestSSEEventFormat:
         try:
             await asyncio.wait_for(collector_task, timeout=1.0)
         except TimeoutError:
-            pass
+            pytest.fail("Timed out waiting for SSE event")
         finally:
             collector_task.cancel()
             publisher_task.cancel()
@@ -151,7 +150,7 @@ class TestSSESubscription:
                     await asyncio.sleep(0.1)
                     break
             except asyncio.CancelledError:
-                pass
+                pass  # Expected — generator cancelled during cleanup
 
         # Act
         task = asyncio.create_task(run_generator_briefly())
@@ -205,7 +204,10 @@ class TestSSESubscription:
         try:
             await asyncio.wait_for(collector_task, timeout=2.0)
         except TimeoutError:
-            pass
+            pytest.fail(
+                f"Timed out waiting for 2 SSE events; received {len(received)} "
+                "event(s) within 2.0 seconds."
+            )
         finally:
             collector_task.cancel()
             publisher_task.cancel()
@@ -335,7 +337,11 @@ class TestSSEEndpoint:
                     async for _ in response.aiter_lines():
                         break
         except TimeoutError:
-            pass  # Timeout is acceptable for this test
+            # Timeout is acceptable here — the primary assertions (status_code,
+            # content-type) run immediately when the stream opens. The timeout
+            # only fires if aiter_lines() blocks, which means test infrastructure
+            # failed to deliver the event, not a production code failure.
+            pass
         finally:
             publisher.cancel()
             with contextlib.suppress(asyncio.CancelledError):

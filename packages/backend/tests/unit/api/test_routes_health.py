@@ -13,16 +13,12 @@ Coverage Target: Medium Risk (api/routes.py)
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
 from httpx import AsyncClient
 
-from lumehaven.state.store import SignalStore
+from lumehaven.state.store import SignalStore, get_signal_store
 from tests.fixtures.signals import create_signal
 from tests.unit.api.conftest import MockAdapter, MockAdapterManager, MockAdapterState
-
-if TYPE_CHECKING:
-    pass
 
 
 class TestHealthStatus:
@@ -298,7 +294,3 @@ class TestHealthGracefulDegradation:
         data = response.json()
         assert data["status"] == "degraded"
         assert data["adapters"] == []
-
-
-# Import needed for test above
-from lumehaven.state.store import get_signal_store  # noqa: E402
