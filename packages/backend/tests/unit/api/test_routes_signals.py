@@ -16,7 +16,6 @@ import pytest
 from httpx import AsyncClient
 
 from lumehaven.api.routes import SignalResponse, SignalsResponse
-from lumehaven.core.signal import Signal
 from lumehaven.state.store import SignalStore
 from tests.fixtures.signals import (
     ALL_TEST_SIGNALS,
@@ -93,7 +92,7 @@ class TestListSignals:
     ) -> None:
         """Each signal in response includes id, value, unit, label."""
         # Arrange
-        signal = Signal(
+        signal = create_signal(
             id="test:temp",
             value="21.5",
             unit="°C",
@@ -126,7 +125,7 @@ class TestGetSignal:
     ) -> None:
         """Returns signal data for existing signal_id."""
         # Arrange
-        signal = Signal(
+        signal = create_signal(
             id="oh:LivingRoom_Temp",
             value="21.5",
             unit="°C",
@@ -172,7 +171,7 @@ class TestGetSignal:
         Technique: Error Guessing — URL path parameter edge case.
         """
         # Arrange
-        signal = Signal(
+        signal = create_signal(
             id="oh:Floor_1_Room_2_Temp",
             value="20.0",
             unit="°C",
@@ -197,7 +196,7 @@ class TestSignalResponseModel:
     def test_from_signal_preserves_all_fields(self) -> None:
         """SignalResponse.from_signal() creates response with all fields."""
         # Arrange
-        signal = Signal(
+        signal = create_signal(
             id="test:id",
             value="42",
             unit="kWh",
@@ -216,7 +215,7 @@ class TestSignalResponseModel:
     def test_from_signal_handles_empty_strings(self) -> None:
         """from_signal() handles empty unit and label correctly."""
         # Arrange
-        signal = Signal(id="test:switch", value="ON", unit="", label="")
+        signal = create_signal(id="test:switch", value="ON", unit="", label="")
 
         # Act
         response = SignalResponse.from_signal(signal)
