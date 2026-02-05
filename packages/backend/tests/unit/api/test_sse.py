@@ -22,6 +22,7 @@ from httpx import AsyncClient
 from lumehaven.api.sse import signal_event_generator
 from lumehaven.core.signal import Signal
 from lumehaven.state.store import SignalStore
+from tests.fixtures.async_utils import wait_for_condition
 from tests.fixtures.signals import create_signal
 
 
@@ -148,7 +149,13 @@ class TestSSESubscription:
 
         # Act
         task = asyncio.create_task(run_generator_briefly())
-        await asyncio.sleep(0.05)  # Let generator start
+
+        # Wait for subscription to be registered (condition-based, not fixed sleep)
+        await wait_for_condition(
+            lambda: signal_store.subscriber_count() >= initial_count + 1,
+            timeout=1.0,
+            description="subscription registration",
+        )
 
         # Assert — subscriber count increased while generator running
         assert signal_store.subscriber_count() >= initial_count + 1
@@ -249,7 +256,13 @@ class TestSSEClientDisconnect:
                 pass
 
         task = asyncio.create_task(run_generator())
-        await asyncio.sleep(0.05)  # Let it subscribe
+
+        # Wait for subscription (condition-based)
+        await wait_for_condition(
+            lambda: signal_store.subscriber_count() == initial_count + 1,
+            timeout=1.0,
+            description="subscription registration",
+        )
 
         # Verify subscribed
         assert signal_store.subscriber_count() == initial_count + 1
@@ -259,8 +272,12 @@ class TestSSEClientDisconnect:
         with contextlib.suppress(asyncio.CancelledError):
             await task
 
-        # Allow cleanup to complete
-        await asyncio.sleep(0.01)
+        # Wait for cleanup to complete (condition-based)
+        await wait_for_condition(
+            lambda: signal_store.subscriber_count() == initial_count,
+            timeout=1.0,
+            description="subscriber cleanup",
+        )
 
         # Assert — subscriber removed
         assert signal_store.subscriber_count() == initial_count
