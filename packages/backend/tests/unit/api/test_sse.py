@@ -49,7 +49,10 @@ class TestSSEEventFormat:
                 break  # Got one event, exit
 
         async def publish_signal() -> None:
-            await asyncio.sleep(0.05)
+            await wait_for_condition(
+                lambda: signal_store.subscriber_count() >= 1,
+                description="subscriber registered",
+            )
             await signal_store.publish(signal)
 
         # Act
@@ -94,7 +97,10 @@ class TestSSEEventFormat:
                 break
 
         async def publish_signal() -> None:
-            await asyncio.sleep(0.05)
+            await wait_for_condition(
+                lambda: signal_store.subscriber_count() >= 1,
+                description="subscriber registered",
+            )
             await signal_store.publish(signal)
 
         # Act
@@ -185,10 +191,12 @@ class TestSSESubscription:
                     break
 
         async def publish_signals() -> None:
-            await asyncio.sleep(0.05)
+            await wait_for_condition(
+                lambda: signal_store.subscriber_count() >= 1,
+                description="subscriber registered",
+            )
             for sig in signals_to_publish:
                 await signal_store.publish(sig)
-                await asyncio.sleep(0.01)
 
         # Act
         collector_task = asyncio.create_task(collect_events())
@@ -232,8 +240,11 @@ class TestSSEClientDisconnect:
 
         task = asyncio.create_task(run_generator())
 
-        # Give generator time to start
-        await asyncio.sleep(0.05)
+        # Wait for generator to subscribe (deterministic)
+        await wait_for_condition(
+            lambda: signal_store.subscriber_count() >= 1,
+            description="generator subscribed",
+        )
 
         # Act — cancel (simulates client disconnect)
         task.cancel()
@@ -304,7 +315,10 @@ class TestSSEEndpoint:
         # and then break out, otherwise the stream blocks indefinitely
 
         async def publish_signal() -> None:
-            await asyncio.sleep(0.05)
+            await wait_for_condition(
+                lambda: signal_store.subscriber_count() >= 1,
+                description="SSE client subscribed",
+            )
             await signal_store.publish(create_signal(id="test:dummy"))
 
         publisher = asyncio.create_task(publish_signal())
