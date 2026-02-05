@@ -39,7 +39,7 @@ class SmartHomeAdapter(Protocol):
         ...     @property
         ...     def prefix(self) -> str: return "my"
         ...     async def get_signals(self) -> dict[str, Signal]: ...
-        ...     async def get_signal(self, signal_id: str) -> Signal: ...
+        ...     async def get_signal(self, signal_id: str) -> Signal | None: ...
         ...     async def subscribe_events(self) -> AsyncIterator[Signal]: ...
         ...     def is_connected(self) -> bool: return True
         ...     async def close(self) -> None: ...
@@ -99,17 +99,16 @@ class SmartHomeAdapter(Protocol):
         """
         ...
 
-    async def get_signal(self, signal_id: str) -> Signal:
+    async def get_signal(self, signal_id: str) -> Signal | None:
         """Retrieve a specific signal by ID.
 
         Args:
             signal_id: The unique identifier of the signal.
 
         Returns:
-            The Signal object for the given ID.
+            The Signal object for the given ID, or None if not found.
 
         Raises:
-            SignalNotFoundError: If the signal doesn't exist.
             SmartHomeConnectionError: If connection to the system fails.
         """
         ...
