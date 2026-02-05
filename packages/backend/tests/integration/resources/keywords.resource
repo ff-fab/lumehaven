@@ -44,7 +44,7 @@ Start Full Backend Stack
     [Documentation]    Start both mock OpenHAB and Lumehaven backend.
     Start Mock OpenHAB Server    port=${MOCK_OPENHAB_PORT}
     Wait For Server Ready    ${MOCK_OPENHAB_URL}/rest/items    timeout=${SERVER_STARTUP_TIMEOUT}
-    Start Lumehaven Backend    port=${LUMEHAVEN_PORT}    openhab_url=${MOCK_OPENHAB_URL}
+    Start Lumehaven Backend    port=${LUMEHAVEN_PORT}
     Wait For Server Ready    ${LUMEHAVEN_URL}/health    timeout=${SERVER_STARTUP_TIMEOUT}
 
 
@@ -142,3 +142,34 @@ Health Status Should Be
     GET Lumehaven    /health
     Response Status Should Be    200
     Response Key Should Equal    status    ${expected_status}
+
+
+# =============================================================================
+# SSE Testing Keywords
+# =============================================================================
+
+Connect And Wait For SSE Subscription
+    [Documentation]    Connect to SSE stream and wait until Lumehaven registers the subscriber.
+    ...                This provides a synchronization barrier to prevent race conditions
+    ...                where events are published before the subscriber is ready.
+    [Arguments]    ${timeout}=${SERVER_STARTUP_TIMEOUT}
+    Connect SSE Stream    ${LUMEHAVEN_URL}/api/events/signals
+    Wait For Lumehaven SSE Subscribers    min_count=1    timeout=${timeout}    lumehaven_url=${LUMEHAVEN_URL}
+
+Trigger And Wait For Signal Update
+    [Documentation]    Trigger a signal update in mock OpenHAB and wait for it via SSE.
+    ...                This keyword:
+    ...                1. Sets the mock OpenHAB item state (triggers SSE chain)
+    ...                2. Polls for SSE event with matching signal ID
+    ...                3. Returns the received event for further assertions
+    [Arguments]    ${item_name}    ${new_value}    ${timeout}=5
+    Set Mock OpenHAB Item State    ${item_name}    ${new_value}
+    ${event}=    Wait For SSE Event Matching    data.id    oh:${item_name}    timeout=${timeout}
+    RETURN    ${event}
+
+Verify SSE Event Signal Value
+    [Documentation]    Verify an SSE event contains expected signal value.
+    [Arguments]    ${event}    ${expected_value}
+    ${data}=    Get From Dictionary    ${event}    data
+    ${actual_value}=    Get From Dictionary    ${data}    value
+    Should Be Equal As Strings    ${actual_value}    ${expected_value}

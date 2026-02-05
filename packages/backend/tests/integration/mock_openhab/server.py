@@ -165,6 +165,33 @@ app = FastAPI(
 # =============================================================================
 
 
+@app.get("/rest/")
+async def get_rest_root() -> JSONResponse:
+    """Return OpenHAB REST API root response (used for connectivity check)."""
+    if mock_state.should_fail:
+        raise HTTPException(
+            status_code=mock_state.fail_status, detail=mock_state.fail_message
+        )
+    # Minimal response matching OpenHAB's /rest/ endpoint
+    return JSONResponse(
+        content={
+            "version": "4",
+            "locale": "en_US",
+            "measurementSystem": "SI",
+            "runtimeInfo": {
+                "version": "4.0.0",
+                "buildString": "Mock OpenHAB for testing",
+            },
+            "links": [
+                {
+                    "type": "items",
+                    "url": "http://localhost:8081/rest/items",
+                }
+            ],
+        }
+    )
+
+
 @app.get("/rest/items")
 async def get_items(
     tags: str | None = Query(None, description="Filter by tag"),
@@ -235,28 +262,27 @@ async def sse_state_subscription(
         )
 
     async def event_generator() -> AsyncIterator[dict[str, str]]:
-        # Send connection ID (OpenHAB behavior)
+        # Send connection ID (OpenHAB behavior - just a plain string, not JSON)
+        connection_id = "mock-connection-id-12345"
         yield {
             "event": "message",
             "id": "0",
-            "data": json.dumps({"context": "openhab:integration-test-connection"}),
+            "data": connection_id,
         }
 
         # Parse requested items
         requested_items = items.split(",") if items else list(mock_state.items.keys())
 
-        # Send initial state for all requested items
-        initial_states = []
+        # Send initial state for all requested items as a dict keyed by item name
+        # This matches OpenHAB's batch state format:
+        # {"item_name": {"state": "...", ...}}
+        initial_states: dict[str, dict[str, str]] = {}
         for item_name in requested_items:
             item = mock_state.get_item(item_name)
             if item:
-                initial_states.append(
-                    {
-                        "name": item["name"],
-                        "state": item["state"],
-                        "type": item["type"],
-                    }
-                )
+                initial_states[item["name"]] = {
+                    "state": item["state"],
+                }
 
         if initial_states:
             yield {
@@ -316,6 +342,23 @@ async def sse_events(request: Request) -> EventSourceResponse:
     return EventSourceResponse(event_generator())
 
 
+@app.post("/rest/events/states/{connection_id}")
+async def subscribe_sse_items(
+    connection_id: str, items: list[str] | None = None
+) -> dict[str, str]:
+    """Subscribe to state updates for specific items.
+
+    This endpoint is called by clients after receiving the connection ID
+    from the SSE stream to specify which items they want to track.
+    """
+    # In a real implementation, this would filter the SSE stream to only
+    # send updates for the specified items. For mock purposes, we just
+    # acknowledge the subscription.
+    item_count = len(items) if items else 0
+    logger.info(f"SSE subscription for connection {connection_id}: {item_count} items")
+    return {"status": "subscribed", "item_count": str(item_count)}
+
+
 # =============================================================================
 # Test Control Endpoints (not part of real OpenHAB API)
 # =============================================================================
@@ -333,15 +376,13 @@ async def set_item_state(item_name: str, state: str) -> dict[str, str]:
     """Update an item's state and trigger SSE event."""
     mock_state.set_item_state(item_name, state)
 
-    # Queue SSE event
+    # Queue SSE event in OpenHAB batch format (dict keyed by item name)
     await mock_state.publish_sse_event(
-        [
-            {
-                "name": item_name,
+        {
+            item_name: {
                 "state": state,
-                "type": mock_state.items.get(item_name, {}).get("type", "String"),
             }
-        ]
+        }
     )
 
     return {"status": "updated", "item": item_name, "state": state}
@@ -353,7 +394,7 @@ async def configure_failure(
 ) -> dict[str, str]:
     """Configure server to return errors."""
     mock_state.configure_failure(status, message)
-    return {"status": "configured", "fail_status": status, "fail_message": message}
+    return {"status": "configured", "fail_status": str(status), "fail_message": message}
 
 
 @app.post("/_test/clear_failure")
@@ -367,14 +408,14 @@ async def clear_failure() -> dict[str, str]:
 async def set_delay(delay: float) -> dict[str, str]:
     """Set connection delay in seconds."""
     mock_state.set_connection_delay(delay)
-    return {"status": "configured", "delay": delay}
+    return {"status": "configured", "delay": str(delay)}
 
 
 @app.post("/_test/set_malformed")
 async def set_malformed(malformed: bool = True) -> dict[str, str]:
     """Configure server to return malformed responses."""
     mock_state.set_malformed(malformed)
-    return {"status": "configured", "malformed": malformed}
+    return {"status": "configured", "malformed": str(malformed).lower()}
 
 
 # =============================================================================

@@ -32,15 +32,14 @@ tasks:
 
   test:be:
     desc: Run all backend tests (unit + integration)
-    dir: '{{.BACKEND_DIR}}'
     cmds:
-      - uv run pytest tests/ -v --tb=short
+      - task: test:be:unit
+      - task: test:be:integration
 
   test:fe:
     desc: Run all frontend tests
-    dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - bun test
+      - task: test:fe:unit
 
   test:e2e:
     desc: Run E2E tests (browser + full stack)

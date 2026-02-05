@@ -34,6 +34,7 @@ class SSEKeywords:
     def __init__(self) -> None:
         """Initialize SSE client state."""
         self._client: httpx.Client | None = None
+        self._stream_context: contextlib.AbstractContextManager | None = None
         self._response: httpx.Response | None = None
         self._events: Queue[dict[str, Any]] = Queue()
         self._reader_thread: threading.Thread | None = None
@@ -133,11 +134,14 @@ class SSEKeywords:
 
         try:
             # Start streaming request
-            self._response = self._client.stream(
+            # IMPORTANT: We must store the context manager to prevent garbage collection
+            # which would call __exit__() and close the stream prematurely
+            self._stream_context = self._client.stream(
                 "GET",
                 url,
                 headers={"Accept": "text/event-stream"},
-            ).__enter__()
+            )
+            self._response = self._stream_context.__enter__()
 
             # Verify content type
             content_type = self._response.headers.get("content-type", "")
@@ -188,6 +192,12 @@ class SSEKeywords:
             with contextlib.suppress(Exception):
                 self._response.close()
             self._response = None
+
+        # Properly exit the stream context manager
+        if self._stream_context is not None:
+            with contextlib.suppress(Exception):
+                self._stream_context.__exit__(None, None, None)
+            self._stream_context = None
 
         if self._client is not None:
             with contextlib.suppress(Exception):
@@ -279,3 +289,154 @@ class SSEKeywords:
                 break
         self._last_event = None
         logger.info("Cleared SSE event queue")
+
+    @keyword("Wait For SSE Event Matching")
+    def wait_for_sse_event_matching(
+        self,
+        field: str,
+        expected_value: str,
+        timeout: float = 5.0,
+        poll_interval: float = 0.1,
+    ) -> dict[str, Any]:
+        """Poll the SSE event queue until an event matches the criteria.
+
+        This is a robust alternative to `Receive SSE Event` that handles
+        timing issues in integration tests. It:
+        - Continuously polls for events within the timeout
+        - Checks each event for a matching field value
+        - Logs all seen events on failure for debugging
+        - Returns the first matching event
+
+        Args:
+            field: Field path to check. Supports nested paths like "data.id"
+                   for JSON-parsed data fields.
+            expected_value: Expected value (string comparison).
+            timeout: Maximum time to wait in seconds (default: 5).
+            poll_interval: Time between poll attempts in seconds (default: 0.1).
+
+        Returns:
+            The first matching event dict.
+
+        Raises:
+            RuntimeError: If not connected to SSE stream.
+            AssertionError: If no matching event received within timeout.
+        """
+        if self._client is None:
+            raise RuntimeError("Not connected to SSE stream")
+
+        import time
+
+        start_time = time.monotonic()
+        seen_events: list[dict[str, Any]] = []
+
+        while time.monotonic() - start_time < timeout:
+            # Drain all available events from queue
+            while True:
+                try:
+                    event = self._events.get_nowait()
+                    seen_events.append(event)
+                    self._last_event = event
+
+                    # Check if this event matches
+                    if self._event_matches(event, field, expected_value):
+                        logger.info(f"Found matching SSE event: {event}")
+                        return event
+                except Empty:
+                    break
+
+            # Wait before next poll
+            time.sleep(poll_interval)
+
+        # Timeout - log all seen events for debugging
+        logger.error(
+            f"No SSE event matching {field}='{expected_value}' "
+            f"within {timeout}s. Seen {len(seen_events)} events:"
+        )
+        for i, event in enumerate(seen_events):
+            logger.error(f"  Event {i + 1}: {event}")
+
+        raise AssertionError(
+            f"No SSE event with {field}='{expected_value}' received within {timeout}s. "
+            f"Saw {len(seen_events)} events."
+        )
+
+    def _event_matches(
+        self, event: dict[str, Any], field: str, expected_value: str
+    ) -> bool:
+        """Check if an event matches the field/value criteria.
+
+        Args:
+            event: The SSE event dict.
+            field: Field path (supports "data.key" for nested access).
+            expected_value: Expected value as string.
+
+        Returns:
+            True if the field exists and matches expected_value.
+        """
+        # Support nested field access like "data.id"
+        parts = field.split(".")
+        value: Any = event
+
+        for part in parts:
+            if isinstance(value, dict) and part in value:
+                value = value[part]
+            else:
+                return False
+
+        return str(value) == str(expected_value)
+
+    @keyword("Wait For Lumehaven SSE Subscribers")
+    def wait_for_lumehaven_sse_subscribers(
+        self,
+        min_count: int = 1,
+        timeout: float = 5.0,
+        poll_interval: float = 0.1,
+        lumehaven_url: str = "http://localhost:8000",
+    ) -> int:
+        """Wait until Lumehaven has at least min_count SSE subscribers.
+
+        This provides a synchronization barrier to ensure the SSE client
+        has fully connected before triggering events. This prevents race
+        conditions where events are published before the subscriber is ready.
+
+        Uses the /metrics endpoint to check subscriber count.
+
+        Args:
+            min_count: Minimum number of subscribers required (default: 1).
+            timeout: Maximum time to wait in seconds (default: 5).
+            poll_interval: Time between poll attempts in seconds (default: 0.1).
+            lumehaven_url: Base URL of Lumehaven backend.
+
+        Returns:
+            The actual subscriber count when condition is met.
+
+        Raises:
+            AssertionError: If subscriber count doesn't reach min_count within timeout.
+        """
+        import time
+
+        start_time = time.monotonic()
+        last_count = 0
+
+        while time.monotonic() - start_time < timeout:
+            try:
+                with httpx.Client(timeout=2.0) as client:
+                    response = client.get(f"{lumehaven_url}/metrics")
+                    if response.status_code == 200:
+                        metrics = response.json()
+                        last_count = metrics.get("subscribers", {}).get("total", 0)
+                        if last_count >= min_count:
+                            logger.info(
+                                f"Lumehaven has {last_count} SSE subscriber(s) "
+                                f"(required: {min_count})"
+                            )
+                            return last_count
+            except Exception as e:
+                logger.debug(f"Error checking metrics: {e}")
+
+            time.sleep(poll_interval)
+
+        raise AssertionError(
+            f"Lumehaven subscriber count ({last_count}) did not reach "
+            f"{min_count} within {timeout}s"
+        )

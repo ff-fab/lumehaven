@@ -9,31 +9,27 @@ Usage in Robot Framework:
 Keywords:
     Start Mock OpenHAB Server    port=8081
     Stop Mock OpenHAB Server
-    Start Lumehaven Backend    port=8000    openhab_url=http://localhost:8081
+    Start Lumehaven Backend    port=8000
     Stop Lumehaven Backend
     Wait For Server Ready    url    timeout=10
 """
 
 from __future__ import annotations
 
-import multiprocessing
 import os
 import socket
+import subprocess
+import sys
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import httpx
-import uvicorn
 from robot.api import logger
 from robot.api.deco import keyword
 
 if TYPE_CHECKING:
-    from multiprocessing import Process
-
-
-# =============================================================================
-# Server Process Management
-# =============================================================================
+    from subprocess import Popen
 
 
 def _is_port_in_use(port: int) -> bool:
@@ -42,43 +38,9 @@ def _is_port_in_use(port: int) -> bool:
         return sock.connect_ex(("localhost", port)) == 0
 
 
-def _run_mock_openhab(port: int) -> None:
-    """Run mock OpenHAB server in a subprocess."""
-    # Import here to avoid circular imports
-    from tests.integration.mock_openhab.server import app
-
-    # Suppress uvicorn access logs in test output
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=port,
-        log_level="warning",
-    )
-
-
-def _run_lumehaven(port: int, openhab_url: str, config_path: str | None) -> None:
-    """Run Lumehaven backend in a subprocess."""
-    # Set environment variables for configuration
-    os.environ["LUMEHAVEN_OPENHAB_URL"] = openhab_url
-
-    if config_path:
-        os.environ["LUMEHAVEN_CONFIG"] = config_path
-
-    # Import and run the app
-    from lumehaven.main import create_app
-
-    app = create_app()
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=port,
-        log_level="warning",
-    )
-
-
-# =============================================================================
-# Robot Framework Keyword Library
-# =============================================================================
+def _get_backend_dir() -> Path:
+    """Get the backend package directory."""
+    return Path(__file__).parent.parent.parent.parent
 
 
 class ServerKeywords:
@@ -88,18 +50,14 @@ class ServerKeywords:
 
     def __init__(self) -> None:
         """Initialize server process references."""
-        self._mock_openhab_process: Process | None = None
-        self._lumehaven_process: Process | None = None
+        self._mock_openhab_process: Popen[bytes] | None = None
+        self._lumehaven_process: Popen[bytes] | None = None
         self._mock_openhab_port: int = 8081
         self._lumehaven_port: int = 8000
 
     @keyword("Start Mock OpenHAB Server")
     def start_mock_openhab_server(self, port: int = 8081) -> None:
-        """Start the mock OpenHAB server on the specified port.
-
-        Args:
-            port: Port number (default: 8081)
-        """
+        """Start the mock OpenHAB server on the specified port."""
         if self._mock_openhab_process is not None:
             logger.warn("Mock OpenHAB server already running")
             return
@@ -108,12 +66,25 @@ class ServerKeywords:
             raise RuntimeError(f"Port {port} is already in use")
 
         self._mock_openhab_port = port
-        self._mock_openhab_process = multiprocessing.Process(
-            target=_run_mock_openhab,
-            args=(port,),
-            daemon=True,
+        backend_dir = _get_backend_dir()
+
+        self._mock_openhab_process = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "tests.integration.mock_openhab.server:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                str(port),
+                "--log-level",
+                "warning",
+            ],
+            cwd=backend_dir,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
-        self._mock_openhab_process.start()
         logger.info(f"Started mock OpenHAB server on port {port}")
 
     @keyword("Stop Mock OpenHAB Server")
@@ -124,29 +95,18 @@ class ServerKeywords:
             return
 
         self._mock_openhab_process.terminate()
-        self._mock_openhab_process.join(timeout=5)
-
-        if self._mock_openhab_process.is_alive():
+        try:
+            self._mock_openhab_process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
             self._mock_openhab_process.kill()
-            self._mock_openhab_process.join(timeout=2)
+            self._mock_openhab_process.wait(timeout=2)
 
         self._mock_openhab_process = None
         logger.info("Stopped mock OpenHAB server")
 
     @keyword("Start Lumehaven Backend")
-    def start_lumehaven_backend(
-        self,
-        port: int = 8000,
-        openhab_url: str = "http://localhost:8081",
-        config_path: str | None = None,
-    ) -> None:
-        """Start the Lumehaven backend on the specified port.
-
-        Args:
-            port: Port number (default: 8000)
-            openhab_url: URL of the OpenHAB server (default: http://localhost:8081)
-            config_path: Path to config file (optional)
-        """
+    def start_lumehaven_backend(self, port: int = 8000) -> None:
+        """Start the Lumehaven backend on the specified port."""
         if self._lumehaven_process is not None:
             logger.warn("Lumehaven backend already running")
             return
@@ -155,12 +115,33 @@ class ServerKeywords:
             raise RuntimeError(f"Port {port} is already in use")
 
         self._lumehaven_port = port
-        self._lumehaven_process = multiprocessing.Process(
-            target=_run_lumehaven,
-            args=(port, openhab_url, config_path),
-            daemon=True,
+        backend_dir = _get_backend_dir()
+        integration_dir = backend_dir / "tests" / "integration"
+
+        # Run from integration test directory where tests/integration/.env lives
+        # This ensures pydantic-settings loads the test .env, not backend/.env
+        # which may contain the developer's live OpenHAB URL
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(backend_dir / "src")
+
+        self._lumehaven_process = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "lumehaven.main:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                str(port),
+                "--log-level",
+                "warning",
+            ],
+            cwd=integration_dir,  # Run from tests/integration/ to use its .env
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
-        self._lumehaven_process.start()
         logger.info(f"Started Lumehaven backend on port {port}")
 
     @keyword("Stop Lumehaven Backend")
@@ -171,23 +152,18 @@ class ServerKeywords:
             return
 
         self._lumehaven_process.terminate()
-        self._lumehaven_process.join(timeout=5)
-
-        if self._lumehaven_process.is_alive():
+        try:
+            self._lumehaven_process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
             self._lumehaven_process.kill()
-            self._lumehaven_process.join(timeout=2)
+            self._lumehaven_process.wait(timeout=2)
 
         self._lumehaven_process = None
         logger.info("Stopped Lumehaven backend")
 
     @keyword("Wait For Server Ready")
     def wait_for_server_ready(self, url: str, timeout: float = 10.0) -> None:
-        """Wait until a server is ready to accept connections.
-
-        Args:
-            url: URL to check (e.g., http://localhost:8000/health)
-            timeout: Maximum time to wait in seconds (default: 10)
-        """
+        """Wait until a server is ready to accept connections."""
         start_time = time.time()
         last_error = None
 
@@ -217,12 +193,7 @@ class ServerKeywords:
 
     @keyword("Set Mock OpenHAB Item State")
     def set_mock_openhab_item_state(self, item_name: str, state: str) -> None:
-        """Update an item's state in the mock OpenHAB server.
-
-        Args:
-            item_name: Name of the item to update
-            state: New state value
-        """
+        """Update an item's state in the mock OpenHAB server."""
         url = f"http://localhost:{self._mock_openhab_port}/_test/set_item_state"
         response = httpx.post(
             url,
@@ -240,14 +211,7 @@ class ServerKeywords:
         timeout: float | None = None,
         malformed: bool = False,
     ) -> None:
-        """Configure the mock OpenHAB server to simulate failures.
-
-        Args:
-            status_code: HTTP status code to return (e.g., 500)
-            message: Error message (default: "Internal Server Error")
-            timeout: Connection delay in seconds to simulate timeout
-            malformed: Whether to return malformed JSON responses
-        """
+        """Configure the mock OpenHAB server to simulate failures."""
         base_url = f"http://localhost:{self._mock_openhab_port}/_test"
 
         if status_code is not None:
@@ -279,10 +243,7 @@ class ServerKeywords:
 
     @keyword("Clear Mock OpenHAB Failure")
     def clear_mock_openhab_failure(self) -> None:
-        """Clear any configured failure in the mock OpenHAB server.
-
-        Clears error status, connection delay, and malformed response settings.
-        """
+        """Clear any configured failure in the mock OpenHAB server."""
         base_url = f"http://localhost:{self._mock_openhab_port}/_test"
 
         response = httpx.post(f"{base_url}/clear_failure", timeout=5.0)

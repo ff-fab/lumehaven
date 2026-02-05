@@ -37,7 +37,7 @@ Health Endpoint Contains Required Fields
     GET Lumehaven    /health
     Response Status Should Be    200
     Response Should Contain Key    status
-    Response Should Contain Key    adapter
+    Response Should Contain Key    adapters
 
 
 # =============================================================================
@@ -50,18 +50,19 @@ Signals List Returns All Items
     GET Lumehaven    /api/signals
     Response Status Should Be    200
     Response Should Contain Key    signals
-    # Verify we get signals from mock OpenHAB (DASHBOARD_ITEMS has 2 items)
+    # Verify we get signals from mock OpenHAB (ALL_ITEMS has 24 items)
     ${signals}=    Output    response body signals
     ${length}=    Get Length    ${signals}
-    Should Be True    ${length} >= 2    Expected at least 2 signals, got ${length}
+    Should Be True    ${length} >= 20    Expected at least 20 signals, got ${length}
 
 Signals List Contains Expected Signal IDs
     [Documentation]    Verify signals list contains expected signal IDs from fixtures.
     [Tags]    signals    smoke
     GET Lumehaven    /api/signals
     Response Status Should Be    200
-    Signal Should Exist    LivingRoom_Temperature
-    Signal Should Exist    LivingRoom_Humidity
+    # Signal IDs are prefixed with "oh:" by the OpenHAB adapter
+    Signal Should Exist    oh:LivingRoom_Temperature
+    Signal Should Exist    oh:Bathroom_Humidity
 
 Signal Has Required Fields
     [Documentation]    Verify each signal has required fields (id, value, unit, label).
@@ -84,14 +85,15 @@ Signal Has Required Fields
 Get Single Signal By ID
     [Documentation]    Verify /api/signals/{id} returns correct signal.
     [Tags]    signals    smoke
-    GET Lumehaven    /api/signals/LivingRoom_Temperature
+    # Signal IDs are prefixed with "oh:" by the OpenHAB adapter
+    GET Lumehaven    /api/signals/oh:LivingRoom_Temperature
     Response Status Should Be    200
-    Response Key Should Equal    id    LivingRoom_Temperature
+    Response Key Should Equal    id    oh:LivingRoom_Temperature
 
 Single Signal Has Correct Value
     [Documentation]    Verify single signal endpoint returns correct value from OpenHAB.
     [Tags]    signals    smoke
-    GET Lumehaven    /api/signals/LivingRoom_Temperature
+    GET Lumehaven    /api/signals/oh:LivingRoom_Temperature
     Response Status Should Be    200
     # Temperature from fixtures is 21.5
     Response Key Should Equal    value    21.5
@@ -99,7 +101,7 @@ Single Signal Has Correct Value
 Non-Existent Signal Returns 404
     [Documentation]    Verify non-existent signal returns 404 error.
     [Tags]    signals    error
-    GET Lumehaven    /api/signals/NonExistent_Signal
+    GET Lumehaven    /api/signals/oh:NonExistent_Signal
     Response Status Should Be    404
 
 
@@ -121,16 +123,17 @@ Metrics Endpoint Returns Prometheus Format
 # Data Flow Tests
 # =============================================================================
 
-Signal Value Reflects Mock OpenHAB State
-    [Documentation]    Verify changing mock OpenHAB state is reflected in API response.
+Signal Value Reflects Initial OpenHAB State
+    [Documentation]    Verify signal values match the mock OpenHAB initial state.
+    ...                Note: Real-time updates are tested in sse_tests.robot.
+    ...                The REST API returns cached values; updates propagate via SSE.
     [Tags]    signals    data-flow
-    # First get initial value
-    GET Lumehaven    /api/signals/LivingRoom_Temperature
+    # Signal IDs are prefixed with "oh:" by the OpenHAB adapter
+    # Temperature from fixtures is 21.5
+    GET Lumehaven    /api/signals/oh:LivingRoom_Temperature
     Response Status Should Be    200
     Response Key Should Equal    value    21.5
-    # Update mock OpenHAB state
-    Set Mock OpenHAB Item State    LivingRoom_Temperature    25.0
-    # Verify Lumehaven returns updated value
-    GET Lumehaven    /api/signals/LivingRoom_Temperature
+    # Light state from fixtures is ON
+    GET Lumehaven    /api/signals/oh:LivingRoom_Light
     Response Status Should Be    200
-    Response Key Should Equal    value    25.0
+    Response Key Should Equal    value    ON
