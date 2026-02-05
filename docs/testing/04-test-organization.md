@@ -40,37 +40,52 @@ packages/backend/
     ├── conftest.py                    # Shared fixtures (signal_factory, etc.)
     ├── fixtures/
     │   ├── __init__.py
+    │   ├── async_utils.py             # Async test helpers (wait_for_condition)
     │   ├── openhab_responses.py       # Mock API response data
+    │   ├── openhab_sse.py             # Mock SSE event data
     │   └── signals.py                 # Test signal factories
     │
     ├── unit/
-    │   ├── conftest.py                # Unit-specific fixtures (mock_adapter)
+    │   ├── conftest.py                # Unit-specific fixtures (async_client, etc.)
     │   ├── test_config.py             # ← mirrors config.py
     │   ├── adapters/
-    │   │   ├── conftest.py            # Adapter test fixtures
-    │   │   ├── test_manager.py        # ← mirrors adapters/manager.py
+    │   │   ├── conftest.py            # MockAdapter fixture
+    │   │   ├── test_protocol.py       # Protocol compliance tests
+    │   │   ├── test_manager_*.py      # Split by aspect (lifecycle, retry, sync)
     │   │   └── openhab/
-    │   │       ├── test_adapter.py    # ← mirrors adapters/openhab/adapter.py
-    │   │       └── test_units.py      # ← mirrors adapters/openhab/units.py
+    │   │       ├── conftest.py        # httpx mocking fixtures
+    │   │       ├── test_adapter_*.py  # Split (init, api, sse, extract, process)
+    │   │       └── test_units.py
     │   ├── api/
-    │   │   ├── test_routes.py
+    │   │   ├── test_routes_health.py
+    │   │   ├── test_routes_signals.py
     │   │   └── test_sse.py
     │   ├── core/
+    │   │   ├── test_exceptions.py
     │   │   └── test_signal.py
     │   └── state/
     │       └── test_store.py
     │
     └── integration/
-        ├── conftest.py                # Integration fixtures (server startup)
-        ├── api_tests.robot
-        └── mock_openhab/              # Mock OpenHAB server for integration
+        ├── .env                       # Test environment variables
+        ├── api_tests.robot            # REST API tests
+        ├── sse_tests.robot            # SSE streaming tests
+        ├── error_handling.robot       # Error scenario tests
+        ├── libraries/
+        │   ├── ServerKeywords.py      # Server lifecycle keywords
+        │   └── SSEKeywords.py         # SSE client keywords
+        ├── resources/
+        │   └── keywords.resource      # Shared keywords and variables
+        └── mock_openhab/
             ├── __init__.py
-            └── server.py
+            └── server.py              # FastAPI mock server
 ```
 
 ### Rationale
 
 - **Mirrored structure** makes it obvious which tests cover which code
+- **Split test files** (e.g., `test_manager_*.py`) improve organization for large
+  modules
 - **Hierarchical conftest.py** scopes fixtures appropriately
 - **fixtures/ directory** for reusable test data (imported, not auto-discovered)
 - **Separate integration/** keeps slow tests isolated
@@ -81,10 +96,23 @@ packages/backend/
 
 ### Test Files
 
-| Pattern             | Example               | When to Use                        |
-| ------------------- | --------------------- | ---------------------------------- |
-| `test_<module>.py`  | `test_manager.py`     | Standard—mirrors source module     |
-| `test_<feature>.py` | `test_retry_logic.py` | When testing cross-cutting feature |
+| Pattern                     | Example                     | When to Use                            |
+| --------------------------- | --------------------------- | -------------------------------------- |
+| `test_<module>.py`          | `test_config.py`            | Standard—mirrors source module         |
+| `test_<module>_<aspect>.py` | `test_manager_lifecycle.py` | Large modules split by behavior/aspect |
+| `test_<feature>.py`         | `test_retry_logic.py`       | Cross-cutting feature spanning modules |
+
+**Splitting large modules:** When a source module has many distinct behaviors, split
+tests by aspect for better organization:
+
+```
+# For adapters/manager.py (large module with distinct behaviors):
+tests/unit/adapters/
+├── test_manager_lifecycle.py    # start_all, stop_all
+├── test_manager_registration.py # add, remove adapters
+├── test_manager_retry.py        # retry logic, backoff
+└── test_manager_sync.py         # event synchronization
+```
 
 ### Test Functions
 

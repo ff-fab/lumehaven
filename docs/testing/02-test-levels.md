@@ -199,63 +199,75 @@ Integration tests verify:
 
 ### Mock Smart Home Server
 
-We'll create a minimal mock OpenHAB server that:
+The mock OpenHAB server (`tests/integration/mock_openhab/server.py`) provides:
 
-- Serves `/rest/items` with configurable fixture data
-- Streams `/rest/events` with controllable SSE events
-- Can be manipulated via RF keywords for test scenarios
+- `/rest/items` — Configurable fixture data from `tests/fixtures/openhab_responses.py`
+- `/rest/events/states` — SSE stream for batch state subscriptions
+- `/_test/set_item_state` — Trigger state changes and SSE events
+- `/_test/configure_failure` — Simulate errors for error handling tests
+- `/_test/reset` — Reset to default state between tests
 
-**Implementation options:**
+**Implementation:** FastAPI stub—same stack as main app, easy to understand.
 
-| Option                 | Pros                           | Cons                         |
-| ---------------------- | ------------------------------ | ---------------------------- |
-| FastAPI stub in tests/ | Same stack, easy to understand | Requires running two servers |
-| pytest-httpserver      | Built-in to pytest ecosystem   | Less readable in RF          |
-| WireMock               | Industry standard, powerful    | Java dependency              |
+### SSE Testing in Integration Tests
 
-_Recommendation:_ FastAPI stub—keeps everything Python, reusable for local dev.
+SSE testing requires special handling since the REST library doesn't support SSE
+streams. We use a custom `SSEKeywords.py` library (`tests/integration/libraries/`) with:
 
-### Example Integration Test
+- Synchronous `httpx.Client` with threading for background event reading
+- Polling-based synchronization via `/metrics` subscriber count
+- `Wait For SSE Event Matching` for reliable event capture with timeout
+
+**Critical synchronization pattern:**
+
+```robot
+Connect And Wait For SSE Subscription
+    [Documentation]    Connect SSE and wait for subscriber registration.
+    Connect SSE Stream    ${LUMEHAVEN_URL}/api/events/signals
+    Wait For Lumehaven SSE Subscribers    min_count=1
+    # Now safe to trigger events — subscriber is registered
+```
+
+This prevents race conditions where events fire before the client is subscribed, which
+is essential for CI reliability.
+
+### Example Integration Tests
 
 ```robot
 *** Settings ***
-Library    RESTinstance
-Library    Collections
+Library     REST
+Library     Collections
+Library     libraries/ServerKeywords.py
+Library     libraries/SSEKeywords.py
+Resource    resources/keywords.resource
 
-Suite Setup       Start Backend With Mock OpenHAB
-Suite Teardown    Stop Backend
+Suite Setup       Start Full Backend Stack
+Suite Teardown    Stop Integration Test Environment
+Test Setup        Reset Test State
 
 *** Test Cases ***
-Temperature Signal Has Correct Unit
-    [Documentation]    Verify OpenHAB temperature items are normalized
-    [Tags]    integration    openhab
+Signal Has Correct Unit From OpenHAB
+    [Documentation]    Verify OpenHAB temperature items are normalized.
+    [Tags]    signals    smoke
+    GET Lumehaven    /api/signals/oh:LivingRoom_Temperature
+    Response Status Should Be    200
+    Response Key Should Equal    unit    °C
 
-    # Given
-    Mock OpenHAB Has Item    Temperature_Living    Number:Temperature    21.5 °C
+Signal Update Propagates Through SSE
+    [Documentation]    Verify signal state changes propagate through SSE stream.
+    [Tags]    sse    data-flow
+    Connect And Wait For SSE Subscription
+    ${event}=    Trigger And Wait For Signal Update    LivingRoom_Temperature    28.5
+    SSE Event Should Contain    event    signal
+    SSE Event Data Should Contain Key    value    28.5
 
-    # When
-    ${response}=    GET    /api/signals/oh:Temperature_Living
-
-    # Then
-    Integer    response status    200
-    String     response body value    21.5
-    String     response body unit     °C
-
-Signal List Reflects All Adapter Items
-    [Documentation]    All items from adapters appear in signal list
-    [Tags]    integration    smoke
-
-    # Given
-    Mock OpenHAB Has Items
-    ...    Light_Kitchen    Switch    ON
-    ...    Temp_Bedroom     Number:Temperature    18.2 °C
-
-    # When
-    ${response}=    GET    /api/signals
-
-    # Then
-    Integer    response status    200
-    Length Should Be    ${response.json()}    2
+Backend Returns 503 When OpenHAB Unavailable
+    [Documentation]    Verify graceful error handling when adapter fails.
+    [Tags]    error-handling
+    Configure Mock OpenHAB Failure    status_code=500
+    # Health endpoint should report degraded status
+    GET Lumehaven    /health
+    Response Key Should Equal    status    degraded
 ```
 
 ### Integration Test Markers
@@ -352,5 +364,7 @@ User Sees Live Temperature Update
 
 - [ADR-006: Testing Strategy](../adr/ADR-006-testing-strategy.md) — Original decision
 - [pytest-asyncio](https://pytest-asyncio.readthedocs.io/)
-- [RESTinstance](https://github.com/asyrjasalo/RESTinstance)
-- [Robot Framework Browser Library](https://robotframework-browser.org/)
+- [Robot Framework REST Library](https://github.com/asyrjasalo/RESTinstance) — HTTP
+  testing
+- [sse-starlette](https://github.com/sysid/sse-starlette) — SSE support for FastAPI
+- [Robot Framework Browser Library](https://robotframework-browser.org/) — E2E (future)
