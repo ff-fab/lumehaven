@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import shared fixtures from fixtures/ to make them available to all tests
 # pytest_plugins would be cleaner but requires package structure changes
+from lumehaven.state.store import SignalStore  # noqa: E402
 from tests.fixtures.config import (  # noqa: E402, F401
     _reset_settings_cache,
     tmp_config_file,
@@ -34,6 +35,22 @@ from tests.fixtures.config import (  # noqa: E402, F401
 
 if TYPE_CHECKING:
     from pytest import Session
+
+
+# =============================================================================
+# Shared Fixtures
+# =============================================================================
+
+
+@pytest.fixture
+def signal_store() -> SignalStore:
+    """Create a fresh SignalStore instance for testing.
+
+    Returns isolated store — not the singleton from get_signal_store().
+    This fixture is available to all tests (unit and integration).
+    """
+    return SignalStore()
+
 
 # =============================================================================
 # Coverage Threshold Validation Hook

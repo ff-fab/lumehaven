@@ -184,15 +184,7 @@ class MockAdapter:
 # =============================================================================
 # Fixtures
 # =============================================================================
-
-
-@pytest.fixture
-def signal_store() -> SignalStore:
-    """Create a fresh SignalStore instance for testing.
-
-    Returns isolated store — not the singleton from get_signal_store().
-    """
-    return SignalStore()
+# Note: signal_store fixture is provided by root conftest.py
 
 
 @pytest.fixture
