@@ -113,7 +113,7 @@ class TestSyncBehavior:
         # Assert
         state = adapter_manager.states["closing-adapter"]
         assert state.connected is False
-        assert "closed" in state.error.lower() if state.error else True
+        assert state.error == "Event stream closed by server"
 
         # Cleanup
         await adapter_manager.stop_all()

@@ -72,9 +72,7 @@ class MockAdapter:
 
     # Internal state
     _connected: bool = False
-    _event_queue: asyncio.Queue[Signal | None] = field(
-        default_factory=lambda: asyncio.Queue()
-    )
+    _event_queue: asyncio.Queue[Signal | None] = field(default_factory=asyncio.Queue)
     _closed: bool = False
 
     @property

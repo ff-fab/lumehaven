@@ -155,7 +155,7 @@ and `tests/fixtures/openhab_sse.py`.
 
 | Step | File                  | Tests | Coverage | Techniques Used                                      |
 | ---- | --------------------- | ----- | -------- | ---------------------------------------------------- |
-| 7.1  | `adapters/manager.py` | 28    | 91%      | State Transition, BVA, Specification, Error Guessing |
+| 7.1  | `adapters/manager.py` | 22    | 91%      | State Transition, BVA, Specification, Error Guessing |
 
 **Key outcome:** State transitions verified (disconnected→connected, connection failure,
 stop_all cleanup). Retry delay exponential backoff tested with BVA at boundary points
