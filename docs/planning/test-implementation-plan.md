@@ -179,17 +179,36 @@ endpoint testing. SSE generator tested directly for event format and subscriptio
 lifecycle. Full endpoint integration tested via httpx AsyncClient with ASGI transport.
 Tests organized: routes_health.py, routes_signals.py, sse.py.
 
-### Phase 9: Integration Tests (Robot Framework)
+### ✅ Phase 9: Integration Tests (Robot Framework) (Complete)
 
 **Goal:** Full vertical slice with mock OpenHAB server
 
-| Step | Scope          | What to Test              |
-| ---- | -------------- | ------------------------- |
-| 9.1  | API smoke      | Health, signals endpoints |
-| 9.2  | SSE flow       | Real-time updates         |
-| 9.3  | Error handling | Mock failures             |
+| Step | Scope          | What to Test              | Status |
+| ---- | -------------- | ------------------------- | ------ |
+| 9.1  | API smoke      | Health, signals endpoints | ✅     |
+| 9.2  | SSE flow       | Real-time updates         | ✅     |
+| 9.3  | Error handling | Mock failures             | ✅     |
+
+**Key outcome:** Robot Framework integration tests implemented with custom Python
+keyword libraries. Mock OpenHAB server provides fixture-based responses with mutable
+state. Per-suite server lifecycle via `ROBOT_LIBRARY_SCOPE = "SUITE"`. SSE testing uses
+background thread reader with event queue. Run with `task test:be:integration`.
+
+**Test files created:**
+
+- `tests/integration/api_tests.robot` — Health, signals, metrics endpoint verification
+- `tests/integration/sse_tests.robot` — Real-time signal update propagation
+- `tests/integration/error_handling.robot` — Failure modes, degraded health states
+- `tests/integration/mock_openhab/server.py` — FastAPI mock with test control endpoints
+- `tests/integration/libraries/ServerKeywords.py` — Server lifecycle management
+- `tests/integration/libraries/SSEKeywords.py` — SSE stream testing
+- `tests/integration/resources/keywords.resource` — Shared Robot Framework keywords
 
 ---
+
+## ✅ Test Implementation Complete
+
+All phases completed. Coverage thresholds achieved across all modules.
 
 ## Test Design Approach Per Component
 
@@ -214,14 +233,16 @@ For your involvement, I'll present:
 
 ---
 
-## Directory Structure (Target)
+## Directory Structure (Final)
 
 ```
 tests/
-├── conftest.py                    # Global fixtures
+├── conftest.py                    # Global fixtures + coverage thresholds
 ├── fixtures/
 │   ├── __init__.py
+│   ├── config.py                  # Config test fixtures
 │   ├── openhab_responses.py       # Mock API data
+│   ├── openhab_sse.py             # SSE event fixtures
 │   └── signals.py                 # Signal factories
 ├── unit/
 │   ├── conftest.py                # Unit-specific fixtures
@@ -231,10 +252,17 @@ tests/
 │   │   ├── test_manager.py
 │   │   ├── test_protocol.py
 │   │   └── openhab/
-│   │       ├── test_adapter.py
+│   │       ├── conftest.py
+│   │       ├── test_adapter_api.py
+│   │       ├── test_adapter_extract.py
+│   │       ├── test_adapter_init.py
+│   │       ├── test_adapter_process.py
+│   │       ├── test_adapter_sse.py
 │   │       └── test_units.py
 │   ├── api/
-│   │   ├── test_routes.py
+│   │   ├── conftest.py
+│   │   ├── test_routes_health.py
+│   │   ├── test_routes_signals.py
 │   │   └── test_sse.py
 │   ├── core/
 │   │   ├── test_signal.py
@@ -242,11 +270,18 @@ tests/
 │   └── state/
 │       └── test_store.py
 └── integration/
-    ├── conftest.py
     ├── api_tests.robot
-    └── mock_openhab/
-        ├── __init__.py
-        └── server.py
+    ├── sse_tests.robot
+    ├── error_handling.robot
+    ├── mock_openhab/
+    │   ├── __init__.py
+    │   └── server.py
+    ├── libraries/
+    │   ├── __init__.py
+    │   ├── ServerKeywords.py
+    │   └── SSEKeywords.py
+    └── resources/
+        └── keywords.resource
 ```
 
 ---
