@@ -164,14 +164,20 @@ protocol with configurable failure modes. Sociable unit tests use real SignalSto
 injected mock adapters. Test classes organized by functionality: Registration,
 Lifecycle, RetryLogic, SyncBehavior, MultipleAdapters.
 
-### Phase 8: API Layer (Medium Risk)
+### ✅ Phase 8: API Layer (Complete)
 
 **Goal:** Route handlers with mocked store
 
-| Step | File            | What to Test                     |
-| ---- | --------------- | -------------------------------- |
-| 8.1  | `api/routes.py` | REST endpoints, error responses  |
-| 8.2  | `api/sse.py`    | SSE streaming, client disconnect |
+| Step | File            | Tests | Coverage | Techniques Used                                          |
+| ---- | --------------- | ----- | -------- | -------------------------------------------------------- |
+| 8.1  | `api/routes.py` | 24    | 100%     | State Transition, Specification, Round-trip, Error Guess |
+| 8.2  | `api/sse.py`    | 7     | 100%     | Specification, State Transition, Error Guessing          |
+
+**Key outcome:** FastAPI dependency override pattern used to inject isolated SignalStore
+for testing. Mock AdapterManager provides configurable adapter states for /health
+endpoint testing. SSE generator tested directly for event format and subscription
+lifecycle. Full endpoint integration tested via httpx AsyncClient with ASGI transport.
+Tests organized: routes_health.py, routes_signals.py, sse.py.
 
 ### Phase 9: Integration Tests (Robot Framework)
 
