@@ -199,7 +199,6 @@ class TestHealthResponse:
     async def test_returns_subscriber_count(
         self,
         async_client: AsyncClient,
-        signal_store: SignalStore,
     ) -> None:
         """Health response includes subscriber_count from store."""
         # Arrange — no subscribers initially
@@ -290,7 +289,7 @@ class TestHealthGracefulDegradation:
         # Act
         async with AsyncClient(
             transport=ASGITransport(app=app),
-            base_url="http://test",
+            base_url="http://testserver",
         ) as client:
             response = await client.get("/health")
 
