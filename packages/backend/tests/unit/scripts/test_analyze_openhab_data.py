@@ -23,6 +23,7 @@ import pytest
 
 from tests.scripts import analyze_openhab_data
 from tests.scripts.analyze_openhab_data import (
+    EXISTING_FIXTURE_TYPES,
     AnalysisReport,
     ItemTypeInfo,
     SSEEventInfo,
@@ -272,13 +273,20 @@ class TestParseItemsSnapshot:
         assert len(report.encoding_issues) == 1
 
     def test_stores_fixture_candidates_for_new_types(self, tmp_path: Path) -> None:
-        """Types not in EXISTING_FIXTURE_TYPES are stored as fixture candidates."""
-        items = [_make_item(item_type="Color", state="120,100,50", name="LED_Strip")]
+        """Types absent from EXISTING_FIXTURE_TYPES become candidates."""
+        new_type = "SyntheticTestType"
+        items = [
+            _make_item(
+                item_type=new_type,
+                state="42",
+                name="Test_Device",
+            )
+        ]
         _write_json(tmp_path / "items.json", items)
 
         report = AnalysisReport()
         parse_items_snapshot(tmp_path / "items.json", report)
-        assert "Color" in report.fixture_candidates
+        assert new_type in report.fixture_candidates
 
     def test_tracks_transformed_state(self, tmp_path: Path) -> None:
         items = [_make_item(transformed_state="21.5 °C")]
@@ -397,30 +405,28 @@ class TestAnalyzeGaps:
     """
 
     def test_flags_unknown_item_type(self) -> None:
+        unknown = "SyntheticTestType"
         report = AnalysisReport()
-        report.item_types["Color"] = ItemTypeInfo(type_name="Color", count=1)
+        report.item_types[unknown] = ItemTypeInfo(type_name=unknown, count=1)
         analyze_gaps(report)
-        assert any("Color" in gap for gap in report.missing_from_fixtures)
+        assert any(unknown in gap for gap in report.missing_from_fixtures)
 
     def test_does_not_flag_known_item_type(self) -> None:
+        known = next(iter(EXISTING_FIXTURE_TYPES))
         report = AnalysisReport()
-        report.item_types["Switch"] = ItemTypeInfo(type_name="Switch", count=5)
+        report.item_types[known] = ItemTypeInfo(type_name=known, count=5)
         analyze_gaps(report)
-        # Switch is in EXISTING_FIXTURE_TYPES
         item_gaps = [
             g for g in report.missing_from_fixtures if g.startswith("Item type")
         ]
-        assert not any("Switch" in g for g in item_gaps)
+        assert not any(known in g for g in item_gaps)
 
     def test_flags_unknown_sse_event(self) -> None:
+        unknown = "SyntheticTestEvent"
         report = AnalysisReport()
-        report.sse_events["GroupStateChangedEvent"] = SSEEventInfo(
-            event_type="GroupStateChangedEvent", count=3
-        )
+        report.sse_events[unknown] = SSEEventInfo(event_type=unknown, count=3)
         analyze_gaps(report)
-        assert any(
-            "GroupStateChangedEvent" in gap for gap in report.missing_from_fixtures
-        )
+        assert any(unknown in gap for gap in report.missing_from_fixtures)
 
     def test_flags_transformed_state_presence(self) -> None:
         report = AnalysisReport()

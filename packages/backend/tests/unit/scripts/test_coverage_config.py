@@ -13,6 +13,8 @@ Test Techniques Used:
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 
 from tests.coverage_config import (
@@ -21,6 +23,16 @@ from tests.coverage_config import (
     get_threshold,
     normalize_path,
 )
+
+# Synthetic thresholds for algorithm-only tests — completely
+# decoupled from production MODULE_THRESHOLDS so that changes
+# to real thresholds or module clustering never break these tests.
+_SYNTH_THRESHOLDS: dict[str, tuple[int, int]] = {
+    "widgets": (80, 70),
+    "widgets/*": (90, 85),
+    "gizmos": (85, 80),
+    "__root__": (30, 0),
+}
 
 # =============================================================================
 # normalize_path
@@ -63,50 +75,56 @@ class TestNormalizePath:
 
 
 class TestGetModuleForFile:
-    """Tests for get_module_for_file() — module matching logic.
+    """Tests for get_module_for_file() — matching algorithm.
 
-    Technique: Decision Table — the four matching rules documented in the
-    function docstring, plus edge cases around wildcard priority.
+    Uses synthetic MODULE_THRESHOLDS so tests verify the algorithm
+    rules only, not production module names or thresholds.
+
+    Technique: Decision Table — the four matching rules documented
+    in the function docstring, plus edge cases around wildcard priority.
     """
 
-    # -- Rule 1: Directory prefix match ("adapters/" matches adapters/manager.py)
+    @pytest.fixture(autouse=True)
+    def _use_synthetic_thresholds(self) -> None:
+        """Replace MODULE_THRESHOLDS with synthetic data."""
+        with patch.dict(
+            "tests.coverage_config.MODULE_THRESHOLDS",
+            _SYNTH_THRESHOLDS,
+            clear=True,
+        ):
+            yield
+
+    # -- Rule 1: Directory prefix match
 
     def test_directory_prefix_match(self) -> None:
-        """Files directly in a module directory match the directory key."""
-        assert get_module_for_file("adapters/manager.py") == "adapters"
-
-    def test_directory_prefix_match_protocol(self) -> None:
-        """Another direct child of adapters/."""
-        assert get_module_for_file("adapters/protocol.py") == "adapters"
+        """Direct child of a module directory matches that key."""
+        assert get_module_for_file("widgets/foo.py") == "widgets"
 
     def test_directory_prefix_match_init(self) -> None:
-        """__init__.py in adapters/ matches the directory key."""
-        assert get_module_for_file("adapters/__init__.py") == "adapters"
+        """__init__.py in a module directory matches that key."""
+        assert get_module_for_file("widgets/__init__.py") == "widgets"
 
-    # -- Rule 2: Single-file module match ("config" matches config.py)
+    # -- Rule 2: Single-file module match
 
-    def test_single_file_module_config(self) -> None:
-        """config.py at the package root matches the 'config' key."""
-        assert get_module_for_file("config.py") == "config"
+    def test_single_file_module(self) -> None:
+        """<key>.py at the package root matches the key."""
+        assert get_module_for_file("gizmos.py") == "gizmos"
 
-    # -- Rule 3: Wildcard match ("adapters/*" matches adapters/<subdir>/...)
+    # -- Rule 3: Wildcard match (key/*)
 
-    def test_wildcard_matches_adapter_subdir(self) -> None:
-        """adapters/openhab/adapter.py matched by adapters/* wildcard."""
-        assert get_module_for_file("adapters/openhab/adapter.py") == "adapters/*"
+    def test_wildcard_matches_subdir_file(self) -> None:
+        """File in a subdirectory of a wildcard base is matched."""
+        assert get_module_for_file("widgets/sub/foo.py") == "widgets/*"
 
-    def test_wildcard_matches_different_adapter(self) -> None:
-        """A future adapter subdir auto-inherits via wildcard."""
-        assert get_module_for_file("adapters/homeassistant/client.py") == "adapters/*"
-
-    def test_wildcard_matches_nested_files(self) -> None:
-        """Deeply nested files in adapter subdir still match wildcard."""
-        assert get_module_for_file("adapters/openhab/units.py") == "adapters/*"
+    def test_wildcard_matches_deeply_nested(self) -> None:
+        """Multi-level subdirectory still matches wildcard."""
+        result = get_module_for_file("widgets/sub/deep/foo.py")
+        assert result == "widgets/*"
 
     def test_wildcard_does_not_match_direct_child(self) -> None:
-        """adapters/manager.py is a direct child, NOT a subdir — matches 'adapters'."""
-        # This tests the important distinction: wildcard requires subdir + nested file
-        assert get_module_for_file("adapters/manager.py") == "adapters"
+        """Direct child of base dir matches the concrete key,
+        NOT the wildcard (wildcard requires a subdir)."""
+        assert get_module_for_file("widgets/foo.py") == "widgets"
 
     # -- Rule 4: Fallback to __root__
 
@@ -115,26 +133,8 @@ class TestGetModuleForFile:
         assert get_module_for_file("__init__.py") == "__root__"
 
     def test_fallback_to_root_for_unknown(self) -> None:
-        """Any file not matching known keys falls back to __root__."""
+        """File not matching any key falls back to __root__."""
         assert get_module_for_file("unknown_module.py") == "__root__"
-
-    # -- Cross-cutting: other module directories
-
-    def test_api_directory(self) -> None:
-        """api/routes.py matches 'api' key."""
-        assert get_module_for_file("api/routes.py") == "api"
-
-    def test_api_sse(self) -> None:
-        """api/sse.py matches 'api' key."""
-        assert get_module_for_file("api/sse.py") == "api"
-
-    def test_state_directory(self) -> None:
-        """state/store.py matches 'state' key."""
-        assert get_module_for_file("state/store.py") == "state"
-
-    def test_core_directory(self) -> None:
-        """core/signal.py matches 'core' key."""
-        assert get_module_for_file("core/signal.py") == "core"
 
 
 # =============================================================================
@@ -151,34 +151,34 @@ class TestGetThreshold:
 
     @pytest.mark.parametrize(
         ("module_key", "expected"),
-        [
-            ("adapters", (85, 80)),
-            ("adapters/*", (90, 85)),
-            ("config", (85, 80)),
-            ("state", (85, 80)),
-            ("api", (80, 75)),
-            ("core", (80, 70)),
-            ("__root__", (30, 0)),
-        ],
+        list(MODULE_THRESHOLDS.items()),
+        ids=list(MODULE_THRESHOLDS.keys()),
     )
     def test_known_keys_return_configured_threshold(
         self, module_key: str, expected: tuple[int, int]
     ) -> None:
-        """Each configured key returns its (line, branch) threshold pair."""
+        """Each configured key returns its (line, branch) threshold pair.
+
+        Values derived from MODULE_THRESHOLDS — no hardcoded thresholds.
+        """
         assert get_threshold(module_key) == expected
 
     def test_unknown_key_falls_back_to_root(self) -> None:
         """Unknown module key returns __root__ threshold."""
         assert get_threshold("nonexistent_module") == MODULE_THRESHOLDS["__root__"]
 
-    def test_wildcard_resolved_key_uses_wildcard_threshold(self) -> None:
-        """A concrete resolved wildcard key like 'adapters/openhab' is unknown —
-        get_threshold looks up by the *rule key*, not the resolved module name.
+    def test_wildcard_key_resolves_from_dict(self) -> None:
+        """Wildcard rule keys (e.g. 'adapters/*') look up directly.
 
-        In practice, get_module_for_file returns the rule key 'adapters/*',
-        which IS in MODULE_THRESHOLDS. This test documents that behavior.
+        A *concrete* subdir name like 'adapters/openhab' is NOT a key
+        and falls back to __root__.  Tests derive from MODULE_THRESHOLDS.
         """
-        # The wildcard rule key itself is valid
-        assert get_threshold("adapters/*") == (90, 85)
-        # A concrete subdir name is NOT a key — falls back
-        assert get_threshold("adapters/openhab") == MODULE_THRESHOLDS["__root__"]
+        # Find a wildcard key dynamically
+        wildcard_keys = [k for k in MODULE_THRESHOLDS if k.endswith("/*")]
+        assert wildcard_keys, "Need at least one wildcard key"
+        wk = wildcard_keys[0]
+        base = wk[:-2]  # strip /*
+
+        assert get_threshold(wk) == MODULE_THRESHOLDS[wk]
+        # Concrete subdir is unknown → fallback
+        assert get_threshold(f"{base}/unknown") == MODULE_THRESHOLDS["__root__"]

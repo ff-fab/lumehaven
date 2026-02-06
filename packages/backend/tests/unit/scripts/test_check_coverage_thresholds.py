@@ -17,6 +17,7 @@ from unittest.mock import patch
 
 import pytest
 
+from tests.coverage_config import get_threshold as _get_threshold
 from tests.scripts.check_coverage_thresholds import (
     ModuleCoverage,
     ThresholdViolation,
@@ -256,13 +257,14 @@ class TestCheckThresholds:
 
     def test_no_violations_when_all_pass(self) -> None:
         """Modules meeting thresholds produce no violations."""
+        line_t, branch_t = _get_threshold("api")
         modules = [
             _make_module(
                 "api",
                 total_lines=100,
-                covered_lines=85,
+                covered_lines=line_t,
                 total_branches=100,
-                covered_branches=80,
+                covered_branches=branch_t,
             )
         ]
         violations = check_thresholds(modules)
@@ -270,48 +272,49 @@ class TestCheckThresholds:
 
     def test_line_violation(self) -> None:
         """Line rate below threshold produces a line violation."""
-        # api threshold is (80, 75) — 50% line rate < 80%
+        line_t, branch_t = _get_threshold("api")
         modules = [
             _make_module(
                 "api",
                 total_lines=100,
-                covered_lines=50,
+                covered_lines=line_t - 1,
                 total_branches=100,
-                covered_branches=80,
+                covered_branches=branch_t,
             )
         ]
         violations = check_thresholds(modules)
         line_violations = [v for v in violations if v.metric == "line"]
         assert len(line_violations) == 1
-        assert line_violations[0].actual == 50.0
-        assert line_violations[0].required == 80
+        assert line_violations[0].actual == line_t - 1
+        assert line_violations[0].required == line_t
 
     def test_branch_violation(self) -> None:
         """Branch rate below threshold produces a branch violation."""
-        # api threshold is (80, 75) — 50% branch rate < 75%
+        line_t, branch_t = _get_threshold("api")
         modules = [
             _make_module(
                 "api",
                 total_lines=100,
-                covered_lines=85,
+                covered_lines=line_t,
                 total_branches=100,
-                covered_branches=50,
+                covered_branches=branch_t - 1,
             )
         ]
         violations = check_thresholds(modules)
         branch_violations = [v for v in violations if v.metric == "branch"]
         assert len(branch_violations) == 1
-        assert branch_violations[0].actual == 50.0
+        assert branch_violations[0].actual == branch_t - 1
 
     def test_both_violations_for_one_module(self) -> None:
         """Module can have both line AND branch violations."""
+        # 0% is below any positive threshold
         modules = [
             _make_module(
-                "adapters/*",
+                "api",
                 total_lines=100,
-                covered_lines=10,
+                covered_lines=0,
                 total_branches=100,
-                covered_branches=10,
+                covered_branches=0,
             )
         ]
         violations = check_thresholds(modules)
@@ -319,14 +322,14 @@ class TestCheckThresholds:
 
     def test_at_exact_threshold_passes(self) -> None:
         """Rate exactly at threshold is NOT a violation (>=)."""
-        # api threshold is (80, 75)
+        line_t, branch_t = _get_threshold("api")
         modules = [
             _make_module(
                 "api",
                 total_lines=100,
-                covered_lines=80,
+                covered_lines=line_t,
                 total_branches=100,
-                covered_branches=75,
+                covered_branches=branch_t,
             )
         ]
         violations = check_thresholds(modules)
@@ -353,13 +356,14 @@ class TestFormatReport:
 
     def test_passed_verbose(self) -> None:
         """Verbose passed report lists each module with check marks."""
+        line_t, branch_t = _get_threshold("api")
         modules = [
             _make_module(
                 "api",
                 total_lines=100,
-                covered_lines=90,
+                covered_lines=line_t,
                 total_branches=100,
-                covered_branches=80,
+                covered_branches=branch_t,
             )
         ]
         report = format_report(modules, [], verbose=True)
@@ -369,29 +373,36 @@ class TestFormatReport:
 
     def test_failed_report_shows_violations(self) -> None:
         """Failed report shows violation details."""
+        # ThresholdViolation is just display data — values are arbitrary
         violations = [
-            ThresholdViolation(module="api", metric="line", actual=50.0, required=80),
+            ThresholdViolation(
+                module="modX",
+                metric="line",
+                actual=50.0,
+                required=80,
+            ),
         ]
         report = format_report([], violations, verbose=False)
         assert "FAILED" in report
-        assert "api" in report
+        assert "modX" in report
         assert "50.0%" in report
 
     def test_verbose_shows_failing_marks(self) -> None:
         """Verbose report shows ✗ for failing modules."""
+        line_t, _branch_t = _get_threshold("api")
         mod = _make_module(
             "api",
             total_lines=100,
-            covered_lines=50,
+            covered_lines=0,
             total_branches=100,
-            covered_branches=80,
+            covered_branches=100,
         )
         violations = [
             ThresholdViolation(
                 module="api",
                 metric="line",
-                actual=50.0,
-                required=80,
+                actual=0.0,
+                required=line_t,
             )
         ]
         report = format_report([mod], violations, verbose=True)
@@ -432,15 +443,15 @@ class TestMain:
 
     def test_exit_1_threshold_violated(self, tmp_path: Path) -> None:
         """Exit code 1 when a threshold is violated."""
-        # adapters/* needs 90% line — give it 10%
+        # 0% coverage guarantees violation for any positive threshold
         data = {
             "files": {
                 "src/lumehaven/adapters/openhab/adapter.py": {
                     "summary": {
                         "num_statements": 100,
-                        "covered_lines": 10,
+                        "covered_lines": 0,
                         "num_branches": 100,
-                        "covered_branches": 10,
+                        "covered_branches": 0,
                     }
                 }
             }
