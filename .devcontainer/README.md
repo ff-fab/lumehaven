@@ -117,7 +117,7 @@ All extensions are auto-installed in the container:
   "ms-python.vscode-pylance",      // Advanced Python analysis
   "charliermarsh.ruff",            // Ruff formatter/linter UI
   "tamasfe.even-better-toml",      // TOML highlighting
-  "robocorp.robotframework-lsp",   // Robot Framework (integration tests)
+  "d-biehl.robotcode",             // Robot Framework (integration tests)
   "dbaeumer.vscode-eslint",        // ESLint for JavaScript
   "prettier.prettier-vscode",      // Prettier formatter
   "bradlc.vscode-tailwindcss",     // Tailwind CSS utilities

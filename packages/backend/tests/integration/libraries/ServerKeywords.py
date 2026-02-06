@@ -29,7 +29,7 @@ from robot.api import logger
 from robot.api.deco import keyword
 
 if TYPE_CHECKING:
-    from subprocess import Popen
+    from subprocess import Popen  # noqa: F811 - imported for type hints only
 
 
 def _is_port_in_use(port: int) -> bool:

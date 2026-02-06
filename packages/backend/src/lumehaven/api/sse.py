@@ -28,6 +28,12 @@ async def signal_event_generator(
 ) -> AsyncGenerator[dict[str, str]]:
     """Generate SSE events from a signal store subscription.
 
+    Note: The subscription is registered when this generator starts iterating
+    (inside store.subscribe()), not when signal_event_generator() is called.
+    EventSourceResponse from sse-starlette 3.0.0+ starts iterating the generator
+    immediately upon returning the response, so this is safe. Integration tests
+    synchronize by polling /metrics until subscriber_count >= 1.
+
     Args:
         store: SignalStore to subscribe to for updates.
 
