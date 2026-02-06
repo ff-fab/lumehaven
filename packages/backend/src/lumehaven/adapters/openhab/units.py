@@ -169,7 +169,7 @@ def format_value(
             return format_str % round(float(value))
         elif format_str.endswith("f"):
             return format_str % float(value)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         # Can't convert to number, return as-is
         pass
 

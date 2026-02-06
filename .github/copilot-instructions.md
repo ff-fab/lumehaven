@@ -90,18 +90,22 @@ lumehaven/
 
 ## Test Coverage Thresholds
 
-Per-module coverage thresholds are enforced based on risk levels (see
-`docs/testing/03-coverage-strategy.md`).
+Per-module coverage thresholds are enforced at the **module** (directory) level — files
+are aggregated (weighted by statement/branch count) before checking against the
+threshold. See `docs/testing/03-coverage-strategy.md`.
 
-**Threshold locations (keep in sync when updating):**
+**Single source of truth:** `packages/backend/tests/coverage_config.py` —
+`MODULE_THRESHOLDS` dict. Both the pytest hook (`conftest.py`) and the standalone script
+import from it.
 
-1. `packages/backend/tests/conftest.py` — `COVERAGE_THRESHOLDS` dict (pytest hook)
-2. `packages/backend/scripts/check_coverage_thresholds.py` — `THRESHOLDS` dict
-   (standalone)
+| Risk Level | Line | Branch | Matching Rule                                    |
+| ---------- | ---- | ------ | ------------------------------------------------ |
+| Critical   | 90%  | 85%    | `adapters/*` — any adapter implementation subdir |
+| High       | 85%  | 80%    | `adapters` (framework), `config`, `state`        |
+| Medium     | 80%  | 75%    | `api`                                            |
+| Low        | 80%  | 70%    | `core`                                           |
+| Low        | 30%  | 0%     | `__root__` (package init, version)               |
+| Excluded   | —    | —      | `main.py` (entrypoint, Robot integration only)   |
 
-| Risk Level | Line | Branch | Modules                                              |
-| ---------- | ---- | ------ | ---------------------------------------------------- |
-| Critical   | 90%  | 85%    | `adapters/openhab/adapter.py`, `adapters/manager.py` |
-| High       | 85%  | 80%    | `config.py`, `state/store.py`                        |
-| Medium     | 80%  | 75%    | `api/routes.py`, `api/sse.py`                        |
-| Default    | 80%  | 70%    | All other modules                                    |
+New adapter implementations (e.g. `adapters/homeassistant/`) auto-inherit the Critical
+threshold — no config changes needed.

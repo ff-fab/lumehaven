@@ -8,19 +8,27 @@ giving developers a single glance at the full picture.
 pytest results come from JUnit XML (--junitxml flag).
 Robot Framework results come from output.xml (default Robot output).
 
+Optionally includes module-level coverage threshold validation when
+``--coverage-file`` is provided. Without it, the script produces a
+test-only summary (backward compatible).
+
 Usage:
-    # After running both suites:
-    python scripts/summarize_tests.py
+    # Test summary only (backward compatible):
+    python tests/scripts/summarize_tests.py
+
+    # Combined test + coverage summary:
+    python tests/scripts/summarize_tests.py --coverage-file=coverage.json
 
     # With custom paths:
-    python scripts/summarize_tests.py \
+    python tests/scripts/summarize_tests.py \
         --unit-results results-unit.xml \
-        --robot-output output.xml
+        --robot-output output.xml \
+        --coverage-file coverage.json
 
 Exit codes:
-    0 - All tests passed (or skipped)
-    1 - One or more test failures/errors, or an expected suite's results are missing
-    2 - Neither results file was found
+    0 - All tests passed (or skipped) and coverage thresholds met
+    1 - Test failures/errors, missing suites, or coverage violations
+    2 - Neither results file was found / coverage file missing
 """
 
 from __future__ import annotations
@@ -30,6 +38,19 @@ import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+# Add tests/ and tests/scripts/ to path so sibling modules can be imported
+# when running as a script.  tests/ holds coverage_config.py, while
+# tests/scripts/ holds check_coverage_thresholds.py (neither directory is a
+# proper Python package — they lack __init__.py on purpose).
+_scripts_dir = str(Path(__file__).resolve().parent)
+_tests_dir = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, _tests_dir)
+sys.path.insert(0, _scripts_dir)
+
+if TYPE_CHECKING:
+    from check_coverage_thresholds import ThresholdViolation
 
 # =============================================================================
 # Data Model
@@ -167,6 +188,55 @@ def _parse_robot_xml_fallback(path: Path) -> SuiteResult | None:
 
 
 # =============================================================================
+# Coverage Integration
+# =============================================================================
+
+
+@dataclass
+class CoverageResult:
+    """Compact coverage threshold check result for embedding in the summary."""
+
+    module_count: int
+    violations: list[ThresholdViolation]
+
+    @property
+    def ok(self) -> bool:
+        return len(self.violations) == 0
+
+
+def check_coverage(coverage_file: Path) -> CoverageResult | None:
+    """Run coverage threshold validation and return a compact result.
+
+    Returns ``None`` if the coverage file doesn't exist or can't be parsed.
+    Imports the coverage threshold script as a library to reuse its logic.
+    """
+    if not coverage_file.exists():
+        print(
+            f"  ⚠ Coverage file not found: {coverage_file}",
+            file=sys.stderr,
+        )
+        return None
+
+    # Late import — only needed when --coverage-file is provided
+    from check_coverage_thresholds import (  # noqa: PLC0415
+        check_thresholds,
+        extract_module_coverage,
+        load_coverage_data,
+    )
+
+    try:
+        data = load_coverage_data(coverage_file)
+    except SystemExit:
+        # load_coverage_data calls sys.exit(2) on invalid JSON;
+        # convert to None so the summary can report the failure gracefully.
+        return None
+
+    modules = extract_module_coverage(data)
+    violations = check_thresholds(modules)
+    return CoverageResult(module_count=len(modules), violations=violations)
+
+
+# =============================================================================
 # Rendering
 # =============================================================================
 
@@ -190,8 +260,15 @@ def _format_row(name: str, passed: int, failed: int, skipped: int, total: int) -
     return f"  {name:<25} {passed:>7} {failed:>7} {skipped:>8} {total:>6}"
 
 
-def _render_summary(results: list[SuiteResult]) -> None:
-    """Print a compact summary table to stdout."""
+def _render_summary(
+    results: list[SuiteResult],
+    coverage: CoverageResult | None = None,
+) -> None:
+    """Print a compact summary table to stdout.
+
+    When *coverage* is provided, a coverage threshold line is appended after
+    the totals row.  On violations the failing modules are listed inline.
+    """
     header = f"  {'Suite':<25} {'Passed':>7} {'Failed':>7} {'Skipped':>8} {'Total':>6}"
 
     # Pre-compute all rows to determine the dynamic width
@@ -213,18 +290,45 @@ def _render_summary(results: list[SuiteResult]) -> None:
         "TOTAL", total_passed, total_failed, total_skipped, total_total
     )
 
-    if total_failed > 0:
-        result_line = f"  Result: FAILURES DETECTED ✗ ({total_failed} failed)"
-        result_colored = (
-            f"  Result: {_RED}FAILURES DETECTED ✗ ({total_failed} failed){_RESET}"
-        )
+    # -- Coverage line (compact) ---------------------------------------------
+    coverage_lines: list[str] = []
+    if coverage is not None:
+        if coverage.ok:
+            coverage_lines.append(
+                f"  Coverage: {coverage.module_count} modules, all thresholds met ✓"
+            )
+        else:
+            n = len(coverage.violations)
+            coverage_lines.append(
+                f"  Coverage: {coverage.module_count} modules, {n} violation(s) ✗"
+            )
+            for v in coverage.violations:
+                coverage_lines.append(
+                    f"    {v.module}: {v.metric} {v.actual:.1f}% < {v.required}%"
+                )
+
+    # -- Result line ---------------------------------------------------------
+    tests_ok = total_failed == 0
+    coverage_ok = coverage is None or coverage.ok
+    all_ok = tests_ok and coverage_ok
+
+    if all_ok:
+        result_line = "  Result: ALL PASSED ✓"
+        result_colored = f"  Result: {_GREEN}ALL PASSED ✓{_RESET}"
     else:
-        result_line = "  Result: ALL TESTS PASSED ✓"
-        result_colored = f"  Result: {_GREEN}ALL TESTS PASSED ✓{_RESET}"
+        parts: list[str] = []
+        if not tests_ok:
+            parts.append(f"{total_failed} test failure(s)")
+        if not coverage_ok:
+            assert coverage is not None  # for type narrowing
+            parts.append(f"{len(coverage.violations)} coverage violation(s)")
+        detail = ", ".join(parts)
+        result_line = f"  Result: FAILED ✗ — {detail}"
+        result_colored = f"  Result: {_RED}FAILED ✗ — {detail}{_RESET}"
 
     # Width = widest content line + padding for visual breathing room
     # Use plain text (no ANSI codes) for width calculation
-    all_lines = [header, totals_row, result_line, *data_rows]
+    all_lines = [header, totals_row, result_line, *data_rows, *coverage_lines]
     width = max(len(line) for line in all_lines) + _PADDING
 
     # Print the table
@@ -238,6 +342,9 @@ def _render_summary(results: list[SuiteResult]) -> None:
         print(row)
     print(_hline(_SINGLE, width))
     print(totals_row)
+    if coverage_lines:
+        for line in coverage_lines:
+            print(line)
     print(_hline(_DOUBLE, width))
     print(result_colored)
     print(_hline(_DOUBLE, width))
@@ -264,6 +371,13 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("output.xml"),
         help="Path to Robot Framework output.xml (default: output.xml)",
+    )
+    parser.add_argument(
+        "--coverage-file",
+        type=Path,
+        default=None,
+        help="Path to coverage JSON file. When provided, module-level "
+        "threshold validation is included in the summary.",
     )
     return parser
 
@@ -309,12 +423,27 @@ def main() -> int:
     for name in not_found:
         print(f"  ⚠ {name}: results file not found — NOT RUN or output missing")
 
-    _render_summary(found)
+    # Optional coverage threshold check
+    coverage_result: CoverageResult | None = None
+    if args.coverage_file is not None:
+        coverage_result = check_coverage(args.coverage_file)
+        if coverage_result is None:
+            # Coverage file was explicitly requested but couldn't be loaded
+            # (missing or corrupt).  Fail hard so CI doesn't silently skip.
+            print(
+                "  ✗ Cannot validate coverage — file missing or corrupt",
+                file=sys.stderr,
+            )
+            _render_summary(found)
+            return 2
 
-    # Exit code: 1 if any failures OR any expected suite is missing
+    _render_summary(found, coverage=coverage_result)
+
+    # Exit code: 1 if any failures, missing suites, or coverage violations
     has_failures = any(not r.ok for r in found)
     has_missing = len(not_found) > 0
-    return 1 if (has_failures or has_missing) else 0
+    has_coverage_violations = coverage_result is not None and not coverage_result.ok
+    return 1 if (has_failures or has_missing or has_coverage_violations) else 0
 
 
 if __name__ == "__main__":
