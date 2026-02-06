@@ -34,9 +34,11 @@ tasks:
     desc: Run all backend tests (unit + integration) with summary
     dir: '{{.BACKEND_DIR}}'
     cmds:
-      - cmd: uv run pytest tests/unit/ -v --tb=short --junitxml=results-unit.xml
+      # Call subtasks via shell — Taskfile only supports ignore_error
+      # on cmd: entries, not on task: invocations.
+      - cmd: task test:be:unit
         ignore_error: true
-      - cmd: uv run robot tests/integration/
+      - cmd: task test:be:integration
         ignore_error: true
       - uv run python scripts/summarize_tests.py
 

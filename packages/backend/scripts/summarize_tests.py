@@ -19,7 +19,7 @@ Usage:
 
 Exit codes:
     0 - All tests passed (or skipped)
-    1 - One or more test failures or errors
+    1 - One or more test failures/errors, or an expected suite's results are missing
     2 - Neither results file was found
 """
 
@@ -311,9 +311,10 @@ def main() -> int:
 
     _render_summary(found)
 
-    # Exit code: 1 if any failures
+    # Exit code: 1 if any failures OR any expected suite is missing
     has_failures = any(not r.ok for r in found)
-    return 1 if has_failures else 0
+    has_missing = len(not_found) > 0
+    return 1 if (has_failures or has_missing) else 0
 
 
 if __name__ == "__main__":
