@@ -42,8 +42,7 @@ class TestSSEEventFormat:
 
         async def collect_one_event() -> None:
             nonlocal received_event
-            gen = signal_event_generator(signal_store)
-            async for event in gen:
+            async for event in signal_event_generator(signal_store):
                 received_event = event
                 break  # Got one event, exit
 
@@ -90,8 +89,7 @@ class TestSSEEventFormat:
 
         async def collect_one_event() -> None:
             nonlocal received_event
-            gen = signal_event_generator(signal_store)
-            async for event in gen:
+            async for event in signal_event_generator(signal_store):
                 received_event = event
                 break
 
@@ -133,37 +131,26 @@ class TestSSESubscription:
     Technique: State Transition Testing — connect → receive → disconnect
     """
 
-    async def test_subscribes_to_store_on_connect(
+    async def test_subscribes_to_store_on_iteration(
         self,
         signal_store: SignalStore,
     ) -> None:
-        """Generator subscribes to store, incrementing subscriber count."""
+        """Starting the generator increments subscriber count."""
         # Arrange
         initial_count = signal_store.subscriber_count()
 
-        async def run_generator_briefly() -> None:
-            gen = signal_event_generator(signal_store)
-            # Starting iteration triggers subscribe()
-            try:
-                async for _ in gen:
-                    # Wait briefly to let count be checked
-                    await asyncio.sleep(0.1)
-                    break
-            except asyncio.CancelledError:
-                pass  # Expected — generator cancelled during cleanup
+        # Act — start iterating the generator (this triggers subscription)
+        gen = signal_event_generator(signal_store)
+        task = asyncio.create_task(gen.__anext__())
 
-        # Act
-        task = asyncio.create_task(run_generator_briefly())
-
-        # Wait for subscription to be registered (condition-based, not fixed sleep)
+        # Wait for subscriber to be registered
         await wait_for_condition(
-            lambda: signal_store.subscriber_count() >= initial_count + 1,
-            timeout=1.0,
-            description="subscription registration",
+            lambda: signal_store.subscriber_count() > initial_count,
+            description="subscriber registered",
         )
 
-        # Assert — subscriber count increased while generator running
-        assert signal_store.subscriber_count() >= initial_count + 1
+        # Assert — subscriber count increased
+        assert signal_store.subscriber_count() == initial_count + 1
 
         # Cleanup
         task.cancel()
@@ -183,8 +170,7 @@ class TestSSESubscription:
         received: list[dict[str, str]] = []
 
         async def collect_events() -> None:
-            gen = signal_event_generator(signal_store)
-            async for event in gen:
+            async for event in signal_event_generator(signal_store):
                 received.append(event)
                 if len(received) >= 2:
                     break
@@ -232,7 +218,7 @@ class TestSSEClientDisconnect:
         self,
         signal_store: SignalStore,
     ) -> None:
-        """Generator logs and re-raises CancelledError on client disconnect."""
+        """Generator cleanly handles CancelledError on client disconnect."""
         # Arrange
         gen = signal_event_generator(signal_store)
 
@@ -242,10 +228,10 @@ class TestSSEClientDisconnect:
 
         task = asyncio.create_task(run_generator())
 
-        # Wait for generator to subscribe (deterministic)
+        # Wait for subscription to be established
         await wait_for_condition(
             lambda: signal_store.subscriber_count() >= 1,
-            description="generator subscribed",
+            description="subscriber registered",
         )
 
         # Act — cancel (simulates client disconnect)
@@ -259,40 +245,30 @@ class TestSSEClientDisconnect:
         self,
         signal_store: SignalStore,
     ) -> None:
-        """Subscriber is removed from store when generator is cancelled."""
+        """Cancelling the generator removes the subscriber from the store."""
         # Arrange
         initial_count = signal_store.subscriber_count()
+        gen = signal_event_generator(signal_store)
 
         async def run_generator() -> None:
-            gen = signal_event_generator(signal_store)
             async for _ in gen:
                 pass
 
         task = asyncio.create_task(run_generator())
 
-        # Wait for subscription (condition-based)
+        # Wait for subscription
         await wait_for_condition(
-            lambda: signal_store.subscriber_count() == initial_count + 1,
-            timeout=1.0,
-            description="subscription registration",
+            lambda: signal_store.subscriber_count() > initial_count,
+            description="subscriber registered",
         )
-
-        # Verify subscribed
         assert signal_store.subscriber_count() == initial_count + 1
 
-        # Act — cancel
+        # Act — cancel and wait for cleanup
         task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await task
 
-        # Wait for cleanup to complete (condition-based)
-        await wait_for_condition(
-            lambda: signal_store.subscriber_count() == initial_count,
-            timeout=1.0,
-            description="subscriber cleanup",
-        )
-
-        # Assert — subscriber removed
+        # Assert — subscriber removed (cleanup via finally block in subscribe())
         assert signal_store.subscriber_count() == initial_count
 
 

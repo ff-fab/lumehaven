@@ -30,6 +30,9 @@
         "python.defaultInterpreterPath": "/workspace/packages/backend/.venv/bin/python",
         "python.terminal.activateEnvironment": true,
 
+        // Robot Framework (RobotCode extension)
+        "robotcode.python": "/workspace/packages/backend/.venv/bin/python",
+
         // Line length: 88 characters (matches Prettier, Ruff, and Black conventions)
         "editor.rulers": [88],
         "editor.wordWrap": "off",
@@ -144,7 +147,7 @@
         "ms-python.vscode-pylance",
         "charliermarsh.ruff",
         "tamasfe.even-better-toml",
-        "robocorp.robotframework-lsp",
+        "d-biehl.robotcode",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",

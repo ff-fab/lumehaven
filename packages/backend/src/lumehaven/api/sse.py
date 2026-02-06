@@ -5,7 +5,6 @@ uses to receive real-time updates. It bridges the signal store's
 pub/sub mechanism with HTTP SSE.
 """
 
-import asyncio
 import json
 import logging
 from collections.abc import AsyncGenerator
@@ -27,23 +26,25 @@ HEARTBEAT_INTERVAL = 30
 async def signal_event_generator(
     store: SignalStore,
 ) -> AsyncGenerator[dict[str, str]]:
-    """Generate SSE events from signal store updates.
+    """Generate SSE events from a signal store subscription.
+
+    Note: The subscription is registered when this generator starts iterating
+    (inside store.subscribe()), not when signal_event_generator() is called.
+    EventSourceResponse from sse-starlette 3.0.0+ starts iterating the generator
+    immediately upon returning the response, so this is safe. Integration tests
+    synchronize by polling /metrics until subscriber_count >= 1.
+
+    Args:
+        store: SignalStore to subscribe to for updates.
 
     Yields:
         Dict with 'event' and 'data' keys for SSE protocol.
     """
-    subscriber = store.subscribe()
-    try:
-        async for signal in subscriber:
-            yield {
-                "event": "signal",
-                "data": json.dumps(signal.to_dict(), ensure_ascii=False),
-            }
-    except asyncio.CancelledError:
-        logger.debug("SSE connection cancelled")
-        raise
-    finally:
-        logger.debug("SSE subscriber cleaned up")
+    async for signal in store.subscribe():
+        yield {
+            "event": "signal",
+            "data": json.dumps(signal.to_dict(), ensure_ascii=False),
+        }
 
 
 @router.get("/api/events/signals", tags=["signals"])
@@ -66,4 +67,5 @@ async def signal_stream(
     return EventSourceResponse(
         signal_event_generator(store),
         media_type="text/event-stream",
+        ping=HEARTBEAT_INTERVAL,
     )

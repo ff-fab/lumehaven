@@ -129,19 +129,42 @@ class SignalStore:
             Queue is bounded to prevent memory exhaustion from slow consumers.
             When full, new updates are dropped (see publish()).
         """
-        settings = get_settings()
-        queue: asyncio.Queue[Signal] = asyncio.Queue(
-            maxsize=settings.subscriber_queue_size
-        )
-        self._subscribers.add(queue)
+        queue = self.register_subscriber()
         try:
             while True:
                 signal = await queue.get()
                 yield signal
         finally:
-            self._subscribers.discard(queue)
-            # Clean up drop stats to prevent memory leak
-            self._drop_stats.pop(queue, None)
+            self.unregister_subscriber(queue)
+
+    def register_subscriber(self) -> asyncio.Queue[Signal]:
+        """Register a new subscriber and return its queue.
+
+        This method allows eager registration of subscribers before
+        the async generator starts iterating, which is important for
+        accurate subscriber counts in testing and monitoring.
+
+        Returns:
+            A bounded asyncio.Queue that will receive Signal objects.
+        """
+        settings = get_settings()
+        queue: asyncio.Queue[Signal] = asyncio.Queue(
+            maxsize=settings.subscriber_queue_size
+        )
+        self._subscribers.add(queue)
+        logger.debug(f"Registered subscriber, total: {len(self._subscribers)}")
+        return queue
+
+    def unregister_subscriber(self, queue: asyncio.Queue[Signal]) -> None:
+        """Unregister a subscriber and clean up its resources.
+
+        Args:
+            queue: The subscriber queue to remove.
+        """
+        self._subscribers.discard(queue)
+        # Clean up drop stats to prevent memory leak
+        self._drop_stats.pop(queue, None)
+        logger.debug(f"Unregistered subscriber, total: {len(self._subscribers)}")
 
     async def publish(self, signal: Signal) -> None:
         """Publish a signal update to all subscribers.

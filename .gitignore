@@ -55,6 +55,11 @@ coverage.json
 .pytest_cache/
 cover/
 
+# Robot Framework output
+output.xml
+log.html
+report.html
+
 # Translations
 *.mo
 *.pot
@@ -140,6 +145,7 @@ celerybeat.pid
 
 # Environments
 .env
+!tests/integration/.env
 .envrc
 .venv
 env/
