@@ -31,10 +31,16 @@ tasks:
       - task: test:fe
 
   test:be:
-    desc: Run all backend tests (unit + integration)
+    desc: Run all backend tests (unit + integration) with summary
+    dir: '{{.BACKEND_DIR}}'
     cmds:
-      - task: test:be:unit
-      - task: test:be:integration
+      # Call subtasks via shell — Taskfile only supports ignore_error
+      # on cmd: entries, not on task: invocations.
+      - cmd: task test:be:unit
+        ignore_error: true
+      - cmd: task test:be:integration
+        ignore_error: true
+      - uv run python scripts/summarize_tests.py
 
   test:fe:
     desc: Run all frontend tests
@@ -54,7 +60,7 @@ tasks:
     desc: Run backend unit tests only (fast, every change)
     dir: '{{.BACKEND_DIR}}'
     cmds:
-      - uv run pytest tests/unit/ -v --tb=short
+      - uv run pytest tests/unit/ -v --tb=short --junitxml=results-unit.xml
 
   test:be:integration:
     desc: Run backend integration tests (Robot Framework)

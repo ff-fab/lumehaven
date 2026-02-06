@@ -60,6 +60,9 @@ output.xml
 log.html
 report.html
 
+# pytest JUnit XML results
+results-unit.xml
+
 # Translations
 *.mo
 *.pot
