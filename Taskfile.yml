@@ -31,16 +31,16 @@ tasks:
       - task: test:fe
 
   test:be:
-    desc: Run all backend tests (unit + integration) with summary
+    desc: Run all backend tests (unit + integration) with coverage and summary
     dir: '{{.BACKEND_DIR}}'
     cmds:
-      # Call subtasks via shell — Taskfile only supports ignore_error
-      # on cmd: entries, not on task: invocations.
-      - cmd: task test:be:unit
+      # Run unit tests with coverage to enable threshold validation.
+      # Uses ignore_error so integration tests + summary always run.
+      - cmd: uv run pytest tests/unit/ -v --tb=short --junitxml=results-unit.xml --cov=lumehaven --cov-branch --cov-report=json
         ignore_error: true
       - cmd: task test:be:integration
         ignore_error: true
-      - uv run python scripts/summarize_tests.py
+      - uv run python tests/scripts/summarize_tests.py --coverage-file=coverage.json
 
   test:fe:
     desc: Run all frontend tests
@@ -87,7 +87,7 @@ tasks:
     dir: '{{.BACKEND_DIR}}'
     cmds:
       - uv run pytest tests/ --cov=lumehaven --cov-branch --cov-report=json -q
-      - uv run python scripts/check_coverage_thresholds.py --verbose
+      - uv run python tests/scripts/check_coverage_thresholds.py --verbose
 
   test:be:watch:
     desc: Run backend unit tests in watch mode
@@ -265,8 +265,8 @@ tasks:
     desc: CI backend test task with coverage
     dir: '{{.BACKEND_DIR}}'
     cmds:
-      - uv run pytest tests/ --cov=lumehaven --cov-branch --cov-report=xml --cov-report=json --cov-report=term
-      - uv run python scripts/check_coverage_thresholds.py
+      - uv run pytest tests/ --cov=lumehaven --cov-branch --cov-report=xml --cov-report=json --cov-report=term --junitxml=results-unit.xml
+      - uv run python tests/scripts/summarize_tests.py --coverage-file=coverage.json
 
   ci:test:fe:
     desc: CI frontend test task with coverage

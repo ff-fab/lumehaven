@@ -28,6 +28,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Import shared fixtures from fixtures/ to make them available to all tests
 # pytest_plugins would be cleaner but requires package structure changes
 from lumehaven.state.store import SignalStore  # noqa: E402
+from tests.coverage_config import (  # noqa: E402
+    get_module_for_file,
+    get_threshold,
+    normalize_path,
+)
 from tests.fixtures.config import (  # noqa: E402, F401
     _reset_settings_cache,
     tmp_config_file,
@@ -55,106 +60,74 @@ def signal_store() -> SignalStore:
 # =============================================================================
 # Coverage Threshold Validation Hook
 # =============================================================================
-# This hook runs after pytest completes and validates per-module coverage
-# against risk-based thresholds defined in docs/testing/03-coverage-strategy.md
+# This hook runs after pytest completes and validates module-level coverage
+# against risk-based thresholds.  Threshold definitions and helpers live in
+# tests/coverage_config.py (single source of truth).
 #
 # Triggered automatically when --cov is used and coverage.json exists.
 
-# Risk-based thresholds: (line_threshold, branch_threshold)
-COVERAGE_THRESHOLDS: dict[str, tuple[int, int]] = {
-    # Critical risk (90% line, 85% branch)
-    "adapters/openhab/adapter.py": (90, 85),
-    "adapters/manager.py": (90, 85),
-    # High risk (85% line, 80% branch)
-    "config.py": (85, 80),
-    "state/store.py": (85, 80),
-    # Medium risk (80% line, 75% branch)
-    "api/routes.py": (80, 75),
-    "api/sse.py": (80, 75),
-    # Default for all other modules (80% line, 70% branch)
-    "__default__": (80, 70),
-}
-
-
-def _get_threshold(module_path: str) -> tuple[int, int]:
-    """Get (line, branch) threshold for a module, with fallback to default."""
-    # Normalize: extract path relative to lumehaven/
-    normalized = module_path
-    for prefix in ("src/lumehaven/", "lumehaven/"):
-        if prefix in normalized:
-            normalized = normalized.split(prefix)[-1]
-            break
-
-    # Exact match
-    if normalized in COVERAGE_THRESHOLDS:
-        return COVERAGE_THRESHOLDS[normalized]
-
-    # Directory prefix match (longest wins)
-    best_match = "__default__"
-    best_len = 0
-    for pattern in COVERAGE_THRESHOLDS:
-        if pattern == "__default__":
-            continue
-        prefix = pattern.removesuffix(".py").rstrip("/")
-        if normalized.startswith(prefix) and len(pattern) > best_len:
-            best_match = pattern
-            best_len = len(pattern)
-
-    return COVERAGE_THRESHOLDS[best_match]
-
 
 def _check_coverage_thresholds(coverage_file: Path) -> list[str]:
-    """Check coverage.json against thresholds, return list of violations."""
+    """Aggregate per-module coverage and check against thresholds."""
     if not coverage_file.exists():
-        return []  # No coverage data, skip validation
+        return []
 
     with coverage_file.open() as f:
         data: dict[str, Any] = json.load(f)
 
-    violations: list[str] = []
-    files = data.get("files", {})
-
-    for filepath, file_data in files.items():
+    # Accumulate totals per module
+    module_totals: dict[str, dict[str, int]] = {}
+    for filepath, file_data in data.get("files", {}).items():
+        normalized = normalize_path(filepath)
+        module = get_module_for_file(normalized)
         summary = file_data.get("summary", {})
 
-        total_lines = summary.get("num_statements", 0)
-        covered_lines = summary.get("covered_lines", 0)
-        line_rate = (covered_lines / total_lines * 100) if total_lines > 0 else 100.0
+        if module not in module_totals:
+            module_totals[module] = {
+                "stmts": 0,
+                "cov_l": 0,
+                "branches": 0,
+                "cov_b": 0,
+            }
+        t = module_totals[module]
+        t["stmts"] += summary.get("num_statements", 0)
+        t["cov_l"] += summary.get("covered_lines", 0)
+        t["branches"] += summary.get("num_branches", 0)
+        t["cov_b"] += summary.get("covered_branches", 0)
 
-        total_branches = summary.get("num_branches", 0)
-        covered_branches = summary.get("covered_branches", 0)
-        branch_rate = (
-            (covered_branches / total_branches * 100) if total_branches > 0 else 100.0
+    # Check each module aggregate against its threshold
+    violations: list[str] = []
+    for module, totals in sorted(module_totals.items()):
+        line_thresh, branch_thresh = get_threshold(module)
+        line_rate = (
+            (totals["cov_l"] / totals["stmts"] * 100) if totals["stmts"] > 0 else 100.0
         )
-
-        line_thresh, branch_thresh = _get_threshold(filepath)
-
-        # Shorten path for display
-        display_path = filepath
-        if "src/lumehaven/" in display_path:
-            display_path = display_path.split("src/lumehaven/")[-1]
+        branch_rate = (
+            (totals["cov_b"] / totals["branches"] * 100)
+            if totals["branches"] > 0
+            else 100.0
+        )
 
         if line_rate < line_thresh:
             violations.append(
-                f"{display_path}: line coverage {line_rate:.1f}% < {line_thresh}%"
+                f"{module}: line coverage {line_rate:.1f}% < {line_thresh}%"
             )
         if branch_rate < branch_thresh:
             violations.append(
-                f"{display_path}: branch coverage {branch_rate:.1f}% < {branch_thresh}%"
+                f"{module}: branch coverage {branch_rate:.1f}% < {branch_thresh}%"
             )
 
     return violations
 
 
 def pytest_sessionfinish(session: Session, exitstatus: int) -> None:
-    """Validate per-module coverage thresholds after test session.
+    """Validate module-level coverage thresholds after test session.
 
-    Only runs when:
-    1. Tests passed (exitstatus == 0)
-    2. Coverage was collected (coverage.json exists)
+    Files are grouped by directory module (e.g. ``api/``, ``adapters/openhab/``)
+    and coverage is aggregated (weighted by statement/branch count) before
+    checking against risk-based thresholds.
 
-    This provides immediate feedback on coverage regressions without
-    requiring a separate CI step.
+    Only runs when tests passed and coverage.json exists.
     """
     # Only check if tests passed
     if exitstatus != 0:

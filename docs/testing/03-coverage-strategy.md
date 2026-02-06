@@ -76,7 +76,7 @@ needed for full coverage.
 uv run radon cc src/lumehaven --average --show-complexity
 
 # Enforce thresholds (xenon)
-uv run xenon --max-absolute C --max-modules B --max-average B src/lumehaven
+uv run xenon --max-absolute B --max-modules A --max-average A src/lumehaven
 ```
 
 ### Cognitive Complexity
@@ -141,17 +141,27 @@ Components are classified by combining:
 
 **Minimum floor:** 80% line coverage for all components regardless of risk level.
 
-### Component Risk Assignment
+### Module Risk Assignment
 
-| Component                     | Risk Level   | Line Target | Branch Target | Rationale                         |
-| ----------------------------- | ------------ | ----------- | ------------- | --------------------------------- |
-| `adapters/openhab/adapter.py` | **Critical** | 90%         | 85%           | Core data source, complex parsing |
-| `adapters/manager.py`         | **Critical** | 90%         | 85%           | Lifecycle state machine           |
-| `config.py`                   | **High**     | 85%         | 80%           | Startup failure = app unusable    |
-| `state/store.py`              | **High**     | 85%         | 80%           | All data flows through here       |
-| `core/signal.py`              | **Low**      | 80%         | 70%           | Simple dataclass                  |
-| `api/routes.py`               | **Medium**   | 80%         | 75%           | Thin layer, delegates to store    |
-| `api/sse.py`                  | **Medium**   | 80%         | 75%           | Streaming complexity              |
+Coverage is enforced at the **module** (directory) level, not per file. All files within
+a module are aggregated using a weighted average (each file contributes proportional to
+its statement/branch count) and the aggregate is checked against the module threshold.
+This avoids per-file exceptions for thin `__init__.py` or hard-to-cover edge branches —
+the module as a whole must meet its target.
+
+Module-to-risk mappings are defined in
+[`tests/coverage_config.py`](../../packages/backend/tests/coverage_config.py) (**single
+source of truth**). Key design points:
+
+- **Adapter implementations auto-discovered:** any `adapters/<name>/` subdirectory
+  inherits the Critical threshold via a wildcard rule (`adapters/*`). Adding a new
+  adapter requires no threshold configuration changes.
+- **Adapter framework** (`adapters/` root files: manager, protocol, factory) is High
+  risk — separate from the implementations it hosts.
+- **Single-file modules** like `config.py` are matched by name at the package root.
+- **`__root__`** is the fallback for files not matched by any other key (package init,
+  version).
+- **`main.py`** is excluded from coverage entirely (entrypoint, Robot integration only).
 
 ---
 
@@ -180,7 +190,7 @@ repos:
       - id: xenon-threshold
         name: Enforce complexity thresholds
         entry:
-          uv run xenon --max-absolute C --max-modules B --max-average B src/lumehaven
+          uv run xenon --max-absolute B --max-modules A --max-average A src/lumehaven
         language: system
         pass_filenames: false
 ```
@@ -204,7 +214,7 @@ jobs:
       - name: Check complexity
         run: |
           uv run radon cc src/lumehaven --json > complexity.json
-          uv run xenon --max-absolute C --max-modules B --max-average B src/lumehaven
+          uv run xenon --max-absolute B --max-modules A --max-average A src/lumehaven
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -244,11 +254,11 @@ directory = "htmlcov"
 
 ### Radon/Xenon Configuration
 
-| Threshold        | Value | Meaning                           |
-| ---------------- | ----- | --------------------------------- |
-| `--max-absolute` | C     | No single function exceeds CC 15  |
-| `--max-modules`  | B     | No module average exceeds CC 10   |
-| `--max-average`  | B     | Project average stays below CC 10 |
+| Threshold        | Value | Meaning                          |
+| ---------------- | ----- | -------------------------------- |
+| `--max-absolute` | B     | No single function exceeds CC 10 |
+| `--max-modules`  | A     | No module average exceeds CC 5   |
+| `--max-average`  | A     | Project average stays below CC 5 |
 
 ### Cognitive Complexity
 

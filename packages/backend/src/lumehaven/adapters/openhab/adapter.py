@@ -11,7 +11,7 @@ It handles the complexity of OpenHAB's data model, including:
 
 import json
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from typing import Any, Literal
 
 import httpx
@@ -258,19 +258,9 @@ class OpenHABAdapter:
                         logger.info(f"Subscribed to {len(self._item_metadata)} items")
                         continue
 
-                    # Parse state change event
-                    try:
-                        event_data = json.loads(data)
-                        for item_name, payload in event_data.items():
-                            if item_name not in self._item_metadata:
-                                continue
-
-                            signal = self._process_event(item_name, payload)
-                            if signal:
-                                yield signal
-                    except json.JSONDecodeError:
-                        logger.warning(f"Failed to parse SSE event: {data[:100]}")
-                        continue
+                    # Parse and yield signals from state change event
+                    for signal in self._parse_sse_events(data):
+                        yield signal
 
         except httpx.HTTPError as e:
             raise SmartHomeConnectionError("openhab", self.base_url, e) from e
@@ -278,6 +268,32 @@ class OpenHABAdapter:
             # Clean up SSE client after subscription ends
             if client is not None:
                 await client.aclose()
+
+    def _parse_sse_events(self, data: str) -> Iterator[Signal]:
+        """Parse an SSE state-update JSON blob and yield signals.
+
+        Extracted from subscribe_events to keep cyclomatic complexity
+        manageable (each method stays at radon rank A/B).
+
+        Args:
+            data: Raw JSON string from the SSE data line.
+
+        Yields:
+            Signal for each tracked item present in the event.
+        """
+        try:
+            event_data = json.loads(data)
+        except json.JSONDecodeError:
+            logger.warning(f"Failed to parse SSE event: {data[:100]}")
+            return
+
+        for item_name, payload in event_data.items():
+            if item_name not in self._item_metadata:
+                continue
+
+            signal = self._process_event(item_name, payload)
+            if signal:
+                yield signal
 
     def _extract_signal(self, item: dict[str, Any]) -> tuple[Signal, _ItemMetadata]:
         """Extract a Signal and metadata from an OpenHAB item response.
