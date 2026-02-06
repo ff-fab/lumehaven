@@ -74,7 +74,7 @@ def get_module_for_file(normalized_path: str) -> str:
     4. **Fallback** — ``__root__``
 
     >>> get_module_for_file("adapters/openhab/adapter.py")
-    'adapters/openhab'
+    'adapters/*'
     >>> get_module_for_file("adapters/manager.py")
     'adapters'
     >>> get_module_for_file("config.py")

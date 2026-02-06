@@ -6,8 +6,8 @@ the coverage JSON report, aggregates file-level data into logical modules, and
 enforces risk-based targets from our test strategy.
 
 Aggregation: files are grouped by directory module (e.g. ``api/``,
-``adapters/openhab/``). Coverage is computed as a weighted average — each
-file contributes proportional to its statement/branch count.
+``adapters/*``). Coverage is computed as a weighted average — each file
+contributes proportional to its statement/branch count.
 
 Usage:
     # Generate JSON report first

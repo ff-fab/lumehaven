@@ -224,7 +224,13 @@ def check_coverage(coverage_file: Path) -> CoverageResult | None:
         load_coverage_data,
     )
 
-    data = load_coverage_data(coverage_file)
+    try:
+        data = load_coverage_data(coverage_file)
+    except SystemExit:
+        # load_coverage_data calls sys.exit(2) on invalid JSON;
+        # convert to None so the summary can report the failure gracefully.
+        return None
+
     modules = extract_module_coverage(data)
     violations = check_thresholds(modules)
     return CoverageResult(module_count=len(modules), violations=violations)
@@ -421,6 +427,15 @@ def main() -> int:
     coverage_result: CoverageResult | None = None
     if args.coverage_file is not None:
         coverage_result = check_coverage(args.coverage_file)
+        if coverage_result is None:
+            # Coverage file was explicitly requested but couldn't be loaded
+            # (missing or corrupt).  Fail hard so CI doesn't silently skip.
+            print(
+                "  ✗ Cannot validate coverage — file missing or corrupt",
+                file=sys.stderr,
+            )
+            _render_summary(found)
+            return 2
 
     _render_summary(found, coverage=coverage_result)
 

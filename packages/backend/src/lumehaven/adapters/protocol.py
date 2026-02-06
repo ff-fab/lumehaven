@@ -126,7 +126,7 @@ class SmartHomeAdapter(Protocol):
             SmartHomeConnectionError: If the event stream disconnects.
 
         Example:
-            >>> async for signal in adapter.subscribe_events():
+            >>> async for signal in adapter.subscribe_events():  # doctest: +SKIP
             ...     print(f"{signal.id}: {signal.value} {signal.unit}")
         """
         ...
