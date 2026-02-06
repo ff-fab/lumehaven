@@ -100,6 +100,7 @@
         "python.linting.pylintEnabled": false,
         "python.linting.mypyEnabled": true,
         "python.analysis.typeCheckingMode": "strict",
+        "python.analysis.extraPaths": ["packages/backend/src", "packages/backend"],
 
         // Python testing (pytest)
         "python.testing.pytestEnabled": true,

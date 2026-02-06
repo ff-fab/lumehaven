@@ -13,6 +13,7 @@ Test Techniques Used:
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from unittest.mock import patch
 
 import pytest
@@ -85,7 +86,7 @@ class TestGetModuleForFile:
     """
 
     @pytest.fixture(autouse=True)
-    def _use_synthetic_thresholds(self) -> None:
+    def _use_synthetic_thresholds(self) -> Generator[None]:
         """Replace MODULE_THRESHOLDS with synthetic data."""
         with patch.dict(
             "tests.coverage_config.MODULE_THRESHOLDS",
