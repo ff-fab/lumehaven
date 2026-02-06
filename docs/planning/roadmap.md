@@ -39,8 +39,8 @@ All blocking architectural decisions have been made and documented as ADRs:
 
 | Task                                    | Status  |
 | --------------------------------------- | ------- |
-| Comprehensive test coverage per ADR-006 | 🔜 Next |
-| GitHub Actions CI pipeline              | ❌      |
+| Comprehensive test coverage per ADR-006 | ✅      |
+| GitHub Actions CI pipeline              | 🔜 Next |
 | Shared config (.editorconfig)           | ❌      |
 | Pre-commit hooks                        | ✅      |
 | Set up Zensical documentation site      | ❌      |
