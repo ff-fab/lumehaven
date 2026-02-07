@@ -1,8 +1,11 @@
-# Deploy documentation to GitHub Pages using MkDocs-Material (ADR-007)
+# Documentation build & deploy (ADR-007)
 #
-# Triggers on pushes to main that modify docs/, mkdocs.yml, or backend source.
-# Builds inside the devcontainer (same as CI) using `task docs:build`,
-# then deploys via official GitHub Pages actions.
+# - On pull requests: validates the docs build (no deploy)
+# - On push to main: builds and deploys to GitHub Pages
+#
+# Build runs inside the devcontainer (same as CI) using `task docs:build`.
+# The build command is delegated to the Taskfile to keep tool references
+# in a single place.
 
 name: Documentation
 
@@ -13,12 +16,20 @@ on:
       - 'docs/**'
       - 'mkdocs.yml'
       - 'packages/backend/src/**' # API docs from docstrings
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'packages/backend/src/**'
 
-# Allow only one concurrent deployment
+# Allow only one concurrent deployment; don't cancel PR builds
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# pages: write and id-token: write only needed for deploy (push to main).
+# PRs only need contents: read and packages: read.
 permissions:
   contents: read
   pages: write
@@ -29,14 +40,10 @@ env:
   DEVCONTAINER_IMAGE: ghcr.io/ff-fab/lumehaven-devcontainer
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
+    name: Build Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/configure-pages@v5
-
       - uses: actions/checkout@v4
 
       - name: Prepare runner for devcontainer
@@ -55,11 +62,23 @@ jobs:
           cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
           runCmd: task docs:build
         env:
-          SITE_URL: https://ff-fab.github.io/lumehaven/
+          SITE_URL: ${{ github.event_name == 'push' && 'https://ff-fab.github.io/lumehaven/' || '' }}
 
       - uses: actions/upload-pages-artifact@v4
+        if: github.event_name == 'push'
         with:
           path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name == 'push'
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/configure-pages@v5
 
       - uses: actions/deploy-pages@v4
         id: deployment
