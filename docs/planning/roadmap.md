@@ -42,7 +42,7 @@ All blocking architectural decisions have been made and documented as ADRs:
 | Comprehensive test coverage per ADR-006           | ✅     |
 | GitHub Actions CI pipeline                        | ✅     |
 | Integration tests in CI (subprocess mock servers) | ✅     |
-| Shared config (.editorconfig)                     | ❌     |
+| Shared config (.editorconfig)                     | ✅     |
 | Pre-commit hooks                                  | ✅     |
 | Set up Zensical documentation site                | ❌     |
 | Add mkdocstrings for API documentation            | ❌     |
