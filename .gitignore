@@ -153,7 +153,7 @@ celerybeat.pid
 
 # Environments
 .env
-!tests/integration/.env
+!**/tests/integration/.env
 .envrc
 .venv
 env/
