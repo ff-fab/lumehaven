@@ -47,6 +47,11 @@ if [ -f ".pre-commit-config.yaml" ]; then
     fi
 fi
 
+# GitHub CLI: disable pager (prevents 'alternate buffer' issues with Copilot in VS Code)
+# gh defaults to $PAGER (=less) when its own pager config is blank.
+# GH_PAGER=cat is set via remoteEnv, but gh config persists across shell sessions.
+gh config set pager cat 2>/dev/null || true
+
 # GitHub CLI authentication reminder
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

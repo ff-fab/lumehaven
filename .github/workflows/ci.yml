@@ -1,0 +1,238 @@
+# Main CI pipeline — runs inside the devcontainer for tool parity with local dev.
+#
+# Monorepo-aware: a lightweight "changes" job detects which packages were
+# modified, then downstream jobs run conditionally. Skipped jobs still satisfy
+# branch protection required checks (GitHub treats skipped jobs as "Success").
+#
+# Job dependency graph:
+#
+#   changes (~3s)
+#     │
+#     ├─ if backend ─┬─ lint-be ─────────────────────────────────────┐
+#     │              ├─ unit-tests-be ──► integration-tests-be       │
+#     │              └─ complexity-be                                │
+#     │                                                              │
+#     ├─ if frontend ┬─ lint-fe          (Phase 3 — stubs only)      │
+#     │              └─ unit-tests-fe                                │
+#     │                                                              │
+#     └─ if backend AND frontend ──────► e2e  (Phase 4 — stub only)  │
+#
+# Uses dorny/paths-filter for path detection — the de facto standard for
+# monorepo CI in GitHub Actions. It compares the PR diff (or push diff)
+# against glob patterns and outputs booleans per filter category.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'old/**'
+      - '*.md'
+      - 'LICENSE'
+
+# Cancel in-progress runs for the same branch/PR — avoids wasting CI minutes
+# on superseded commits when you push twice quickly.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: read # Pull the devcontainer image from GHCR
+
+env:
+  DEVCONTAINER_IMAGE: ghcr.io/ff-fab/lumehaven-devcontainer
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Change Detection
+  # ---------------------------------------------------------------------------
+  # Lightweight job (~3s) that determines which packages changed.
+  # Downstream jobs use its outputs in `if:` conditions.
+  # When a job is skipped via `if:`, GitHub reports it as "Success" —
+  # this is what makes branch protection work in a monorepo.
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'packages/backend/**'
+              - 'Taskfile.yml'
+              - '.github/workflows/ci.yml'
+              - 'codecov.yml'
+              - '.devcontainer/**'
+            frontend:
+              - 'packages/frontend/**'
+              - 'Taskfile.yml'
+              - '.github/workflows/ci.yml'
+              - '.devcontainer/**'
+
+  # ---------------------------------------------------------------------------
+  # Backend Jobs
+  # ---------------------------------------------------------------------------
+
+  lint-be:
+    name: 'Backend: Lint & Type Check'
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run linting inside devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
+          push: never
+          runCmd: task ci:lint:be
+
+  unit-tests-be:
+    name: 'Backend: Unit Tests & Coverage'
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run unit tests inside devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
+          push: never
+          runCmd: task ci:test:be
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          files: packages/backend/coverage.xml
+          flags: backend
+          fail_ci_if_error: false # Don't block PRs on Codecov outages
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            packages/backend/coverage.xml
+            packages/backend/coverage.json
+          retention-days: 30
+
+  complexity-be:
+    name: 'Backend: Code Complexity'
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run complexity checks inside devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
+          push: never
+          runCmd: task complexity
+
+  integration-tests-be:
+    name: 'Backend: Integration Tests (Robot Framework)'
+    runs-on: ubuntu-latest
+    needs: unit-tests-be # Test pyramid: skip expensive integration if units fail
+    # This job runs when unit-tests-be ran AND succeeded.
+    # When unit-tests-be is skipped (no backend changes), this is also skipped —
+    # both satisfy branch protection as "Success".
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run integration tests inside devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
+          push: never
+          runCmd: task test:be:integration
+
+      - name: Upload Robot Framework results
+        if: always() # Upload even on failure — reports help diagnose issues
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-results
+          path: |
+            packages/backend/output.xml
+            packages/backend/log.html
+            packages/backend/report.html
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Frontend Jobs (Phase 3 — stubs, uncomment when frontend exists)
+  # ---------------------------------------------------------------------------
+
+  # lint-fe:
+  #   name: "Frontend: Lint & Type Check"
+  #   runs-on: ubuntu-latest
+  #   needs: changes
+  #   if: needs.changes.outputs.frontend == 'true'
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Run linting inside devcontainer
+  #       uses: devcontainers/ci@v0.3
+  #       with:
+  #         cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
+  #         push: never
+  #         runCmd: task ci:lint:fe
+
+  # unit-tests-fe:
+  #   name: "Frontend: Unit Tests"
+  #   runs-on: ubuntu-latest
+  #   needs: changes
+  #   if: needs.changes.outputs.frontend == 'true'
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Run frontend tests inside devcontainer
+  #       uses: devcontainers/ci@v0.3
+  #       with:
+  #         cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
+  #         push: never
+  #         runCmd: task ci:test:fe
+
+  # ---------------------------------------------------------------------------
+  # E2E Tests (Phase 4 — stub, depends on both backend and frontend)
+  # ---------------------------------------------------------------------------
+
+  # e2e:
+  #   name: "E2E Tests (Browser + Full Stack)"
+  #   runs-on: ubuntu-latest
+  #   needs: [unit-tests-be, unit-tests-fe]
+  #   # Run when at least one upstream succeeded and none failed.
+  #   # The always() + result checks pattern handles the "some ran, some skipped"
+  #   # matrix that occurs in a monorepo when only one package changed.
+  #   if: |
+  #     always() &&
+  #     (needs.unit-tests-be.result == 'success' || needs.unit-tests-be.result == 'skipped') &&
+  #     (needs.unit-tests-fe.result == 'success' || needs.unit-tests-fe.result == 'skipped') &&
+  #     !(needs.unit-tests-be.result == 'skipped' && needs.unit-tests-fe.result == 'skipped')
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Run E2E tests inside devcontainer
+  #       uses: devcontainers/ci@v0.3
+  #       with:
+  #         cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
+  #         push: never
+  #         runCmd: task test:e2e

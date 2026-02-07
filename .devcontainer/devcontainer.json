@@ -20,7 +20,8 @@
 
   "remoteEnv": {
     "PATH": "/workspace/packages/backend/.venv/bin:${containerEnv:PATH}",
-    "UV_LINK_MODE": "symlink"
+    "UV_LINK_MODE": "symlink",
+    "GH_PAGER": "cat"
   },
 
   "customizations": {

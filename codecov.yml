@@ -1,0 +1,75 @@
+# Codecov configuration for lumehaven
+# Docs: https://docs.codecov.io/docs/codecov-yaml
+#
+# Note: Fine-grained per-module thresholds are enforced by
+# packages/backend/scripts/check_coverage_thresholds.py (runs in CI).
+# Codecov provides the project-level gate + PR diff coverage comments.
+
+coverage:
+  status:
+    # Project-level: overall coverage must not drop below 80%
+    # Matches fail_under=80 in pyproject.toml [tool.coverage.report]
+    project:
+      default:
+        target: 80%
+        threshold: 4% # Allow 4% fluctuation before failing
+
+    # Patch-level: new/changed lines in a PR should have reasonable coverage
+    patch:
+      default:
+        target: 50%
+
+# Only analyze backend source (frontend doesn't exist yet)
+flags:
+  backend:
+    paths:
+      - packages/backend/src/
+
+comment:
+  layout: 'condensed_header, condensed_files, condensed_footer, components'
+  behavior: default
+  require_changes: true # Only comment when coverage changes
+
+# BEGIN GENERATED COMPONENTS — do not edit manually.
+# Source: check_coverage_thresholds.py ← coverage_config.MODULE_THRESHOLDS
+# Run:    task sync:codecov
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto # No regression — absolute thresholds enforced by script
+  individual_components:
+    - component_id: be-adapters
+      name: 'Backend: Adapters'
+      paths:
+        - 'packages/backend/src/lumehaven/adapters/'
+        - 'packages/backend/src/lumehaven/adapters.py'
+    - component_id: be-adapters-impl
+      name: 'Backend: Adapters (implementations)'
+      paths:
+        - '^packages/backend/src/lumehaven/adapters/[^/]+/.+'
+    - component_id: be-config
+      name: 'Backend: Config'
+      paths:
+        - 'packages/backend/src/lumehaven/config/'
+        - 'packages/backend/src/lumehaven/config.py'
+    - component_id: be-state
+      name: 'Backend: State'
+      paths:
+        - 'packages/backend/src/lumehaven/state/'
+        - 'packages/backend/src/lumehaven/state.py'
+    - component_id: be-api
+      name: 'Backend: Api'
+      paths:
+        - 'packages/backend/src/lumehaven/api/'
+        - 'packages/backend/src/lumehaven/api.py'
+    - component_id: be-core
+      name: 'Backend: Core'
+      paths:
+        - 'packages/backend/src/lumehaven/core/'
+        - 'packages/backend/src/lumehaven/core.py'
+    - component_id: be-root
+      name: 'Backend: Root'
+      paths:
+        - '^packages/backend/src/lumehaven/[^/]+\.py$'
+# END GENERATED COMPONENTS
