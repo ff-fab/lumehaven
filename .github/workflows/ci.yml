@@ -96,6 +96,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Log in to GHCR (for devcontainer cache)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run linting inside devcontainer
         uses: devcontainers/ci@v0.3
         with:
@@ -110,6 +117,13 @@ jobs:
     if: needs.changes.outputs.backend == 'true'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Log in to GHCR (for devcontainer cache)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run unit tests inside devcontainer
         uses: devcontainers/ci@v0.3
@@ -145,6 +159,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Log in to GHCR (for devcontainer cache)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run complexity checks inside devcontainer
         uses: devcontainers/ci@v0.3
         with:
@@ -161,6 +182,13 @@ jobs:
     # both satisfy branch protection as "Success".
     steps:
       - uses: actions/checkout@v4
+
+      - name: Log in to GHCR (for devcontainer cache)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run integration tests inside devcontainer
         uses: devcontainers/ci@v0.3
