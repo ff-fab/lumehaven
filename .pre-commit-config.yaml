@@ -3,6 +3,14 @@
 # Run manually: pre-commit run --all-files
 
 repos:
+  # EditorConfig: Validate all files match .editorconfig settings
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+    rev: 3.2.1
+    hooks:
+      - id: editorconfig-checker
+        name: EditorConfig (whitespace & encoding)
+        alias: ec
+
   # Basic checks (trailing whitespace, YAML validity, etc.)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
