@@ -791,3 +791,11 @@ class TestMainSyncCodecov:
             result = main()
 
         assert result == 1
+
+    def test_check_without_sync_codecov_is_error(self) -> None:
+        """--check alone (without --sync-codecov) raises a parser error."""
+        with (
+            patch("sys.argv", ["prog", "--check"]),
+            pytest.raises(SystemExit, match="2"),
+        ):
+            main()

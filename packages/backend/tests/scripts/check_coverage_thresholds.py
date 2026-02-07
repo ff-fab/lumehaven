@@ -33,7 +33,8 @@ Usage:
 Exit codes:
     0 - All thresholds met / components in sync
     1 - One or more thresholds violated / components out of sync
-    2 - Coverage file not found or invalid
+    2 - Coverage file not found or invalid / codecov.yml missing when using
+        --sync-codecov
 """
 
 from __future__ import annotations
@@ -319,7 +320,8 @@ def sync_codecov_components(*, check_only: bool = False) -> int:
             codecov.yml is out of date.
 
     Returns:
-        0 if in sync (or updated), 1 if out of sync (check_only mode).
+        0 if in sync (or updated), 1 if out of sync (check_only mode),
+        2 if codecov.yml not found.
     """
     codecov_path = _find_codecov_yml()
 
@@ -399,6 +401,10 @@ def main() -> int:
     )
 
     args = parser.parse_args()
+
+    # Enforce flag relationship: --check is only valid with --sync-codecov.
+    if args.check and not args.sync_codecov:
+        parser.error("--check can only be used together with --sync-codecov")
 
     # Codecov sync mode — independent of coverage data
     if args.sync_codecov:

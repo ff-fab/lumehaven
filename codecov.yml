@@ -2,7 +2,7 @@
 # Docs: https://docs.codecov.io/docs/codecov-yaml
 #
 # Note: Fine-grained per-module thresholds are enforced by
-# packages/backend/scripts/check_coverage_thresholds.py (runs in CI).
+# packages/backend/tests/scripts/check_coverage_thresholds.py (runs in CI).
 # Codecov provides the project-level gate + PR diff coverage comments.
 
 coverage:
