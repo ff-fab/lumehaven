@@ -45,8 +45,8 @@ All blocking architectural decisions have been made and documented as ADRs:
 | Shared config (.editorconfig)                     | ✅     |
 | Pre-commit hooks                                  | ✅     |
 | Set up MkDocs-Material documentation site         | 🚧     |
-| Add mkdocstrings for API documentation            | 🚧     |
-| Add docs build validation to CI (PR trigger)      | 🚧     |
+| Add mkdocstrings for API documentation            | ✅     |
+| Add docs build validation to CI (PR trigger)      | ✅     |
 
 ## ⏳ Phase 2b (Interrupt): Implement Beads
 
