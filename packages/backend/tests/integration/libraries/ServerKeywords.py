@@ -55,7 +55,8 @@ class ServerKeywords:
         self._mock_openhab_port: int = 8081
         self._lumehaven_port: int = 8000
         self._log_dir = _get_backend_dir()
-        self._log_files: list[IO[str]] = []
+        self._mock_openhab_log: IO[str] | None = None
+        self._lumehaven_log: IO[str] | None = None
 
     def _open_log(self, name: str) -> IO[str]:
         """Open a log file for a server subprocess.
@@ -67,19 +68,18 @@ class ServerKeywords:
             name: Server name used as filename prefix.
 
         Returns:
-            Writable file handle (closed during suite teardown).
+            Writable file handle (caller is responsible for closing).
         """
         path = self._log_dir / f"{name}.log"
-        fh = path.open("w")  # noqa: SIM115 — closed in _close_logs
-        self._log_files.append(fh)
+        fh = path.open("w")  # noqa: SIM115 — closed in stop_* methods
         logger.info(f"Server log: {path}")
         return fh
 
-    def _close_logs(self) -> None:
-        """Close all open log file handles."""
-        for fh in self._log_files:
+    @staticmethod
+    def _close_log(fh: IO[str] | None) -> None:
+        """Close a log file handle if open."""
+        if fh is not None:
             fh.close()
-        self._log_files.clear()
 
     @keyword("Start Mock OpenHAB Server")
     def start_mock_openhab_server(self, port: int = 8081) -> None:
@@ -94,7 +94,7 @@ class ServerKeywords:
         self._mock_openhab_port = port
         backend_dir = _get_backend_dir()
 
-        log_file = self._open_log("mock_openhab")
+        self._mock_openhab_log = self._open_log("mock_openhab")
 
         self._mock_openhab_process = subprocess.Popen(
             [
@@ -110,8 +110,8 @@ class ServerKeywords:
                 "info",
             ],
             cwd=backend_dir,
-            stdout=log_file,
-            stderr=log_file,
+            stdout=self._mock_openhab_log,
+            stderr=self._mock_openhab_log,
         )
         logger.info(f"Started mock OpenHAB server on port {port}")
 
@@ -130,7 +130,8 @@ class ServerKeywords:
             self._mock_openhab_process.wait(timeout=2)
 
         self._mock_openhab_process = None
-        self._close_logs()
+        self._close_log(self._mock_openhab_log)
+        self._mock_openhab_log = None
         logger.info("Stopped mock OpenHAB server")
 
     @keyword("Start Lumehaven Backend")
@@ -153,7 +154,7 @@ class ServerKeywords:
         env = os.environ.copy()
         env["PYTHONPATH"] = str(backend_dir / "src")
 
-        log_file = self._open_log("lumehaven")
+        self._lumehaven_log = self._open_log("lumehaven")
 
         self._lumehaven_process = subprocess.Popen(
             [
@@ -170,8 +171,8 @@ class ServerKeywords:
             ],
             cwd=integration_dir,  # Run from tests/integration/ to use its .env
             env=env,
-            stdout=log_file,
-            stderr=log_file,
+            stdout=self._lumehaven_log,
+            stderr=self._lumehaven_log,
         )
         logger.info(f"Started Lumehaven backend on port {port}")
 
@@ -190,6 +191,8 @@ class ServerKeywords:
             self._lumehaven_process.wait(timeout=2)
 
         self._lumehaven_process = None
+        self._close_log(self._lumehaven_log)
+        self._lumehaven_log = None
         logger.info("Stopped Lumehaven backend")
 
     @keyword("Wait For Server Ready")

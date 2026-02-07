@@ -1,4 +1,4 @@
-# CI Integration Tests — Docker Compose Mock Infrastructure
+# CI Integration Tests — Subprocess-based Mock Infrastructure
 
 ## Context
 
@@ -42,11 +42,11 @@ OpenHAB + Lumehaven as subprocesses, runs tests, then tears down.
 **Implementation:**
 
 ```yaml
-# ci.yml — new job
+# Taskfile.yml — new task
 ci:test:integration:be:
   dir: packages/backend
   cmds:
-    - uv run robot --outputdir . tests/integration/
+    - uv run robot --outputdir . --xunit results-integration.xml tests/integration/
 ```
 
 ```yaml
@@ -180,10 +180,20 @@ only adds Dockerfiles, build time, and divergence from local dev.
 Ship the subprocess approach in CI. Revisit Compose when Phase 4 (E2E with frontend +
 backend + mock) justifies the orchestration complexity.
 
-## Next Steps
+## Outcome
 
-1. Add `ci:test:integration:be` task to Taskfile
-2. Uncomment `integration-tests-be` job in `ci.yml`
-3. Upload Robot Framework reports as artifacts
-4. Verify in CI
-5. Update roadmap
+**Option C (Hybrid)** was adopted. The subprocess-based integration tests now run in CI
+via PR #40. All 18 tests (API, SSE, error handling) pass inside the devcontainer.
+
+What was implemented:
+
+- `ci:test:integration:be` Taskfile task with `--outputdir` and `--xunit` flags
+- `integration-tests-be` CI job gated behind `unit-tests-be` (test pyramid)
+- Robot Framework reports + server logs uploaded as CI artifacts
+- Roadmap updated: Phase 2 item ✅, Docker Compose deferred to Phase 4
+
+## Remaining Work (Phase 4)
+
+1. Revisit Docker Compose infrastructure when E2E tests (frontend + backend + mock)
+   justify the orchestration complexity
+2. If Docker Compose is adopted, capture the decision in a new ADR
