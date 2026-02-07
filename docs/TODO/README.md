@@ -45,3 +45,26 @@ forgotten.
   with working asset generation.
 - **Trigger:** Zensical v0.1.0+ or confirmed fix for asset pipeline
 - **Review date:** August 2026
+
+### T6: Signal Value Type — String-Only vs. Rich Types
+
+- **Source:** ADR-005 (Signal Abstraction)
+- **Context:** Currently `Signal.value` is always `str` and the frontend renders it
+  as-is ("keep the frontend dumb"). In practice, the frontend will need to interpret
+  values — e.g., hiding `NULL`/`UNDEF` signals, treating `ON`/`OFF` as boolean for
+  toggle switches, numeric comparisons for thresholds or charts. Keeping everything as
+  opaque strings pushes type interpretation into the frontend anyway, undermining the
+  "dumb frontend" goal.
+- **Options:**
+    - Widen `value` to `str | int | float | bool | None` and let pydantic coerce on
+      construction — frontend gets native types, no string parsing needed
+    - Add a `value_type` discriminator field (`"string"`, `"number"`, `"bool"`,
+      `"null"`) alongside the string value — frontend switches on it
+    - Keep `str` but add a `raw_value` field with the original typed value
+- **Trade-offs:** Changing `value` type touches Signal, all adapters, the store, API
+  response models, and frontend contracts. The wider the type, the more the frontend
+  must handle — but it already must. Better to formalize the contract than have implicit
+  string parsing on the frontend side.
+- **Trigger:** Frontend development (Phase 3) — revisit when building dashboard
+  components that need conditional rendering or value interpretation
+- **ADR impact:** Would amend ADR-005; consider a new ADR if the change is significant
