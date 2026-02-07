@@ -15,3 +15,7 @@ build/
 package-lock.json
 bun.lockb
 uv.lock
+
+# MkDocs API reference pages (mkdocstrings ::: directives use indented YAML
+# that prettier collapses into single lines, breaking the build)
+docs/reference/api/

@@ -203,6 +203,20 @@ tasks:
       - task: test
 
   # ===========================================================================
+  # Documentation
+  # ===========================================================================
+
+  docs:serve:
+    desc: Preview documentation site with hot reload (port 8001)
+    cmds:
+      - uv run --group docs --project {{.BACKEND_DIR}} mkdocs serve --dev-addr 0.0.0.0:8001
+
+  docs:build:
+    desc: Build documentation site (strict mode, clean output)
+    cmds:
+      - uv run --group docs --project {{.BACKEND_DIR}} mkdocs build --clean
+
+  # ===========================================================================
   # Development Servers
   # ===========================================================================
 

@@ -1,0 +1,65 @@
+# Deploy documentation to GitHub Pages using MkDocs-Material (ADR-007)
+#
+# Triggers on pushes to main that modify docs/, mkdocs.yml, or backend source.
+# Builds inside the devcontainer (same as CI) using `task docs:build`,
+# then deploys via official GitHub Pages actions.
+
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'packages/backend/src/**' # API docs from docstrings
+
+# Allow only one concurrent deployment
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  packages: read # Pull the devcontainer image from GHCR
+
+env:
+  DEVCONTAINER_IMAGE: ghcr.io/ff-fab/lumehaven-devcontainer
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/checkout@v4
+
+      - name: Prepare runner for devcontainer
+        run: mkdir -p ~/.ssh
+
+      - name: Log in to GHCR (for devcontainer cache)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build documentation inside devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
+          runCmd: task docs:build
+        env:
+          SITE_URL: https://ff-fab.github.io/lumehaven/
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      - uses: actions/deploy-pages@v4
+        id: deployment
