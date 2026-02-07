@@ -37,14 +37,14 @@ All blocking architectural decisions have been made and documented as ADRs:
 
 ## 🚧 Phase 2: Backend Maturity (Current)
 
-| Task                                    | Status  |
-| --------------------------------------- | ------- |
-| Comprehensive test coverage per ADR-006 | ✅      |
-| GitHub Actions CI pipeline              | 🔜 Next |
-| Shared config (.editorconfig)           | ❌      |
-| Pre-commit hooks                        | ✅      |
-| Set up Zensical documentation site      | ❌      |
-| Add mkdocstrings for API documentation  | ❌      |
+| Task                                    | Status |
+| --------------------------------------- | ------ |
+| Comprehensive test coverage per ADR-006 | ✅     |
+| GitHub Actions CI pipeline              | ✅     |
+| Shared config (.editorconfig)           | ❌     |
+| Pre-commit hooks                        | ✅     |
+| Set up Zensical documentation site      | ❌     |
+| Add mkdocstrings for API documentation  | ❌     |
 
 ## ⏳ Phase 2b (Interrupt): Implement Beads
 
