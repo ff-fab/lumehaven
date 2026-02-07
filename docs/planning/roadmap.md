@@ -54,6 +54,7 @@ All blocking architectural decisions have been made and documented as ADRs:
 | -------------------------------------- | ------ |
 | Install beads CLI\* for agent planning | ❌     |
 | Integrate beads and transfer roadmap   | ❌     |
+| Learn about caching of github actions  | ❌     |
 
 \*) https://github.com/steveyegge/beads
 
