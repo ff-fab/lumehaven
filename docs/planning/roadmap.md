@@ -20,7 +20,7 @@ All blocking architectural decisions have been made and documented as ADRs:
 | Frontend Stack     | [ADR-004](../adr/ADR-004-frontend-stack.md)       | React + Vite + TypeScript + bun      |
 | Signal Abstraction | [ADR-005](../adr/ADR-005-signal-abstraction.md)   | Minimal: id, value, unit, label      |
 | Testing Strategy   | [ADR-006](../adr/ADR-006-testing-strategy.md)     | pytest + Robot Framework             |
-| Documentation      | [ADR-007](../adr/ADR-007-documentation-system.md) | Zensical + mkdocstrings              |
+| Documentation      | [ADR-007](../adr/ADR-007-documentation-system.md) | MkDocs-Material + mkdocstrings       |
 
 ## ✅ Phase 1: Backend Core (Complete)
 
@@ -44,8 +44,9 @@ All blocking architectural decisions have been made and documented as ADRs:
 | Integration tests in CI (subprocess mock servers) | ✅     |
 | Shared config (.editorconfig)                     | ✅     |
 | Pre-commit hooks                                  | ✅     |
-| Set up Zensical documentation site                | ❌     |
-| Add mkdocstrings for API documentation            | ❌     |
+| Set up MkDocs-Material documentation site         | 🚧     |
+| Add mkdocstrings for API documentation            | ✅     |
+| Add docs build validation to CI (PR trigger)      | ✅     |
 
 ## ⏳ Phase 2b (Interrupt): Implement Beads
 
@@ -92,6 +93,7 @@ All blocking architectural decisions have been made and documented as ADRs:
 | Camera/media integration    | ❌     |
 | HomeAssistant adapter (D12) | ❌     |
 | Bazel build system (D1)     | ❌     |
+| PR preview deploys for docs | ❌     |
 | Additional widgets          | ❌     |
 
 ---

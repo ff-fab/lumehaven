@@ -7,11 +7,13 @@ applyTo: '**/*.md'
 
 ## Documentation System (ADR-007)
 
-| Component       | Choice              |
-| --------------- | ------------------- |
-| Site Generator  | MkDocs              |
-| Theme           | Material for MkDocs |
-| Python API Docs | mkdocstrings        |
+| Component       | Choice                                                  |
+| --------------- | ------------------------------------------------------- |
+| Site Generator  | MkDocs + Material for MkDocs (`mkdocs.yml`)             |
+| Theme           | Material for MkDocs                                     |
+| Python API Docs | mkdocstrings                                            |
+| Structure       | Diátaxis (Tutorials / How-To / Reference / Explanation) |
+| CLI             | `mkdocs serve`, `mkdocs build`                          |
 
 ## ADR Format
 
@@ -68,6 +70,5 @@ _<Date>_
 | Content           | Location         |
 | ----------------- | ---------------- |
 | ADRs              | `docs/adr/`      |
-| Lessons Learned   | `docs/ll/`       |
 | Planning/Roadmaps | `docs/planning/` |
 | Pending Decisions | `docs/TODO/`     |

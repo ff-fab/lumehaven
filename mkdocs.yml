@@ -1,0 +1,190 @@
+# MkDocs configuration for lumehaven documentation (ADR-007)
+#
+# Usage (via Taskfile — single source of truth for tool commands):
+#   task docs:serve       # Local preview with hot reload
+#   task docs:build       # Build static site to site/
+#
+# Structure follows the Diátaxis framework:
+#   Tutorials   — learning-oriented (getting started)
+#   How-To      — task-oriented (specific goals)
+#   Reference   — information-oriented (API, config, ADRs)
+#   Explanation — understanding-oriented (architecture, design)
+
+site_name: lumehaven
+site_description: Smart home dashboard — BFF + SPA for OpenHAB and HomeAssistant
+# site_url defaults to GitHub Pages URL. CI can override via SITE_URL env var.
+# Local `mkdocs serve` ignores site_url for link generation.
+site_url: !ENV [SITE_URL, 'https://ff-fab.github.io/lumehaven/']
+repo_url: https://github.com/ff-fab/lumehaven
+repo_name: ff-fab/lumehaven
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Dark mode (default — smart home dashboards are typically dark)
+    - scheme: slate
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    # Light mode
+    - scheme: default
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.action.edit
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [packages/backend/src]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            merge_init_into_class: true
+            show_if_no_docstring: false
+            signature_crossrefs: true
+
+markdown_extensions:
+  # Admonitions (note, warning, tip, etc.)
+  - admonition
+  - pymdownx.details
+
+  # HTML / attribute extensions (required for grid cards, icon sizing)
+  - attr_list
+  - md_in_html
+
+  # Code blocks
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+  # Content tabs (e.g., showing Python / TypeScript side by side)
+  - pymdownx.tabbed:
+      alternate_style: true
+
+  # Typography and formatting
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.keys
+
+  # Lists and task lists
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+  # Table of contents
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+  # Tables
+  - tables
+
+  # Footnotes
+  - footnotes
+
+  # Emoji (used sparingly for status indicators)
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+# Navigation — Diátaxis framework with dual-audience support
+nav:
+  - Home: index.md
+
+  - Tutorials:
+      - tutorials/index.md
+      - Getting Started: tutorials/getting-started.md
+      - Development Setup: tutorials/development-setup.md
+
+  - How-To Guides:
+      - how-to/index.md
+      - Configure lumehaven: how-to/configuration.md
+      - Add a New Adapter: how-to/add-adapter.md
+      - Run Tests & Check Coverage: how-to/testing.md
+
+  - Reference:
+      - reference/index.md
+      - Python API:
+          - reference/api/index.md
+          - Core: reference/api/core.md
+          - Adapters: reference/api/adapters.md
+          - API Routes: reference/api/routes.md
+          - State: reference/api/state.md
+          - Config: reference/api/config.md
+      - REST API: reference/rest-api.md
+      - Configuration Reference: reference/configuration.md
+      - Architecture Decision Records:
+          - adr/index.md
+          - ADR-001 State Management: adr/ADR-001-state-management.md
+          - ADR-002 Backend Runtime: adr/ADR-002-backend-runtime.md
+          - ADR-004 Frontend Stack: adr/ADR-004-frontend-stack.md
+          - ADR-005 Signal Abstraction: adr/ADR-005-signal-abstraction.md
+          - ADR-006 Testing Strategy: adr/ADR-006-testing-strategy.md
+          - ADR-007 Documentation System: adr/ADR-007-documentation-system.md
+
+  - Explanation:
+      - explanation/index.md
+      - 'Architecture: The BFF Pattern': explanation/architecture.md
+      - Signal Abstraction: explanation/signal-abstraction.md
+      - Adapter System: explanation/adapter-system.md
+      - Testing Strategy:
+          - testing/00-index.md
+          - Test Design Techniques: testing/01-test-design-techniques.md
+          - Test Levels: testing/02-test-levels.md
+          - Coverage Strategy: testing/03-coverage-strategy.md
+          - Test Organization: testing/04-test-organization.md
+          - Tooling Configuration: testing/05-tooling-configuration.md
+          - Test File Template: testing/06-test-file-template-python.md
+
+  - Contributing:
+      - contributing/index.md
+      - Coding Standards: contributing/coding-standards.md
+
+  # Blog — nav slot reserved, activate when content exists
+  # - Blog:
+  #     - blog/index.md
+
+# Directories excluded from the build (internal-only content).
+# Files matching these patterns are not copied to the output site.
+exclude_docs: |
+  planning/
+  TODO/
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ff-fab/lumehaven

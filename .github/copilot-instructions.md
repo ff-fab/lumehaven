@@ -20,7 +20,7 @@ All major decisions are documented in `docs/adr/`. **Follow these decisions:**
 | 004 | Frontend Stack     | React + Vite + TypeScript + bun               |
 | 005 | Signal Abstraction | Minimal: `id`, `value`, `unit`, `label`       |
 | 006 | Testing            | pytest (unit) + Robot Framework (integration) |
-| 007 | Documentation      | Zensical + mkdocstrings (modern, performant)  |
+| 007 | Documentation      | MkDocs-Material + mkdocstrings                |
 
 Create new ADRs for any major changes or decisions.
 
@@ -33,7 +33,6 @@ lumehaven/
 │   └── frontend/             # React SPA (TypeScript)
 ├── docs/
 │   ├── adr/                  # Architecture Decision Records (authoritative)
-│   ├── ll/                   # Lessons learned from PoC
 │   ├── planning/             # Roadmap, decision tracker
 │   └── TODO/                 # Technical debt, deferred items
 └── old/                      # PoC reference (do not modify)
@@ -42,7 +41,6 @@ lumehaven/
 ## Reference Material
 
 - `old/` - Proof-of-concept (reference only, do not modify)
-- `docs/ll/` - Lessons learned from PoC, OpenHAB API quirks
 - `docs/adr/` - Architecture Decision Records (**authoritative**)
 
 ## Git Workflow (GitHub Flow)

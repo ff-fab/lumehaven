@@ -149,6 +149,10 @@ venv = ".venv"
 extraPaths = ["src", "."]
 
 [dependency-groups]
+docs = [
+    "mkdocs-material>=9",
+    "mkdocstrings[python]>=0.28",
+]
 dev = [
     # Testing
     "coverage>=7.13.2",

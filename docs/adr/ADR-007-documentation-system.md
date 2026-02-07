@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted (Amended Feb 2026)
 
 ## Context
 
@@ -179,34 +179,37 @@ Next-generation static site generator built by the Material for MkDocs team.
 
 ## Decision
 
-**Changed (January 2026):** Use **Option 6: Zensical** instead of Option 2.
+**Reverted to Option 2 (February 2026):** Use **MkDocs + Material for MkDocs**.
 
-### Rationale for Change
+### History
 
-Since the original decision, critical information emerged:
+- **Original (December 2025):** Option 2 (MkDocs + mkdocstrings) selected.
+- **Changed (January 2026):** Switched to Option 6 (Zensical) due to MkDocs core
+  maintenance concerns and Zensical's modern architecture.
+- **Reverted (February 2026):** Switched back to Option 2 after discovering a critical
+  Zensical bug, see rationale below.
 
-- **MkDocs core is unmaintained** since August 2024 (no releases in over 1.5 years as of
-  January 2026)
-- **Supply chain risk:** Issues and pull requests accumulating; considered a supply
-  chain risk by the Material for MkDocs team
-- **Zensical released November 2025** by the creators of Material for MkDocs
-  specifically to address MkDocs' architectural limitations
-- **Backward compatible:** Existing MkDocs/Material projects work with minimal or no
-  changes
-- **Modern foundation:** Built with performance and extensibility in mind from first
-  principles
+### Rationale for Revert
 
-### Benefits of Zensical
+Zensical (v0.0.10 through v0.0.21) has a confirmed bug where **theme assets (CSS, JS,
+favicon) are never copied to the build output directory**. The build completes
+successfully but the generated HTML references assets that don't exist, resulting in
+unstyled pages (HTTP 404 for all CSS/JS).
 
-- **Future-proof:** Actively maintained with clear roadmap through 2026+
-- **Performance:** 5x faster rebuilds via differential build engine (ZRX)
-- **Better DX:** Faster development feedback loops for large documentation projects
-- **Ecosystem:** Growing support; endorsed by FastAPI and other major projects
-- **Low migration cost:** Backward compatible with Material for MkDocs configuration
-- **Open Source:** MIT licensed, no proprietary dependencies
+**Investigation summary:**
 
-This maintains the original decision's spirit (simplicity + good output) while
-eliminating supply chain risk.
+- Tested every functional Zensical version (v0.0.10, v0.0.15, v0.0.19, v0.0.20, v0.0.21)
+- Tested with both Python 3.13 and 3.14
+- Tested with both `mkdocs.yml` and native `zensical.toml` configuration
+- Confirmed the Rust core (`process_theme_assets()` in `workflow.rs`) never copies
+  `templates/assets/` to `site/assets/`
+- mkdocs-material confirmed working with identical configuration
+
+The bug appears to have existed since Zensical's first functional release, meaning the
+asset pipeline was never operational. With no GitHub issues tracking this and no
+timeline for a fix, continuing with Zensical is not viable.
+
+**Zensical is tracked in `docs/TODO/README.md` (T5) for future re-evaluation.**
 
 ### Documentation Structure
 
@@ -241,12 +244,10 @@ docs/
     └── ...
 ```
 
-### Zensical Configuration
-
-Zensical uses the same `mkdocs.yml` format as MkDocs, making migration seamless:
+### MkDocs Configuration
 
 ```yaml
-# mkdocs.yml (compatible with both MkDocs and Zensical)
+# mkdocs.yml
 site_name: Lumehaven
 site_description: Smart Home Dashboard
 repo_url: https://github.com/ff-fab/lumehaven
@@ -306,10 +307,7 @@ nav:
 
 ### API Documentation Approach
 
-**Python (mkdocstrings with Zensical):**
-
-mkdocstrings is actively maintained by Timothée Mazzucotelli, who joined the Zensical
-team in November 2025 to ensure seamless API documentation.
+**Python (mkdocstrings):**
 
 ```markdown
 <!-- docs/api/backend/signal.md -->
@@ -421,11 +419,10 @@ _Scale: 1 (poor) to 5 (excellent)_
 ### Dependencies (pyproject.toml)
 
 ```toml
-[project.optional-dependencies]
+[dependency-groups]
 docs = [
-    "mkdocs>=1.5",
-    "mkdocs-material>=9.0",
-    "mkdocstrings[python]>=0.24",
+    "mkdocs-material>=9",
+    "mkdocstrings[python]>=0.28",
 ]
 ```
 
@@ -480,8 +477,9 @@ jobs:
 - MkDocs: https://www.mkdocs.org/
 - Material for MkDocs: https://squidfunk.github.io/mkdocs-material/
 - mkdocstrings: https://mkdocstrings.github.io/
+- Zensical: https://zensical.github.io/ (deferred, see TODO T5)
 - TypeDoc: https://typedoc.org/
 - Sphinx: https://www.sphinx-doc.org/ (alternative)
 - sphinx-needs: https://sphinx-needs.readthedocs.io/ (deferred option)
 
-_January 5, 2026_
+_January 5, 2026 — amended February 7, 2026_

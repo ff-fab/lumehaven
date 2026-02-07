@@ -21,7 +21,7 @@ platforms (OpenHAB, HomeAssistant). The core challenge is:
    with separated unit information
 
 The PoC established a working pattern in
-[smarthome.py](../../old/backend/home-observer/smarthome.py) with `SmartHomeItem`
+[smarthome.py](https://github.com/ff-fab/lumehaven/blob/main/old/backend/home-observer/smarthome.py) with `SmartHomeItem`
 storing `name`, `value`, `unit`, and `format`. This proved sufficient for OpenHAB but
 needs evaluation for HomeAssistant support.
 
@@ -227,7 +227,7 @@ _Scale: 1 (poor) to 5 (excellent)_
 
 ### OpenHAB → Signal
 
-Based on PoC's [openhab.py](../../old/backend/home-observer/openhab.py):
+Based on PoC's [openhab.py](https://github.com/ff-fab/lumehaven/blob/main/old/backend/home-observer/openhab.py):
 
 | OpenHAB Field              | Signal Field          | Notes                                 |
 | -------------------------- | --------------------- | ------------------------------------- |
@@ -327,11 +327,9 @@ class Signal:
 ## References
 
 - PoC implementation:
-  [old/backend/home-observer/smarthome.py](../../old/backend/home-observer/smarthome.py)
+  [old/backend/home-observer/smarthome.py](https://github.com/ff-fab/lumehaven/blob/main/old/backend/home-observer/smarthome.py)
 - PoC OpenHAB adapter:
-  [old/backend/home-observer/openhab.py](../../old/backend/home-observer/openhab.py)
-- OpenHAB API examples:
-  [docs/ll/openhab-example-api-calls.md](../ll/openhab-example-api-calls.md)
+  [old/backend/home-observer/openhab.py](https://github.com/ff-fab/lumehaven/blob/main/old/backend/home-observer/openhab.py)
 - HomeAssistant WebSocket API: https://developers.home-assistant.io/docs/api/websocket/
 
 Note: The PoC references are not checked into the main codebase.

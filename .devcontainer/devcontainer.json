@@ -162,10 +162,11 @@
     }
   },
 
-  "forwardPorts": [8000, 5173],
+  "forwardPorts": [8000, 5173, 8001],
   "portsAttributes": {
     "8000": { "label": "Backend API", "onAutoForward": "notify" },
-    "5173": { "label": "Frontend Dev", "onAutoForward": "notify" }
+    "5173": { "label": "Frontend Dev", "onAutoForward": "notify" },
+    "8001": { "label": "Documentation", "onAutoForward": "silent" }
   },
 
   "postCreateCommand": ".devcontainer/post-create.sh",
