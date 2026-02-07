@@ -64,6 +64,10 @@ report.html
 results-unit.xml
 results-integration.xml
 
+# Integration test server logs
+mock_openhab.log
+lumehaven.log
+
 # Translations
 *.mo
 *.pot

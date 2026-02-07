@@ -224,6 +224,8 @@ jobs:
             packages/backend/log.html
             packages/backend/report.html
             packages/backend/results-integration.xml
+            packages/backend/mock_openhab.log
+            packages/backend/lumehaven.log
           retention-days: 30
 
   # ---------------------------------------------------------------------------
