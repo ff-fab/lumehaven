@@ -63,7 +63,7 @@ like OpenHAB and HomeAssistant into a clean, uniform signal model.
 ## Current Status
 
 lumehaven is in active development. The backend is functional with an OpenHAB adapter.
-See the [project roadmap](https://github.com/ff-fab/lumehaven) for current progress.
+See the [project roadmap](https://github.com/ff-fab/lumehaven/blob/main/docs/planning/roadmap.md) for current progress.
 
 ## License
 

@@ -12,9 +12,9 @@
 
 site_name: lumehaven
 site_description: Smart home dashboard — BFF + SPA for OpenHAB and HomeAssistant
-# site_url uses !ENV so local `mkdocs serve` works (empty = relative paths)
-# while CI sets SITE_URL for correct GitHub Pages asset paths.
-site_url: !ENV [SITE_URL, '']
+# site_url defaults to GitHub Pages URL. CI can override via SITE_URL env var.
+# Local `mkdocs serve` ignores site_url for link generation.
+site_url: !ENV [SITE_URL, 'https://ff-fab.github.io/lumehaven/']
 repo_url: https://github.com/ff-fab/lumehaven
 repo_name: ff-fab/lumehaven
 edit_uri: edit/main/docs/
@@ -89,10 +89,9 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format:
-            !!python/name:pymdownx.superfences.fence_code_format # Content tabs (e.g., showing Python / TypeScript side by side)
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
-
+  # Content tabs (e.g., showing Python / TypeScript side by side)
   - pymdownx.tabbed:
       alternate_style: true
 
@@ -120,10 +119,9 @@ markdown_extensions:
   # Emoji (used sparingly for status indicators)
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator:
-        !!python/name:material.extensions.emoji.to_svg # Navigation — Diátaxis framework with dual-audience support
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
-
+# Navigation — Diátaxis framework with dual-audience support
 nav:
   - Home: index.md
 
@@ -181,9 +179,7 @@ nav:
   #     - blog/index.md
 
 # Directories excluded from the build (internal-only content).
-# These pages are built but NOT in the nav, so they're not discoverable.
-# MkDocs does not natively support exclude_docs; these are excluded by
-# not appearing in the nav: section above.
+# Files matching these patterns are not copied to the output site.
 exclude_docs: |
   planning/
   TODO/

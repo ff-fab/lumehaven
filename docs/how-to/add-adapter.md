@@ -29,14 +29,8 @@ packages/backend/src/lumehaven/adapters/homeassistant/
 └── units.py          # Optional: unit mapping
 ```
 
-Your adapter must satisfy the `SmartHomeAdapter` Protocol:
-
-```python
-::: lumehaven.adapters.protocol.SmartHomeAdapter
-    options:
-      show_source: false
-      members: false
-```
+Your adapter must satisfy the
+[`SmartHomeAdapter` Protocol](../reference/api/adapters.md#lumehaven.adapters.protocol.SmartHomeAdapter):
 
 ## Step 2: Register in the Factory
 

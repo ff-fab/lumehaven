@@ -4,8 +4,8 @@ REST API endpoints and their Pydantic response models.
 
 !!! tip "Interactive API docs"
 
-    For interactive exploration, use the built-in
-    [Swagger UI](/docs) or [ReDoc](/redoc) when the backend is running.
+    For interactive exploration, when the backend is running, open
+    `http://localhost:8000/docs` (Swagger UI) or `http://localhost:8000/redoc` (ReDoc).
 
 ## Routes Module
 

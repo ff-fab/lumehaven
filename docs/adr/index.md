@@ -13,15 +13,16 @@ alternatives considered, and the consequences.
 | [004](ADR-004-frontend-stack.md)       | Frontend Stack                           | Accepted | Dec 2025 |
 | [005](ADR-005-signal-abstraction.md)   | Signal Identity and Metadata Abstraction | Accepted | Jan 2026 |
 | [006](ADR-006-testing-strategy.md)     | Testing Strategy                         | Accepted | Jan 2026 |
-| [007](ADR-007-documentation-system.md) | Documentation System                     | Accepted | Jan 2026 |
+| [007](ADR-007-documentation-system.md) | Documentation System                     | Accepted (Amended) | Feb 2026 |
 
 !!! note "Numbering gap" ADR-003 was a draft that was merged into ADR-002 during review.
 
 ## What is an ADR?
 
 An Architecture Decision Record is a short document that captures a single significant
-decision. ADRs are immutable once accepted — if a decision is reversed, a new ADR
-supersedes the old one rather than editing it.
+decision. Once accepted, an ADR may only be amended while the initial implementation of
+its scope is still in progress (e.g., a tooling change discovered during setup). Once
+stable, a decision is reversed or replaced via a new ADR that supersedes the original.
 
 **Format:** Each ADR follows a consistent template with Status, Context, Decision,
 Decision Drivers, Considered Options, Decision Matrix, and Consequences sections. See

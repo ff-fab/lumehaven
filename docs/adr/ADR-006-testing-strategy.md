@@ -371,17 +371,9 @@ def get_item(item_name: str):
     return MOCK_ITEMS.get(item_name, {"error": "not found"})
 ```
 
-**Fixture data:** Store real (anonymized) API responses in `tests/fixtures/` for
-realistic testing.
-
-### Test Data from PoC
-
-Leverage examples from
-[openhab-example-api-calls.md](../ll/openhab-example-api-calls.md):
-
-- 200+ real item types with various patterns
-- SSE event formats
-- Edge cases (transformed states, special values)
+**Fixture data:** Real (anonymized) API responses are stored in `tests/fixtures/` for
+realistic testing, covering 200+ item types, SSE event formats, and edge cases
+(transformed states, special values).
 
 ## Decision Drivers
 
@@ -545,8 +537,5 @@ jobs:
 - Browser Library: https://robotframework-browser.org/
 - pytest-asyncio: https://pytest-asyncio.readthedocs.io/
 - Vitest: https://vitest.dev/
-- PoC lessons: [docs/ll/00-lessons-from-poc.md](../ll/00-lessons-from-poc.md)
-- OpenHAB examples:
-  [docs/ll/openhab-example-api-calls.md](../ll/openhab-example-api-calls.md)
 
 _January 5, 2026_

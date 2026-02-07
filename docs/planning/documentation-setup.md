@@ -62,7 +62,6 @@ Home (index.md) — project overview + quick-links grid
 | ---------------------------------- | ------------ | ------------------------------------- |
 | ADRs (`docs/adr/`)                 | ✅ Yes       | Standard open-source practice         |
 | Testing strategy (`docs/testing/`) | ✅ Yes       | Part of Explanation quadrant          |
-| Lessons learned (`docs/ll/`)       | ✅ Temporary | Remove after Phase 3 (frontend done)  |
 | Planning docs (`docs/planning/`)   | ❌ No        | Internal, excluded via `exclude_docs` |
 | TODO items (`docs/TODO/`)          | ❌ No        | Internal, excluded via `exclude_docs` |
 
@@ -99,7 +98,6 @@ Home (index.md) — project overview + quick-links grid
 - [ ] Add `llms.txt` (Pydantic does this for AI-friendly docs)
 - [ ] Frontend coding standards (when Phase 3 starts)
 - [ ] Deployment how-to guide
-- [ ] Remove lessons learned after frontend Phase 3 complete
 
 ### Phase 4: Versioning (v1.0)
 

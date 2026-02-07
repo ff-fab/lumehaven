@@ -4,8 +4,7 @@
 the backend, and see your first signals in the API.
 
 !!! warning "Work in progress" This tutorial will be completed as part of the
-documentation content phase. See the
-[documentation roadmap](../explanation/architecture.md) for details.
+documentation content phase.
 
 ## Prerequisites
 

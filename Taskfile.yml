@@ -214,7 +214,7 @@ tasks:
   docs:build:
     desc: Build documentation site (strict mode, clean output)
     cmds:
-      - uv run --group docs --project {{.BACKEND_DIR}} mkdocs build --clean
+      - uv run --group docs --project {{.BACKEND_DIR}} mkdocs build --clean --strict
 
   # ===========================================================================
   # Development Servers

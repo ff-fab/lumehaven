@@ -260,7 +260,6 @@ All formatters and linters are **auto-configured**:
 ## Documentation
 
 - **Architecture decisions**: [docs/adr/](docs/adr/)
-- **Lessons learned from PoC**: [docs/ll/](docs/ll/)
 - **Setup details**: [.devcontainer/README.md](.devcontainer/README.md)
 - **Project overview**: [README.md](README.md)
 

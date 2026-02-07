@@ -150,7 +150,7 @@ This avoids per-file exceptions for thin `__init__.py` or hard-to-cover edge bra
 the module as a whole must meet its target.
 
 Module-to-risk mappings are defined in
-[`tests/coverage_config.py`](../../packages/backend/tests/coverage_config.py) (**single
+[`tests/coverage_config.py`](https://github.com/ff-fab/lumehaven/blob/main/packages/backend/tests/coverage_config.py) (**single
 source of truth**). Key design points:
 
 - **Adapter implementations auto-discovered:** any `adapters/<name>/` subdirectory

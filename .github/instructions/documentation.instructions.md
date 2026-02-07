@@ -70,6 +70,5 @@ _<Date>_
 | Content           | Location         |
 | ----------------- | ---------------- |
 | ADRs              | `docs/adr/`      |
-| Lessons Learned   | `docs/ll/`       |
 | Planning/Roadmaps | `docs/planning/` |
 | Pending Decisions | `docs/TODO/`     |

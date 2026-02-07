@@ -2,7 +2,7 @@
 
 ## Status
 
-Amended (February 2026)
+Accepted (Amended Feb 2026)
 
 ## Context
 

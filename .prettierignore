@@ -16,6 +16,7 @@ package-lock.json
 bun.lockb
 uv.lock
 
-# MkDocs API reference pages (mkdocstrings ::: directives use indented YAML
-# that prettier collapses into single lines, breaking the build)
-docs/reference/api/
+# Documentation pages (mkdocstrings ::: directives, admonitions, and other
+# MkDocs-specific syntax that prettier reformats incorrectly)
+docs/**
+mkdocs.yml

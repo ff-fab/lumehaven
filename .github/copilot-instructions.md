@@ -33,7 +33,6 @@ lumehaven/
 │   └── frontend/             # React SPA (TypeScript)
 ├── docs/
 │   ├── adr/                  # Architecture Decision Records (authoritative)
-│   ├── ll/                   # Lessons learned from PoC
 │   ├── planning/             # Roadmap, decision tracker
 │   └── TODO/                 # Technical debt, deferred items
 └── old/                      # PoC reference (do not modify)
@@ -42,7 +41,6 @@ lumehaven/
 ## Reference Material
 
 - `old/` - Proof-of-concept (reference only, do not modify)
-- `docs/ll/` - Lessons learned from PoC, OpenHAB API quirks
 - `docs/adr/` - Architecture Decision Records (**authoritative**)
 
 ## Git Workflow (GitHub Flow)
