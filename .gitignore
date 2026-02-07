@@ -62,6 +62,11 @@ report.html
 
 # pytest JUnit XML results
 results-unit.xml
+results-integration.xml
+
+# Integration test server logs
+mock_openhab.log
+lumehaven.log
 
 # Translations
 *.mo
@@ -148,7 +153,7 @@ celerybeat.pid
 
 # Environments
 .env
-!tests/integration/.env
+!**/tests/integration/.env
 .envrc
 .venv
 env/

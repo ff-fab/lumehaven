@@ -275,6 +275,12 @@ tasks:
       - uv run pytest tests/unit/ --cov=lumehaven --cov-branch --cov-report=xml --cov-report=json --cov-report=term --junitxml=results-unit.xml
       - uv run python tests/scripts/summarize_tests.py --unit-only --coverage-file=coverage.json
 
+  ci:test:integration:be:
+    desc: CI backend integration tests (Robot Framework)
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run robot --outputdir . --xunit results-integration.xml tests/integration/
+
   ci:test:fe:
     desc: CI frontend test task with coverage
     dir: '{{.FRONTEND_DIR}}'

@@ -41,8 +41,7 @@ All blocking architectural decisions have been made and documented as ADRs:
 | ------------------------------------------------- | ------ |
 | Comprehensive test coverage per ADR-006           | ✅     |
 | GitHub Actions CI pipeline                        | ✅     |
-| Docker Compose CI mock infra (OpenHAB mock + SSE) | ❌     |
-| Integration tests in CI (Robot Framework)         | ❌     |
+| Integration tests in CI (subprocess mock servers) | ✅     |
 | Shared config (.editorconfig)                     | ❌     |
 | Pre-commit hooks                                  | ✅     |
 | Set up Zensical documentation site                | ❌     |
@@ -71,13 +70,16 @@ All blocking architectural decisions have been made and documented as ADRs:
 
 ## ⏳ Phase 4: Integration & Deployment
 
-| Task                                | Status |
-| ----------------------------------- | ------ |
-| Docker/container configuration (D8) | ❌     |
-| Robot Framework E2E tests           | ❌     |
-| Deployment strategy                 | ❌     |
-| Configuration management (D9)       | ❌     |
-| Observability setup (D10)           | ❌     |
+| Task                                        | Status |
+| ------------------------------------------- | ------ |
+| Docker/container configuration (D8)         | ❌     |
+| Robot Framework E2E tests                   | ❌     |
+| Docker Compose infrastructure for CI/E2E \* | ❌     |
+| Deployment strategy                         | ❌     |
+| Configuration management (D9)               | ❌     |
+| Observability setup (D10)                   | ❌     |
+
+\*) see Option C in TODO/ci-integration-tests.md
 
 ## ⏳ Phase 5: Maintenance & Future Development
 
