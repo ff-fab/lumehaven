@@ -136,7 +136,7 @@ jobs:
         with:
           cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
           push: never
-          runCmd: task ci:test:be
+          runCmd: task ci:test:unit:be
 
       - name: Upload coverage to Codecov
         if: always()

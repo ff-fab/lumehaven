@@ -379,6 +379,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Path to coverage JSON file. When provided, module-level "
         "threshold validation is included in the summary.",
     )
+    parser.add_argument(
+        "--unit-only",
+        action="store_true",
+        help="Only check unit test results; skip Robot Framework. "
+        "Useful in CI where integration tests run as a separate job.",
+    )
     return parser
 
 
@@ -387,7 +393,7 @@ def main() -> int:
     args = _build_parser().parse_args()
 
     unit_result = parse_junit_xml(args.unit_results)
-    robot_result = parse_robot_output(args.robot_output)
+    robot_result = None if args.unit_only else parse_robot_output(args.robot_output)
 
     found: list[SuiteResult] = []
     not_found: list[str] = []
@@ -397,7 +403,9 @@ def main() -> int:
     else:
         not_found.append("Unit (pytest)")
 
-    if robot_result is not None:
+    if args.unit_only:
+        pass  # Robot not expected — skip
+    elif robot_result is not None:
         found.append(robot_result)
     else:
         not_found.append("Integration (Robot)")
