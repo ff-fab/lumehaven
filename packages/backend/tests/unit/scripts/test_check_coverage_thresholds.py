@@ -19,13 +19,18 @@ import pytest
 
 from tests.coverage_config import get_threshold as _get_threshold
 from tests.scripts.check_coverage_thresholds import (
+    _BEGIN_MARKER,
+    _END_MARKER,
     ModuleCoverage,
     ThresholdViolation,
+    _generate_components_block,
+    _module_key_to_component,
     check_thresholds,
     extract_module_coverage,
     format_report,
     load_coverage_data,
     main,
+    sync_codecov_components,
 )
 
 # =============================================================================
@@ -536,3 +541,261 @@ class TestMain:
 
         assert result == 0
         assert stdout.getvalue() == ""
+
+
+# =============================================================================
+# Codecov Component Sync
+# =============================================================================
+
+
+class TestModuleKeyToComponent:
+    """Tests for _module_key_to_component mapping logic.
+
+    Technique: Equivalence Partitioning — four distinct key patterns:
+    __root__, wildcard (*/), directory, and single-file module.
+    """
+
+    def test_root_key_produces_regex_for_root_files(self) -> None:
+        """__root__ maps to a regex matching only top-level .py files."""
+        comp = _module_key_to_component("__root__", 30, 0)
+        assert comp["component_id"] == "be-root"
+        assert any("[^/]+\\.py$" in p for p in comp["paths"])
+
+    def test_wildcard_key_produces_subdir_regex(self) -> None:
+        """adapters/* maps to regex matching adapter subdirectories."""
+        comp = _module_key_to_component("adapters/*", 90, 85)
+        assert comp["component_id"] == "be-adapters-impl"
+        assert any("adapters/[^/]+/" in p for p in comp["paths"])
+
+    def test_directory_module_produces_dir_and_file_paths(self) -> None:
+        """Directory module (api) produces both dir/ and .py paths."""
+        comp = _module_key_to_component("api", 80, 75)
+        assert comp["component_id"] == "be-api"
+        # Should have both a directory path and a .py path
+        paths = comp["paths"]
+        assert any(p.endswith("api/") for p in paths)
+        assert any(p.endswith("api.py") for p in paths)
+
+    def test_single_file_module_same_as_directory(self) -> None:
+        """Single-file module (config) uses same pattern.
+
+        Codecov ignores non-matching paths, so both dir/ and .py are safe.
+        """
+        comp = _module_key_to_component("config", 85, 80)
+        assert comp["component_id"] == "be-config"
+        assert any("config.py" in p for p in comp["paths"])
+
+    def test_component_id_uses_be_prefix(self) -> None:
+        """All backend components use 'be-' prefix for monorepo namespacing."""
+        for key in ("core", "state", "api", "__root__", "adapters/*"):
+            comp = _module_key_to_component(key, 80, 70)
+            assert comp["component_id"].startswith("be-")
+
+    def test_name_includes_backend_prefix(self) -> None:
+        """Display names include 'Backend:' for clarity in Codecov UI."""
+        comp = _module_key_to_component("core", 80, 70)
+        assert comp["name"].startswith("Backend:")
+
+
+class TestGenerateComponentsBlock:
+    """Tests for _generate_components_block YAML generation.
+
+    Technique: Specification-based — verify structural properties of the
+    generated output that must hold regardless of MODULE_THRESHOLDS content.
+    """
+
+    def test_block_starts_with_begin_marker(self) -> None:
+        """Generated block must start with the BEGIN marker."""
+        block = _generate_components_block()
+        assert block.startswith(_BEGIN_MARKER)
+
+    def test_block_ends_with_end_marker(self) -> None:
+        """Generated block must end with the END marker."""
+        block = _generate_components_block()
+        assert block.rstrip().endswith(_END_MARKER)
+
+    def test_block_contains_component_management(self) -> None:
+        """YAML must include the top-level component_management key."""
+        block = _generate_components_block()
+        assert "component_management:" in block
+
+    def test_block_uses_target_auto(self) -> None:
+        """Default status uses target: auto (no regression, not hardcoded)."""
+        block = _generate_components_block()
+        assert "target: auto" in block
+
+    def test_block_contains_all_module_keys(self) -> None:
+        """Every MODULE_THRESHOLDS key should appear as a component."""
+        from tests.coverage_config import MODULE_THRESHOLDS
+
+        block = _generate_components_block()
+        for key in MODULE_THRESHOLDS:
+            comp = _module_key_to_component(key, *MODULE_THRESHOLDS[key])
+            assert comp["component_id"] in block, (
+                f"Component for {key!r} missing from generated block"
+            )
+
+
+class TestSyncCodecovComponents:
+    """Tests for sync_codecov_components file I/O and sync logic.
+
+    Technique: Equivalence Partitioning — three scenarios:
+    1. File already in sync (no-op)
+    2. File out of sync (update or fail)
+    3. File without markers (first-time append)
+
+    Uses tmp_path to avoid touching the real codecov.yml.
+    """
+
+    def _write_codecov(self, path: Path, content: str) -> None:
+        path.write_text(content)
+
+    def test_in_sync_returns_0(self, tmp_path: Path) -> None:
+        """Returns 0 and doesn't modify file when already in sync."""
+        block = _generate_components_block()
+        content = f"coverage:\n  status: {{}}\n\n{block}\n"
+        codecov_path = tmp_path / "codecov.yml"
+        self._write_codecov(codecov_path, content)
+
+        with patch(
+            "tests.scripts.check_coverage_thresholds._find_codecov_yml",
+            return_value=codecov_path,
+        ):
+            result = sync_codecov_components(check_only=False)
+
+        assert result == 0
+        assert codecov_path.read_text() == content  # Unchanged
+
+    def test_check_only_in_sync_returns_0(self, tmp_path: Path) -> None:
+        """Check mode returns 0 when in sync."""
+        block = _generate_components_block()
+        content = f"coverage:\n  status: {{}}\n\n{block}\n"
+        codecov_path = tmp_path / "codecov.yml"
+        self._write_codecov(codecov_path, content)
+
+        with patch(
+            "tests.scripts.check_coverage_thresholds._find_codecov_yml",
+            return_value=codecov_path,
+        ):
+            result = sync_codecov_components(check_only=True)
+
+        assert result == 0
+
+    def test_out_of_sync_updates_file(self, tmp_path: Path) -> None:
+        """Sync mode rewrites the markers section when out of date."""
+        old_block = f"{_BEGIN_MARKER}\nold content\n{_END_MARKER}"
+        content = f"# header\ncoverage:\n  status: {{}}\n\n{old_block}\n"
+        codecov_path = tmp_path / "codecov.yml"
+        self._write_codecov(codecov_path, content)
+
+        with patch(
+            "tests.scripts.check_coverage_thresholds._find_codecov_yml",
+            return_value=codecov_path,
+        ):
+            result = sync_codecov_components(check_only=False)
+
+        assert result == 0
+        updated = codecov_path.read_text()
+        assert _BEGIN_MARKER in updated
+        assert _END_MARKER in updated
+        assert "old content" not in updated
+        assert "component_management:" in updated
+        # Header preserved
+        assert updated.startswith("# header")
+
+    def test_check_only_out_of_sync_returns_1(self, tmp_path: Path) -> None:
+        """Check mode returns 1 when out of sync, does NOT modify file."""
+        old_block = f"{_BEGIN_MARKER}\nold content\n{_END_MARKER}"
+        content = f"coverage:\n  status: {{}}\n\n{old_block}\n"
+        codecov_path = tmp_path / "codecov.yml"
+        self._write_codecov(codecov_path, content)
+
+        with patch(
+            "tests.scripts.check_coverage_thresholds._find_codecov_yml",
+            return_value=codecov_path,
+        ):
+            result = sync_codecov_components(check_only=True)
+
+        assert result == 1
+        assert codecov_path.read_text() == content  # Unchanged
+
+    def test_no_markers_appends_block(self, tmp_path: Path) -> None:
+        """First-time sync appends markers and block to existing file."""
+        content = "coverage:\n  status: {}\n"
+        codecov_path = tmp_path / "codecov.yml"
+        self._write_codecov(codecov_path, content)
+
+        with patch(
+            "tests.scripts.check_coverage_thresholds._find_codecov_yml",
+            return_value=codecov_path,
+        ):
+            result = sync_codecov_components(check_only=False)
+
+        assert result == 0
+        updated = codecov_path.read_text()
+        assert _BEGIN_MARKER in updated
+        assert _END_MARKER in updated
+        # Original content preserved at the top
+        assert updated.startswith("coverage:")
+
+    def test_missing_file_returns_2(self, tmp_path: Path) -> None:
+        """Returns 2 when codecov.yml doesn't exist."""
+        codecov_path = tmp_path / "nonexistent.yml"
+
+        with patch(
+            "tests.scripts.check_coverage_thresholds._find_codecov_yml",
+            return_value=codecov_path,
+        ):
+            result = sync_codecov_components(check_only=False)
+
+        assert result == 2
+
+
+class TestMainSyncCodecov:
+    """Tests for main() with --sync-codecov flag integration.
+
+    Technique: Integration — verify CLI arg parsing routes to sync_codecov_components.
+    """
+
+    def test_sync_codecov_flag_calls_sync(self, tmp_path: Path) -> None:
+        """--sync-codecov routes to sync_codecov_components."""
+        block = _generate_components_block()
+        content = f"coverage:\n  status: {{}}\n\n{block}\n"
+        codecov_path = tmp_path / "codecov.yml"
+        codecov_path.write_text(content)
+
+        with (
+            patch("sys.argv", ["prog", "--sync-codecov"]),
+            patch(
+                "tests.scripts.check_coverage_thresholds._find_codecov_yml",
+                return_value=codecov_path,
+            ),
+        ):
+            result = main()
+
+        assert result == 0
+
+    def test_sync_codecov_check_flag_fails_on_drift(self, tmp_path: Path) -> None:
+        """--sync-codecov --check returns 1 when out of sync."""
+        old_block = f"{_BEGIN_MARKER}\nstale\n{_END_MARKER}"
+        codecov_path = tmp_path / "codecov.yml"
+        codecov_path.write_text(f"header\n{old_block}\n")
+
+        with (
+            patch("sys.argv", ["prog", "--sync-codecov", "--check"]),
+            patch(
+                "tests.scripts.check_coverage_thresholds._find_codecov_yml",
+                return_value=codecov_path,
+            ),
+        ):
+            result = main()
+
+        assert result == 1
+
+    def test_check_without_sync_codecov_is_error(self) -> None:
+        """--check alone (without --sync-codecov) raises a parser error."""
+        with (
+            patch("sys.argv", ["prog", "--check"]),
+            pytest.raises(SystemExit, match="2"),
+        ):
+            main()

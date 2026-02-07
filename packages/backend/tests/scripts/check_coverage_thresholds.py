@@ -5,6 +5,11 @@ Coverage.py doesn't support per-module thresholds natively. This script reads
 the coverage JSON report, aggregates file-level data into logical modules, and
 enforces risk-based targets from our test strategy.
 
+Additionally, this script can synchronise Codecov component definitions in
+``codecov.yml`` with ``MODULE_THRESHOLDS`` from ``coverage_config.py``.  This
+keeps Codecov PR comments and the local enforcement script aligned on the same
+module boundaries.
+
 Aggregation: files are grouped by directory module (e.g. ``api/``,
 ``adapters/*``). Coverage is computed as a weighted average — each file
 contributes proportional to its statement/branch count.
@@ -19,16 +24,24 @@ Usage:
     # Or specify custom coverage file
     python tests/scripts/check_coverage_thresholds.py --coverage-file=custom.json
 
+    # Sync codecov.yml components from coverage_config.py (local dev)
+    python tests/scripts/check_coverage_thresholds.py --sync-codecov
+
+    # Validate codecov.yml components are in sync (CI — fails if out of date)
+    python tests/scripts/check_coverage_thresholds.py --sync-codecov --check
+
 Exit codes:
-    0 - All thresholds met
-    1 - One or more thresholds violated
-    2 - Coverage file not found or invalid
+    0 - All thresholds met / components in sync
+    1 - One or more thresholds violated / components out of sync
+    2 - Coverage file not found or invalid / codecov.yml missing when using
+        --sync-codecov
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -197,6 +210,162 @@ def format_report(
     return "\n".join(lines)
 
 
+# =============================================================================
+# Codecov Component Sync
+# =============================================================================
+
+# Marker comments delimiting the auto-generated section in codecov.yml.
+# Everything between these markers is replaced on sync; content outside is
+# preserved (hand-written coverage targets, comment settings, etc.).
+_BEGIN_MARKER = "# BEGIN GENERATED COMPONENTS — do not edit manually."
+_END_MARKER = "# END GENERATED COMPONENTS"
+
+# Base path prefix for all backend source files in the monorepo.
+_BACKEND_SRC = "packages/backend/src/lumehaven"
+
+
+def _module_key_to_component(
+    key: str, line_thresh: int, branch_thresh: int
+) -> dict[str, str | list[str]]:
+    """Convert a MODULE_THRESHOLDS key to a Codecov component definition.
+
+    The mapping rules mirror ``get_module_for_file`` in coverage_config.py:
+
+    * ``__root__``   → root-level ``*.py`` files (``__init__.py``, ``_version.py``, …)
+    * ``adapters/*`` → any adapter implementation subdirectory
+    * ``adapters``   → direct files in ``adapters/`` (framework code)
+    * ``config``     → single-file module ``config.py``
+    * ``state``      → directory module ``state/``
+    """
+    if key == "__root__":
+        return {
+            "component_id": "be-root",
+            "name": "Backend: Root",
+            # Regex: files directly in lumehaven/ (not in subdirs)
+            "paths": [rf"^{_BACKEND_SRC}/[^/]+\.py$"],
+        }
+
+    if key.endswith("/*"):
+        parent = key[:-2]  # "adapters/*" → "adapters"
+        return {
+            "component_id": f"be-{parent}-impl",
+            "name": f"Backend: {parent.title()} (implementations)",
+            # Regex: any file in a subdirectory of parent
+            "paths": [rf"^{_BACKEND_SRC}/{parent}/[^/]+/.+"],
+        }
+
+    # Directory or single-file module — Codecov will ignore non-matching paths
+    return {
+        "component_id": f"be-{key}",
+        "name": f"Backend: {key.title()}",
+        "paths": [f"{_BACKEND_SRC}/{key}/", f"{_BACKEND_SRC}/{key}.py"],
+    }
+
+
+def _generate_components_block() -> str:
+    """Generate the YAML block for codecov.yml component_management.
+
+    Reads MODULE_THRESHOLDS from coverage_config.py and produces a
+    component_management section with ``target: auto`` (no regression from
+    current level). Absolute thresholds remain in coverage_config.py — single
+    source of truth.
+    """
+    from coverage_config import MODULE_THRESHOLDS
+
+    lines = [
+        _BEGIN_MARKER,
+        f"# Source: {Path(__file__).name} ← coverage_config.MODULE_THRESHOLDS",
+        "# Run:    task sync:codecov",
+        "component_management:",
+        "  default_rules:",
+        "    statuses:",
+        "      - type: project",
+        "        target: auto # No regression — absolute thresholds enforced by script",
+        "  individual_components:",
+    ]
+
+    for key, (line_thresh, branch_thresh) in MODULE_THRESHOLDS.items():
+        comp = _module_key_to_component(key, line_thresh, branch_thresh)
+        lines.append(f"    - component_id: {comp['component_id']}")
+        lines.append(f"      name: '{comp['name']}'")
+        lines.append("      paths:")
+        for path in comp["paths"]:
+            # Always use single quotes — Prettier normalises YAML strings
+            # to single quotes, so we match that style for idempotency.
+            lines.append(f"        - '{path}'")
+
+    lines.append(_END_MARKER)
+    return "\n".join(lines)
+
+
+def _find_codecov_yml() -> Path:
+    """Locate codecov.yml at the repository root.
+
+    Walks up from the script's location to find the repo root (where .git is),
+    then expects codecov.yml there.
+    """
+    current = Path(__file__).resolve().parent
+    for parent in [current, *current.parents]:
+        if (parent / ".git").exists():
+            return parent / "codecov.yml"
+    # Fallback: assume CWD-based structure
+    return Path("codecov.yml")
+
+
+def sync_codecov_components(*, check_only: bool = False) -> int:
+    """Sync or validate Codecov component definitions in codecov.yml.
+
+    Args:
+        check_only: If True, only validate (don't write). Returns 1 if
+            codecov.yml is out of date.
+
+    Returns:
+        0 if in sync (or updated), 1 if out of sync (check_only mode),
+        2 if codecov.yml not found.
+    """
+    codecov_path = _find_codecov_yml()
+
+    if not codecov_path.exists():
+        print(f"Error: {codecov_path} not found", file=sys.stderr)
+        return 2
+
+    current_content = codecov_path.read_text()
+    new_block = _generate_components_block()
+
+    # Check if markers exist
+    has_markers = _BEGIN_MARKER in current_content and _END_MARKER in current_content
+
+    if has_markers:
+        # Replace content between markers (inclusive)
+        pattern = re.compile(
+            re.escape(_BEGIN_MARKER) + r".*?" + re.escape(_END_MARKER),
+            re.DOTALL,
+        )
+        updated_content = pattern.sub(new_block, current_content)
+    else:
+        # First time: append the block at the end
+        separator = "\n" if current_content.endswith("\n") else "\n\n"
+        updated_content = (
+            current_content.rstrip("\n") + separator + "\n" + new_block + "\n"
+        )
+
+    if updated_content == current_content:
+        print("✓ codecov.yml components are in sync with coverage_config.py")
+        return 0
+
+    if check_only:
+        print(
+            "✗ codecov.yml components are OUT OF SYNC with coverage_config.py",
+            file=sys.stderr,
+        )
+        print("  Run 'task sync:codecov' to update.", file=sys.stderr)
+        return 1
+
+    codecov_path.write_text(updated_content)
+    print(f"✓ Updated {codecov_path} components from coverage_config.py")
+    return 0
+
+
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -220,8 +389,26 @@ def main() -> int:
         action="store_true",
         help="Only output on failure",
     )
+    parser.add_argument(
+        "--sync-codecov",
+        action="store_true",
+        help="Sync codecov.yml components from coverage_config.py",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="With --sync-codecov: validate only, fail if out of sync (for CI)",
+    )
 
     args = parser.parse_args()
+
+    # Enforce flag relationship: --check is only valid with --sync-codecov.
+    if args.check and not args.sync_codecov:
+        parser.error("--check can only be used together with --sync-codecov")
+
+    # Codecov sync mode — independent of coverage data
+    if args.sync_codecov:
+        return sync_codecov_components(check_only=args.check)
 
     # Load coverage data
     data = load_coverage_data(args.coverage_file)

@@ -34,6 +34,9 @@ tasks:
     desc: Run all backend tests (unit + integration) with coverage and summary
     dir: '{{.BACKEND_DIR}}'
     cmds:
+      # Keep codecov.yml components in sync with coverage_config.py (write mode).
+      # CI uses --check (read-only); local tasks auto-update for low cognitive load.
+      - uv run python tests/scripts/check_coverage_thresholds.py --sync-codecov
       # Run unit tests with coverage to enable threshold validation.
       # Uses ignore_error so integration tests + summary always run.
       - cmd: uv run pytest tests/unit/ -v --tb=short --junitxml=results-unit.xml --cov=lumehaven --cov-branch --cov-report=json
@@ -60,6 +63,7 @@ tasks:
     desc: Run backend unit tests only (fast, every change)
     dir: '{{.BACKEND_DIR}}'
     cmds:
+      - uv run python tests/scripts/check_coverage_thresholds.py --sync-codecov
       - uv run pytest tests/unit/ -v --tb=short --junitxml=results-unit.xml
 
   test:be:integration:
@@ -72,6 +76,7 @@ tasks:
     desc: Run backend tests with coverage (terminal + XML for IDE)
     dir: '{{.BACKEND_DIR}}'
     cmds:
+      - uv run python tests/scripts/check_coverage_thresholds.py --sync-codecov
       - uv run pytest tests/ --cov=lumehaven --cov-branch --cov-report=term-missing --cov-report=xml
 
   test:be:cov:html:
@@ -86,6 +91,7 @@ tasks:
     desc: Check per-module coverage thresholds
     dir: '{{.BACKEND_DIR}}'
     cmds:
+      - uv run python tests/scripts/check_coverage_thresholds.py --sync-codecov
       - uv run pytest tests/ --cov=lumehaven --cov-branch --cov-report=json -q
       - uv run python tests/scripts/check_coverage_thresholds.py --verbose
 
@@ -251,22 +257,23 @@ tasks:
       - uv run radon cc src/lumehaven --average --show-complexity
       - uv run xenon src/lumehaven --max-absolute B --max-modules A --max-average A
 
+  sync:codecov:
+    desc: Sync codecov.yml components from coverage_config.py
+    dir: '{{.BACKEND_DIR}}'
+    cmds:
+      - uv run python tests/scripts/check_coverage_thresholds.py --sync-codecov
+
   # ===========================================================================
   # CI Tasks (used in GitHub Actions)
   # ===========================================================================
 
-  ci:test:
-    desc: CI test task with coverage and threshold validation
-    cmds:
-      - task: ci:test:be
-      # - task: ci:test:fe  # Enable when frontend tests exist
-
-  ci:test:be:
-    desc: CI backend test task with coverage
+  ci:test:unit:be:
+    desc: CI backend unit tests with coverage and threshold validation
     dir: '{{.BACKEND_DIR}}'
     cmds:
-      - uv run pytest tests/ --cov=lumehaven --cov-branch --cov-report=xml --cov-report=json --cov-report=term --junitxml=results-unit.xml
-      - uv run python tests/scripts/summarize_tests.py --coverage-file=coverage.json
+      - uv run python tests/scripts/check_coverage_thresholds.py --sync-codecov --check
+      - uv run pytest tests/unit/ --cov=lumehaven --cov-branch --cov-report=xml --cov-report=json --cov-report=term --junitxml=results-unit.xml
+      - uv run python tests/scripts/summarize_tests.py --unit-only --coverage-file=coverage.json
 
   ci:test:fe:
     desc: CI frontend test task with coverage
