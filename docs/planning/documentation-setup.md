@@ -81,16 +81,16 @@ Home (index.md) — project overview + quick-links grid
 - [x] Verify `task docs:serve` renders correctly
 - [x] Verify mkdocstrings generates API docs from existing docstrings
 
-### Phase 2: Content (next)
+### Phase 2: Content
 
-- [ ] Complete "Getting Started" tutorial with real walkthrough
-- [ ] Complete "Add a New Adapter" how-to with full code examples
-- [ ] Complete "Configuration" how-to with all YAML options
-- [ ] Expand architecture explanation with detailed diagrams
-- [ ] Expand signal abstraction explanation with normalization details
-- [ ] Fill in Configuration Reference from config model
-- [ ] Slim down root `CONTRIBUTE.md` → link to doc site detail
-- [ ] Cross-link between sections (tutorials ↔ how-tos ↔ reference)
+- [x] Complete "Getting Started" tutorial with real walkthrough
+- [x] Complete "Add a New Adapter" how-to with full code examples
+- [x] Complete "Configuration" how-to with all YAML options
+- [x] Expand architecture explanation with detailed diagrams
+- [x] Expand signal abstraction explanation with normalization details
+- [x] Fill in Configuration Reference from config model
+- [x] Slim down root `CONTRIBUTE.md` → link to doc site detail
+- [x] Cross-link between sections (tutorials ↔ how-tos ↔ reference)
 
 ### Phase 3: Polish (later)
 
