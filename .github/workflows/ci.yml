@@ -96,6 +96,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Prepare runner for devcontainer
+        run: mkdir -p ~/.ssh # devcontainer.json mounts ~/.ssh; runners lack it
+
       - name: Log in to GHCR (for devcontainer cache)
         uses: docker/login-action@v3
         with:
@@ -117,6 +120,9 @@ jobs:
     if: needs.changes.outputs.backend == 'true'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Prepare runner for devcontainer
+        run: mkdir -p ~/.ssh
 
       - name: Log in to GHCR (for devcontainer cache)
         uses: docker/login-action@v3
@@ -159,6 +165,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Prepare runner for devcontainer
+        run: mkdir -p ~/.ssh
+
       - name: Log in to GHCR (for devcontainer cache)
         uses: docker/login-action@v3
         with:
@@ -182,6 +191,9 @@ jobs:
     # both satisfy branch protection as "Success".
     steps:
       - uses: actions/checkout@v4
+
+      - name: Prepare runner for devcontainer
+        run: mkdir -p ~/.ssh
 
       - name: Log in to GHCR (for devcontainer cache)
         uses: docker/login-action@v3
