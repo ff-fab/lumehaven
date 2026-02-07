@@ -183,45 +183,48 @@ jobs:
           runCmd: task complexity
 
   # ---------------------------------------------------------------------------
-  # Backend Integration Tests (deferred — needs Docker Compose mock infra)
+  # Backend Integration Tests (Robot Framework)
   # ---------------------------------------------------------------------------
-  # Robot Framework integration tests require an OpenHAB mock server.
-  # Uncomment once Docker Compose CI infrastructure is in place (see roadmap).
+  # Runs mock OpenHAB + Lumehaven as subprocesses inside the devcontainer.
+  # Gated behind unit-tests-be (test pyramid: skip expensive tests if fast
+  # tests fail).
 
-  # integration-tests-be:
-  #   name: 'Backend: Integration Tests (Robot Framework)'
-  #   runs-on: ubuntu-latest
-  #   needs: unit-tests-be # Test pyramid: skip expensive integration if units fail
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #
-  #     - name: Prepare runner for devcontainer
-  #       run: mkdir -p ~/.ssh
-  #
-  #     - name: Log in to GHCR (for devcontainer cache)
-  #       uses: docker/login-action@v3
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.actor }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
-  #
-  #     - name: Run integration tests inside devcontainer
-  #       uses: devcontainers/ci@v0.3
-  #       with:
-  #         cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
-  #         push: never
-  #         runCmd: task test:be:integration
-  #
-  #     - name: Upload Robot Framework results
-  #       if: always()
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: robot-results
-  #         path: |
-  #           packages/backend/output.xml
-  #           packages/backend/log.html
-  #           packages/backend/report.html
-  #         retention-days: 30
+  integration-tests-be:
+    name: 'Backend: Integration Tests (Robot Framework)'
+    runs-on: ubuntu-latest
+    needs: [changes, unit-tests-be]
+    if: needs.changes.outputs.backend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare runner for devcontainer
+        run: mkdir -p ~/.ssh
+
+      - name: Log in to GHCR (for devcontainer cache)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run integration tests inside devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          cacheFrom: ${{ env.DEVCONTAINER_IMAGE }}
+          push: never
+          runCmd: task ci:test:integration:be
+
+      - name: Upload Robot Framework results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-results
+          path: |
+            packages/backend/output.xml
+            packages/backend/log.html
+            packages/backend/report.html
+            packages/backend/results-integration.xml
+          retention-days: 30
 
   # ---------------------------------------------------------------------------
   # Frontend Jobs (Phase 3 — stubs, uncomment when frontend exists)

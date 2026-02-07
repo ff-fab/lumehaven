@@ -41,8 +41,8 @@ All blocking architectural decisions have been made and documented as ADRs:
 | ------------------------------------------------- | ------ |
 | Comprehensive test coverage per ADR-006           | ✅     |
 | GitHub Actions CI pipeline                        | ✅     |
-| Docker Compose CI mock infra (OpenHAB mock + SSE) | ❌     |
-| Integration tests in CI (Robot Framework)         | ❌     |
+| Integration tests in CI (subprocess mock servers) | ✅     |
+| Docker Compose infrastructure (Phase 4, for E2E)  | ❌     |
 | Shared config (.editorconfig)                     | ❌     |
 | Pre-commit hooks                                  | ✅     |
 | Set up Zensical documentation site                | ❌     |
