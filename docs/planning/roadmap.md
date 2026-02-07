@@ -93,6 +93,7 @@ All blocking architectural decisions have been made and documented as ADRs:
 | Camera/media integration    | ❌     |
 | HomeAssistant adapter (D12) | ❌     |
 | Bazel build system (D1)     | ❌     |
+| PR preview deploys for docs | ❌     |
 | Additional widgets          | ❌     |
 
 ---
