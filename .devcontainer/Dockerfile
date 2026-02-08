@@ -33,6 +33,7 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list \
         # General utilities
         jq \
         httpie \
+        fzf \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -63,4 +64,4 @@ RUN mkdir -p /home/vscode/.vscode-server /home/vscode/.vscode-server/extensions 
     && chown -R vscode:vscode /home/vscode/.vscode-server
 
 # Verify installations
-RUN uv --version && bun --version && python --version && task --version && bd version
+RUN uv --version && bun --version && python --version && task --version && bd version && fzf --version
