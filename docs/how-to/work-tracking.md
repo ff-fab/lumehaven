@@ -30,7 +30,18 @@ task plan:order       # Dependency graph of highest-priority open phase
 task plan:order -- deploy     # Dependency graph of a specific phase
 ```
 
-These commands resolve phase names automatically — you don't need to know issue IDs.
+These commands resolve phases by **title keyword**, **full ID**, or **short ID**
+(without the `lh-` prefix):
+
+```bash
+task plan:phase -- frontend   # by title keyword
+task plan:phase -- lh-809     # by full ID
+task plan:phase -- 809        # by short ID
+```
+
+!!! note "The `--` separator is required"
+    Taskfile uses `--` to separate its own flags from arguments passed to the script.
+    Always write `task plan:phase -- <arg>`, not `task plan:phase --<arg>`.
 
 ## Find Available Work
 
