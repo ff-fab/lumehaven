@@ -131,7 +131,7 @@ lumehaven/
 ├── docs/                       # Documentation
 │   ├── adr/                    # Architecture Decision Records
 │   ├── ll/                     # Lessons learned from PoC
-│   ├── planning/               # Roadmap
+│   ├── planning/               # Decisions, design docs
 │   ├── DEVELOPMENT-ENVIRONMENT.md  # Development guide
 │   └── TODO/                   # Task backlog
 ├── .prettierrc.json            # Frontend formatter config
@@ -207,7 +207,7 @@ bun test
 3. Open a pull request for review
 4. Merge after approval
 
-See [docs/planning/](docs/planning/) for roadmap and active work.
+Run `task plan` to see phase progress, or `bd ready` for available work.
 
 ## Documentation
 

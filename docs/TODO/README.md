@@ -68,3 +68,12 @@ forgotten.
 - **Trigger:** Frontend development (Phase 3) — revisit when building dashboard
   components that need conditional rendering or value interpretation
 - **ADR impact:** Would amend ADR-005; consider a new ADR if the change is significant
+
+### T7: ~~Beads Git Hooks (post-merge, pre-push)~~ — RESOLVED
+
+- **Source:** Phase 2b (Beads introduction)
+- **Resolution:** Option B selected — integrated beads sync as local hooks in
+  `.pre-commit-config.yaml`. Pre-commit manages all git hooks (Single Responsibility).
+  Hooks installed for `pre-push` (auto-syncs uncommitted JSONL) and `post-merge`
+  (imports upstream JSONL changes after pull).
+- **Resolved:** February 2026

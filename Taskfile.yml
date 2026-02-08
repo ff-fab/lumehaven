@@ -21,6 +21,70 @@ tasks:
       - task --list
 
   # ===========================================================================
+  # Planning Tasks — Beads (bd) issue tracker views
+  # ===========================================================================
+  # These wrap bd commands so you can think in phase names, not issue IDs.
+  # Phase-scoped tasks accept a search term: task plan:phase -- frontend
+
+  plan:
+    desc: Show progress per phase (epic completion overview)
+    silent: true
+    cmds:
+      - bd epic status
+
+  plan:ready:
+    desc: Show unblocked work you can start right now
+    silent: true
+    cmds:
+      - bd ready
+
+  plan:phase:
+    desc: 'Show backlog for a phase (e.g.: task plan:phase -- frontend)'
+    silent: true
+    cmds:
+      - |
+        SEARCH="{{.CLI_ARGS}}"
+        if [ -z "$SEARCH" ]; then
+          EPIC_ID=$(bd query 'type=epic AND status=open' --json 2>/dev/null | jq -r 'sort_by(.priority) | .[0].id // empty')
+          if [ -z "$EPIC_ID" ]; then
+            echo "No open epics found." >&2; exit 1
+          fi
+          TITLE=$(bd show "$EPIC_ID" --json 2>/dev/null | jq -r '.[0].title')
+          echo "Auto-selected: $TITLE ($EPIC_ID)"
+          echo "─────────────────────────────────────────"
+        else
+          EPIC_ID=$(bd query "type=epic AND title=$SEARCH" --json 2>/dev/null | jq -r '.[0].id // empty')
+          if [ -z "$EPIC_ID" ]; then
+            echo "No epic matching '$SEARCH'. Available epics:" >&2
+            bd list --type epic --all --limit 0 >&2; exit 1
+          fi
+        fi
+        bd children "$EPIC_ID"
+
+  plan:order:
+    desc: 'Show execution order within a phase (e.g.: task plan:order -- frontend)'
+    silent: true
+    cmds:
+      - |
+        SEARCH="{{.CLI_ARGS}}"
+        if [ -z "$SEARCH" ]; then
+          EPIC_ID=$(bd query 'type=epic AND status=open' --json 2>/dev/null | jq -r 'sort_by(.priority) | .[0].id // empty')
+          if [ -z "$EPIC_ID" ]; then
+            echo "No open epics found." >&2; exit 1
+          fi
+          TITLE=$(bd show "$EPIC_ID" --json 2>/dev/null | jq -r '.[0].title')
+          echo "Auto-selected: $TITLE ($EPIC_ID)"
+          echo "─────────────────────────────────────────"
+        else
+          EPIC_ID=$(bd query "type=epic AND title=$SEARCH" --json 2>/dev/null | jq -r '.[0].id // empty')
+          if [ -z "$EPIC_ID" ]; then
+            echo "No epic matching '$SEARCH'. Available epics:" >&2
+            bd list --type epic --all --limit 0 >&2; exit 1
+          fi
+        fi
+        bd graph "$EPIC_ID" --compact
+
+  # ===========================================================================
   # Test Tasks - Top Level
   # ===========================================================================
 

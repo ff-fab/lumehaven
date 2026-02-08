@@ -15,37 +15,37 @@ like OpenHAB and HomeAssistant into a clean, uniform signal model.
 
 <div class="grid cards" markdown>
 
-- :material-school:{ .lg .middle } **Tutorials**
+-   :material-school:{ .lg .middle } **Tutorials**
 
-  ***
+    ---
 
-  New to lumehaven? Start here to get up and running.
+    New to lumehaven? Start here to get up and running.
 
-  [:octicons-arrow-right-24: Getting Started](tutorials/getting-started.md)
+    [:octicons-arrow-right-24: Getting Started](tutorials/getting-started.md)
 
-- :material-tools:{ .lg .middle } **How-To Guides**
+-   :material-tools:{ .lg .middle } **How-To Guides**
 
-  ***
+    ---
 
-  Step-by-step instructions for specific tasks.
+    Step-by-step instructions for specific tasks.
 
-  [:octicons-arrow-right-24: Add a New Adapter](how-to/add-adapter.md)
+    [:octicons-arrow-right-24: Add a New Adapter](how-to/add-adapter.md)
 
-- :material-book-open-variant:{ .lg .middle } **Reference**
+-   :material-book-open-variant:{ .lg .middle } **Reference**
 
-  ***
+    ---
 
-  Technical reference for APIs, configuration, and decisions.
+    Technical reference for APIs, configuration, and decisions.
 
-  [:octicons-arrow-right-24: Python API](reference/api/index.md)
+    [:octicons-arrow-right-24: Python API](reference/api/index.md)
 
-- :material-head-lightbulb:{ .lg .middle } **Explanation**
+-   :material-head-lightbulb:{ .lg .middle } **Explanation**
 
-  ***
+    ---
 
-  Understand the architecture and design decisions.
+    Understand the architecture and design decisions.
 
-  [:octicons-arrow-right-24: Architecture](explanation/architecture.md)
+    [:octicons-arrow-right-24: Architecture](explanation/architecture.md)
 
 </div>
 
@@ -63,7 +63,8 @@ like OpenHAB and HomeAssistant into a clean, uniform signal model.
 ## Current Status
 
 lumehaven is in active development. The backend is functional with an OpenHAB adapter.
-See the [project roadmap](https://github.com/ff-fab/lumehaven/blob/main/docs/planning/roadmap.md) for current progress.
+Run `task plan` to see current progress per phase, or `task plan:ready` for
+available work.
 
 ## License
 
