@@ -19,22 +19,28 @@ EPIC_ID="$1"
 
 # --- Handle virtual "Orphaned tasks" entry -------------------------------- #
 if [ "$EPIC_ID" = "_orphan" ]; then
-  ORPHAN_CACHE="${TMPDIR:-/tmp}/beads-orphans-$$"
-  # Re-detect orphans (cache may be stale across subshells)
-  ALL_TASK_IDS=$(bd list --all --json --limit 0 2>/dev/null \
-    | jq -r '.[] | select(.issue_type != "epic") | .id' | sort)
-  EPIC_IDS=$(bd list --type epic --all --json 2>/dev/null | jq -r '.[].id')
-  PARENTED_IDS=""
-  for eid in $EPIC_IDS; do
-    children=$(bd list --parent "$eid" --all --json --limit 0 2>/dev/null | jq -r '.[].id')
-    [ -n "$children" ] && PARENTED_IDS="${PARENTED_IDS:+$PARENTED_IDS
-}$children"
-  done
-  PARENTED_IDS=$(echo "$PARENTED_IDS" | sort -u)
-  if [ -n "$PARENTED_IDS" ]; then
-    ORPHANS=$(comm -23 <(echo "$ALL_TASK_IDS") <(echo "$PARENTED_IDS"))
+  ORPHAN_CACHE="${2:-}"
+
+  # Use cached orphan IDs from plan-interactive.sh if available
+  if [ -n "$ORPHAN_CACHE" ] && [ -s "$ORPHAN_CACHE" ]; then
+    ORPHANS=$(cat "$ORPHAN_CACHE")
   else
-    ORPHANS="$ALL_TASK_IDS"
+    # Fallback: re-detect orphans (standalone invocation or stale cache)
+    ALL_TASK_IDS=$(bd list --all --json --limit 0 2>/dev/null \
+      | jq -r '.[] | select(.issue_type != "epic") | .id' | sort)
+    EPIC_IDS=$(bd list --type epic --all --json 2>/dev/null | jq -r '.[].id')
+    PARENTED_IDS=""
+    for eid in $EPIC_IDS; do
+      children=$(bd list --parent "$eid" --all --json --limit 0 2>/dev/null | jq -r '.[].id')
+      [ -n "$children" ] && PARENTED_IDS="${PARENTED_IDS:+$PARENTED_IDS
+}$children"
+    done
+    PARENTED_IDS=$(echo "$PARENTED_IDS" | sort -u)
+    if [ -n "$PARENTED_IDS" ]; then
+      ORPHANS=$(comm -23 <(echo "$ALL_TASK_IDS") <(echo "$PARENTED_IDS"))
+    else
+      ORPHANS="$ALL_TASK_IDS"
+    fi
   fi
 
   if [ -z "$ORPHANS" ]; then
@@ -43,19 +49,22 @@ if [ "$EPIC_ID" = "_orphan" ]; then
   fi
 
   printf "\033[31m⚠ Tasks not parented to any epic\033[0m\n\n"
-  for oid in $ORPHANS; do
-    info=$(bd show "$oid" --json 2>/dev/null \
-      | jq -r '.[0] | "\(.status)\t\(.priority // 2)\t\(.title)"')
-    status=$(echo "$info" | cut -f1)
-    priority=$(echo "$info" | cut -f2)
-    title=$(echo "$info" | cut -f3)
-    case "$status" in
-      closed)      icon="✓" ;;
-      in_progress) icon="●" ;;
-      *)           icon="○" ;;
-    esac
-    printf "%s P%s  %s  %s\n" "$icon" "$priority" "$oid" "$title"
-  done
+
+  # Bulk-fetch all tasks in one bd call, filter to orphan IDs (avoids N+1)
+  orphan_ids_json=$(echo "$ORPHANS" | jq -R -s 'split("\n") | map(select(. != ""))')
+  bd list --all --json --limit 0 2>/dev/null \
+    | jq -r --argjson ids "$orphan_ids_json" \
+        '[.[] | select(.issue_type != "epic") | select(.id as $i | $ids | index($i))]
+         | sort_by(.priority, .title) | .[]
+         | "\(.status)\t\(.priority // 2)\t\(.id)\t\(.title)"' \
+    | while IFS=$'\t' read -r status priority oid title; do
+        case "$status" in
+          closed)      icon="✓" ;;
+          in_progress) icon="●" ;;
+          *)           icon="○" ;;
+        esac
+        printf "%s P%s  %s  %s\n" "$icon" "$priority" "$oid" "$title"
+      done
   exit 0
 fi
 
