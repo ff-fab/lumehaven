@@ -23,7 +23,7 @@ The Taskfile provides ergonomic wrappers around common `bd` operations:
 
 ```bash
 task plan             # Phase progress overview (epic status bars)
-task plan:ui          # Interactive plan overview                |
+task plan:ui          # Interactive plan overview
 task plan:ready       # Show unblocked work ready to start
 task plan:phase       # Backlog of highest-priority open phase
 task plan:phase -- frontend   # Backlog of a specific phase (by keyword)

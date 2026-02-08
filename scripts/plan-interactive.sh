@@ -12,14 +12,14 @@
 #   <80        → preview hidden (toggle with ?)
 #
 # Keybindings (Epic view):
-#   Enter  → drill into selected epic (show tasks)
-#   Esc    → exit
-#   ?      → toggle preview pane
+#   Enter / →  → drill into selected epic (show tasks)
+#   Esc   / ←  → exit
+#   ?          → toggle preview pane
 #
 # Keybindings (Task view):
-#   Enter  → show full task details, then return to task list
-#   Esc    → go back to epic view
-#   ?      → toggle preview pane
+#   Enter / →  → show full task details, then return to task list
+#   Esc   / ←  → go back to epic view
+#   ?          → toggle preview pane
 
 set -euo pipefail
 
@@ -163,15 +163,19 @@ build_task_lines() {
 STATE="EPICS"
 SELECTED_EPIC_ID=""
 SELECTED_EPIC_TITLE=""
+TASK_ID=""
+CACHED_EPIC_LINES=""
 
 while true; do
   case "$STATE" in
 
     # ----- Epic picker ----------------------------------------------------- #
     EPICS)
-      EPIC_LINES=$(build_epic_lines) || exit 1
+      if [ -z "$CACHED_EPIC_LINES" ]; then
+        CACHED_EPIC_LINES=$(build_epic_lines) || exit 1
+      fi
 
-      SELECTED=$(echo "$EPIC_LINES" \
+      SELECTED=$(echo "$CACHED_EPIC_LINES" \
         | fzf \
             --ansi \
             --no-sort \

@@ -109,9 +109,12 @@ tasks:
   plan:task:
     desc: 'Show details of a task (e.g.: task plan:task ID=lh-6yy.3)'
     silent: true
+    vars:
+      ID: ''
     cmds:
       - |
-        SEARCH="{{.ID}}{{.CLI_ARGS}}"
+        SEARCH="{{.ID}}"
+        if [ -z "$SEARCH" ]; then SEARCH="{{.CLI_ARGS}}"; fi
         if [ -z "$SEARCH" ]; then
           echo "Usage: task plan:task ID=<task-id-or-title>" >&2
           echo "   or: task plan:task -- <task-id-or-title>" >&2
