@@ -176,10 +176,10 @@ while true; do
             --ansi \
             --no-sort \
             --cycle \
-            --header '→/Enter: drill in │ Esc: quit │ ?: toggle preview' \
+            --header '→/Enter: drill in │ ←/Esc: quit │ ?: toggle preview' \
             --preview "bash \"$SCRIPT_DIR/plan-preview.sh\" {1}" \
             --preview-window 'right,60%,border-left,wrap,<120(down,50%,border-top,wrap),<80(hidden)' \
-            --bind '?:toggle-preview,right:accept' \
+            --bind '?:toggle-preview,right:accept,left:abort' \
         || true)
 
       if [ -n "$SELECTED" ]; then
