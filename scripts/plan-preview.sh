@@ -28,7 +28,7 @@ if [ "$EPIC_ID" = "_orphan" ]; then
     # Fallback: re-detect orphans (standalone invocation or stale cache)
     ALL_TASK_IDS=$(bd list --all --json --limit 0 2>/dev/null \
       | jq -r '.[] | select(.issue_type != "epic") | .id' | sort)
-    EPIC_IDS=$(bd list --type epic --all --json 2>/dev/null | jq -r '.[].id')
+    EPIC_IDS=$(bd list --type epic --all --json --limit 0 2>/dev/null | jq -r '.[].id')
     PARENTED_IDS=""
     for eid in $EPIC_IDS; do
       children=$(bd list --parent "$eid" --all --json --limit 0 2>/dev/null | jq -r '.[].id')
