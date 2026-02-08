@@ -214,6 +214,7 @@ For the full contribution workflow, see the
 | Command                         | Description                              |
 | ------------------------------- | ---------------------------------------- |
 | `task plan`                     | Phase progress overview (epic status)    |
+| `task plan:ui`                  | Interactive plan overview                |
 | `task plan:ready`               | Show unblocked work ready to start       |
 | `task plan:phase`               | Backlog of highest-priority open phase   |
 | `task plan:phase -- <keyword>`  | Backlog of a specific phase by keyword   |
