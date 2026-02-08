@@ -40,14 +40,14 @@ The frontend is intentionally "dumb":
 
 ```tsx
 // Two usage patterns:
-<Signal id="kitchen_temp" />        {/* Fetches from store */}
+<Signal id="oh:kitchen_temp" />     {/* Fetches from store; id includes adapter prefix */}
 <Signal signal={signalObject} />     {/* Direct pass */}
 
 // Renders BEM structure:
-// <div class="signal" data-signal-type="continuous" data-available="true">
+// <span class="signal" data-type="number" data-available="true" data-id="oh:kitchen_temp">
 //   <span class="signal__value">21.3</span>
 //   <span class="signal__unit">°C</span>
-// </div>
+// </span>
 ```
 
 ## SSE Client Pattern (in @lumehaven/core)

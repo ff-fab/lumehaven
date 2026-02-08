@@ -129,7 +129,10 @@ class SmartHomeAdapter(Protocol):
         command format. The adapter translates as needed.
 
         Args:
-            signal_id: The signal's ID (without prefix).
+            signal_id: The adapter-local signal ID (without prefix). The
+                backend command router receives a fully-qualified ID
+                (e.g. "oh:Light"), uses the prefix to select the adapter,
+                strips the prefix, then passes the remaining ID here.
             command: The command value as a string.
 
         Raises:
