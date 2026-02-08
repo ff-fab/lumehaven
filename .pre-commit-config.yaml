@@ -100,36 +100,14 @@ repos:
     hooks:
       - id: bd-sync-pre-push
         name: Beads sync (pre-push)
-        entry: sh -c '
-          if [ ! -d .beads ]; then exit 0; fi
-          if ! command -v bd >/dev/null 2>&1; then exit 0; fi
-          FILES=""
-          for f in .beads/beads.jsonl .beads/issues.jsonl .beads/deletions.jsonl; do
-          if git ls-files --error-unmatch "$f" >/dev/null 2>&1 || [ -f "$f" ]; then
-          FILES="$FILES $f"
-          fi
-          done
-          if [ -z "$FILES" ]; then exit 0; fi
-          if [ -n "$(git status --porcelain -- $FILES 2>/dev/null)" ]; then
-          echo "Beads JSONL has uncommitted changes, running bd sync..."
-          bd sync || exit 1
-          fi
-          '
+        entry: bash -c 'if [ ! -d .beads ] || ! command -v bd >/dev/null 2>&1; then exit 0; fi; if [ -n "$(git status --porcelain -- .beads/*.jsonl 2>/dev/null)" ]; then echo "Beads JSONL has uncommitted changes, running bd sync..."; bd sync || exit 1; fi'
         language: system
         always_run: true
         pass_filenames: false
         stages: [pre-push]
       - id: bd-import-post-merge
         name: Beads import (post-merge)
-        entry: sh -c '
-          if [ ! -d .beads ]; then exit 0; fi
-          if ! command -v bd >/dev/null 2>&1; then exit 0; fi
-          CHANGED=$(git diff-tree -r --name-only ORIG_HEAD HEAD -- ".beads/*.jsonl" 2>/dev/null)
-          if [ -n "$CHANGED" ]; then
-          echo "Beads JSONL updated by merge, importing..."
-          bd sync --import-only || true
-          fi
-          '
+        entry: bash -c 'if [ ! -d .beads ] || ! command -v bd >/dev/null 2>&1; then exit 0; fi; CHANGED=$(git diff-tree -r --name-only ORIG_HEAD HEAD -- ".beads/*.jsonl" 2>/dev/null); if [ -n "$CHANGED" ]; then echo "Beads JSONL updated by merge, importing..."; bd sync --import-only || true; fi'
         language: system
         always_run: true
         pass_filenames: false
