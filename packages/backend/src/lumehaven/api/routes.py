@@ -9,7 +9,7 @@ from typing import Annotated, Literal, Self
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, model_validator
 
-from lumehaven.core.signal import Signal
+from lumehaven.core.signal import Signal, SignalType, SignalValue
 from lumehaven.state.store import SignalStore, get_signal_store
 
 logger = logging.getLogger(__name__)
@@ -31,12 +31,15 @@ router = APIRouter()
 
 
 class SignalResponse(BaseModel):
-    """API response model for a single signal."""
+    """API response model for a single signal (ADR-010 enriched)."""
 
     id: str
-    value: str
+    value: SignalValue
+    display_value: str
     unit: str
     label: str
+    available: bool
+    signal_type: SignalType
 
     @classmethod
     def from_signal(cls, signal: Signal) -> Self:
@@ -44,8 +47,11 @@ class SignalResponse(BaseModel):
         return cls(
             id=signal.id,
             value=signal.value,
+            display_value=signal.display_value,
             unit=signal.unit,
             label=signal.label,
+            available=signal.available,
+            signal_type=signal.signal_type,
         )
 
 
