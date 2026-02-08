@@ -196,9 +196,16 @@ build_task_lines() {
     local orphan_ids_json
     orphan_ids_json=$(jq -R -s 'split("\n") | map(select(. != ""))' "$ORPHAN_CACHE")
     TASKS=$(bd list --all --json --limit 0 2>/dev/null \
-      | jq -r --argjson ids "$orphan_ids_json" \
-          '[.[] | select(.issue_type != "epic") | select(.id as $i | $ids | index($i))]
-           | sort_by(.priority, .title) | .[] | [.id, .status, (.priority // 2 | tostring), .title] | @tsv')
+      | jq -r --argjson ids "$orphan_ids_json" '
+          ($ids | map({(.): true}) | add) as $idset
+          | [.[]
+             | select(.issue_type != "epic")
+             | select(.id as $i | $idset[$i])
+            ]
+          | sort_by(.priority, .title)
+          | .[]
+          | [.id, .status, (.priority // 2 | tostring), .title]
+          | @tsv')
   else
     TASKS=$(bd list --parent "$EPIC_ID" --all --json --limit 0 2>/dev/null \
       | jq -r 'sort_by(.priority, .title) | .[] | [.id, .status, .priority, .title] | @tsv')
