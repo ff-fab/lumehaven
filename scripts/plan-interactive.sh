@@ -35,6 +35,51 @@ fi
 
 BAR_WIDTH=20
 
+# --- Temp file for orphaned task IDs (shared across functions) ------------- #
+ORPHAN_CACHE=$(mktemp)
+trap 'rm -f "$ORPHAN_CACHE"' EXIT
+
+# =========================================================================== #
+# Helper: detect orphaned tasks (non-epic, not parented to any epic)          #
+# =========================================================================== #
+detect_orphaned_tasks() {
+  local ALL_TASK_IDS PARENTED_IDS EPIC_IDS
+
+  # All non-epic task IDs
+  ALL_TASK_IDS=$(bd list --all --json --limit 0 2>/dev/null \
+    | jq -r '.[] | select(.issue_type != "epic") | .id' | sort)
+
+  if [ -z "$ALL_TASK_IDS" ]; then
+    return
+  fi
+
+  # Collect all epic IDs
+  EPIC_IDS=$(bd list --type epic --all --json 2>/dev/null | jq -r '.[].id')
+
+  # Union of all parented task IDs across all epics
+  PARENTED_IDS=""
+  for eid in $EPIC_IDS; do
+    local children
+    children=$(bd list --parent "$eid" --all --json --limit 0 2>/dev/null \
+      | jq -r '.[].id')
+    if [ -n "$children" ]; then
+      if [ -n "$PARENTED_IDS" ]; then
+        PARENTED_IDS="${PARENTED_IDS}"$'\n'"${children}"
+      else
+        PARENTED_IDS="$children"
+      fi
+    fi
+  done
+  PARENTED_IDS=$(echo "$PARENTED_IDS" | sort -u)
+
+  # Orphaned = ALL_TASK_IDS − PARENTED_IDS
+  if [ -n "$PARENTED_IDS" ]; then
+    comm -23 <(echo "$ALL_TASK_IDS") <(echo "$PARENTED_IDS")
+  else
+    echo "$ALL_TASK_IDS"
+  fi
+}
+
 # =========================================================================== #
 # Helper: build epic fzf lines                                                #
 # =========================================================================== #
@@ -109,6 +154,28 @@ build_epic_lines() {
     fi
   done <<< "$ALL_EPICS"
 
+  # --- Detect orphaned tasks and append virtual epic if any ---------------- #
+  local ORPHANED
+  ORPHANED=$(detect_orphaned_tasks)
+  if [ -n "$ORPHANED" ]; then
+    # Cache orphan IDs for build_task_lines
+    echo "$ORPHANED" > "$ORPHAN_CACHE"
+    local orphan_count
+    orphan_count=$(echo "$ORPHANED" | wc -l | tr -d ' ')
+
+    local orphan_bar_fill="" orphan_bar_empty=""
+    for ((i=0; i<BAR_WIDTH; i++)); do orphan_bar_empty+="░"; done
+
+    local orphan_line
+    orphan_line=$(printf "%-8s  \033[31m⚠\033[0m  %-${MAX_TITLE}s  \033[31m%s\033[0m  %3s   (%d)" \
+      "_orphan" "Orphaned tasks" "$orphan_bar_empty" "  —" "$orphan_count")
+
+    FZF_LINES="${FZF_LINES}"$'\n'"${orphan_line}"
+  else
+    # Clear cache
+    : > "$ORPHAN_CACHE"
+  fi
+
   echo -e "$FZF_LINES"
 }
 
@@ -119,8 +186,32 @@ build_task_lines() {
   local EPIC_ID="$1"
   local TASKS MAX_TITLE FZF_LINES=""
 
-  TASKS=$(bd list --parent "$EPIC_ID" --all --json --limit 0 2>/dev/null \
-    | jq -r 'sort_by(.priority, .title) | .[] | [.id, .status, .priority, .title] | @tsv')
+  if [ "$EPIC_ID" = "_orphan" ]; then
+    # Virtual epic: list orphaned tasks from cache
+    if [ ! -s "$ORPHAN_CACHE" ]; then
+      echo "No orphaned tasks." >&2
+      return 1
+    fi
+    # Fetch each orphaned task's details
+    local orphan_ids
+    orphan_ids=$(cat "$ORPHAN_CACHE")
+    TASKS=""
+    for oid in $orphan_ids; do
+      local task_line
+      task_line=$(bd show "$oid" --json 2>/dev/null \
+        | jq -r '.[0] | [.id, .status, (.priority // 2 | tostring), .title] | @tsv')
+      if [ -n "$task_line" ]; then
+        if [ -z "$TASKS" ]; then
+          TASKS="$task_line"
+        else
+          TASKS="${TASKS}"$'\n'"${task_line}"
+        fi
+      fi
+    done
+  else
+    TASKS=$(bd list --parent "$EPIC_ID" --all --json --limit 0 2>/dev/null \
+      | jq -r 'sort_by(.priority, .title) | .[] | [.id, .status, .priority, .title] | @tsv')
+  fi
 
   if [ -z "$TASKS" ]; then
     echo "No tasks in this epic." >&2
@@ -188,8 +279,12 @@ while true; do
 
       if [ -n "$SELECTED" ]; then
         SELECTED_EPIC_ID=$(echo "$SELECTED" | awk '{print $1}')
-        SELECTED_EPIC_TITLE=$(bd show "$SELECTED_EPIC_ID" --json 2>/dev/null \
-          | jq -r '.[0].title')
+        if [ "$SELECTED_EPIC_ID" = "_orphan" ]; then
+          SELECTED_EPIC_TITLE="Orphaned tasks"
+        else
+          SELECTED_EPIC_TITLE=$(bd show "$SELECTED_EPIC_ID" --json 2>/dev/null \
+            | jq -r '.[0].title')
+        fi
         STATE="TASKS"
       else
         STATE="EXIT"
