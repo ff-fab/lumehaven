@@ -11,20 +11,30 @@ workflow, conventions, and expectations for contributions.
 lumehaven uses GitHub Flow — `main` is always deployable, all changes go through pull
 requests.
 
-### 1. Create a Feature Branch
+### 1. Find Work
+
+```bash
+task plan:ready       # Show unblocked tasks
+bd update <id> --status in_progress   # Claim a task
+```
+
+For full details on work tracking, see
+[Track Work with Beads](../how-to/work-tracking.md).
+
+### 2. Create a Feature Branch
 
 ```bash
 git checkout main && git pull
 git checkout -b feature/description   # or fix/, docs/, refactor/
 ```
 
-### 2. Make Changes
+### 3. Make Changes
 
 - Follow the [coding standards](coding-standards.md)
 - Write tests for new functionality
 - Update documentation if needed
 
-### 3. Verify Locally
+### 4. Verify Locally
 
 ```bash
 task test:be          # All backend tests pass
@@ -34,14 +44,33 @@ task typecheck:be     # Type checking passes
 
 Pre-commit hooks will also run automatically on commit.
 
-### 4. Push and Create a PR
+### 5. Close Beads Tasks
+
+Before pushing, commit the beads state so it's included in the branch:
+
+```bash
+bd close <id>         # Mark your task as done
+bd sync               # Export to JSONL
+git add .beads/ && git commit -m "chore: sync beads state"
+```
+
+!!! warning "Commit before push"
+    Beads data lives in `.beads/issues.jsonl` — a regular git-tracked file.
+    If you push without committing, the PR will have stale issue state.
+    The pre-push hook will reject the push if uncommitted beads changes are detected.
+
+### 6. Push and Create a PR
 
 ```bash
 git push -u origin feature/description
 gh pr create
 ```
 
-### 5. Review Process
+!!! note "Post-merge sync"
+    After pulling, a post-merge hook runs `bd sync --import-only` to pick up
+    beads changes from remote.
+
+### 7. Review Process
 
 - CI must pass (tests, lint, type check, coverage thresholds)
 - PRs should have clear descriptions of what and why

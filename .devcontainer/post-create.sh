@@ -45,6 +45,22 @@ if [ -f ".pre-commit-config.yaml" ]; then
     else
         echo "⚠️  pre-commit install had issues, but continuing..."
     fi
+    # Install additional hook stages for beads (bd) sync
+    uv --directory packages/backend run pre-commit install --hook-type pre-push --hook-type post-merge 2>/dev/null || true
+fi
+
+# Install beads MCP server for Copilot integration (Python-based)
+echo "🔮 Installing beads MCP server..."
+uv tool install beads-mcp 2>/dev/null || echo "⚠️  beads-mcp install had issues, continuing..."
+
+# Initialize beads issue tracker if not already done
+cd /workspace
+if [ ! -d ".beads" ]; then
+    echo "🔮 Initializing beads issue tracker..."
+    bd init --quiet --no-hooks
+    echo "✅ Beads initialized"
+else
+    echo "✅ Beads already initialized"
 fi
 
 # SSH: seed known_hosts for GitHub so the first git push doesn't trigger a TOFU prompt.

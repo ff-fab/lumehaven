@@ -33,7 +33,7 @@ lumehaven/
 │   └── frontend/             # React SPA (TypeScript)
 ├── docs/
 │   ├── adr/                  # Architecture Decision Records (authoritative)
-│   ├── planning/             # Roadmap, decision tracker
+│   ├── planning/             # Decision tracker, design docs
 │   └── TODO/                 # Technical debt, deferred items
 └── old/                      # PoC reference (do not modify)
 ```
@@ -77,14 +77,82 @@ lumehaven/
    - shared fixtures (in tests/fixtures/) should be used to avoid duplication
    - always ensure tests incl. fixtures, documentation and feature are in sync
 
-4. **Push and create pull request**
+4. **Close beads tasks and commit state**
+
+   ```bash
+   bd close <id>         # Close finished work
+   bd sync               # Export to JSONL
+   git add .beads/ && git commit -m "chore: sync beads state"
+   ```
+
+5. **Push and create pull request**
 
    ```bash
    git push -u origin feature/description
    gh pr create
    ```
 
-**Key Principle:** `main` is always deployable. All changes go through PRs.
+**Key Principle:** `main` is always deployable. All changes go through PRs. Beads state
+must be committed before pushing — the pre-push hook enforces this.
+
+## Issue Tracking (Beads)
+
+This project uses **bd (beads)** for issue tracking — a git-backed graph issue tracker
+for AI agents. Issues are stored as JSONL in `.beads/` and committed to git.
+
+Run `bd prime` for full workflow context.
+
+**Quick reference:**
+
+- `bd ready` — Find unblocked work
+- `bd create "Title" --type task --priority 2` — Create issue
+- `bd update <id> --claim` — Claim a task (assigns + sets in_progress)
+- `bd close <id>` — Complete work
+- `bd dep add <child> <parent>` — Add dependency
+- `bd sync` — Sync with git (run at session end)
+
+**Workflow:** Check `bd ready` at session start. Claim work, implement, close when done.
+Commit beads state (`bd sync && git add .beads/ && git commit`) before pushing.
+
+### Beads vs TODO: Two Systems, Distinct Purposes
+
+This project uses **two complementary tracking systems**. Do not conflate them.
+
+| System           | Purpose            | Content type            | Location     |
+| ---------------- | ------------------ | ----------------------- | ------------ |
+| **Beads (`bd`)** | Work tracking      | Actionable tasks, epics | `.beads/`    |
+| **TODO folder**  | Deferred decisions | Rich deliberation docs  | `docs/TODO/` |
+
+**Beads** tracks _work_: things to build, fix, or ship. Items flow through
+`ready → in_progress → closed`.
+
+**TODO items** (T1–Tn) are _deliberation documents_ — deferred decisions, architectural
+evaluations, and technical debt assessments. They contain structured options with
+advantages/disadvantages, trade-offs, and ADR references. They are mini-ADRs-in-waiting,
+not work items.
+
+### Gate Tasks (Hybrid Bridge)
+
+When a TODO item has a **phase trigger** (e.g., "revisit when building frontend
+components"), create a **gate task** in beads that:
+
+1. References the TODO item: `"Evaluate signal value type (T6, docs/TODO/)"`
+2. Is added as a **dependency** of the first task that would be affected
+3. Contains no decision logic itself — points to the TODO doc for full context
+
+This enforces that deferred decisions are evaluated at the right point in the workflow,
+without duplicating the rich deliberation content into beads.
+
+**Rules:**
+
+- **Date-triggered TODOs** (e.g., "Review date: June 2026") stay markdown-only. Beads
+  has no calendar awareness.
+- **Phase-triggered TODOs** get a gate task as a dependency of the relevant phase task
+- **When creating a new TODO item**, always check whether it needs a gate task
+- **When closing a gate task**, the outcome should be one of:
+  - A new ADR (if the decision is significant)
+  - An update to the existing TODO item marking it resolved
+  - New beads tasks created from the decision
 
 ## Test Coverage Thresholds
 
