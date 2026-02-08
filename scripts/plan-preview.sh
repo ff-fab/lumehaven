@@ -53,10 +53,11 @@ if [ "$EPIC_ID" = "_orphan" ]; then
   # Bulk-fetch all tasks in one bd call, filter to orphan IDs (avoids N+1)
   orphan_ids_json=$(echo "$ORPHANS" | jq -R -s 'split("\n") | map(select(. != ""))')
   bd list --all --json --limit 0 2>/dev/null \
-    | jq -r --argjson ids "$orphan_ids_json" \
-        '[.[] | select(.issue_type != "epic") | select(.id as $i | $ids | index($i))]
-         | sort_by(.priority, .title) | .[]
-         | "\(.status)\t\(.priority // 2)\t\(.id)\t\(.title)"' \
+    | jq -r --argjson ids "$orphan_ids_json" '
+        ($ids | map({key: ., value: true}) | from_entries) as $idset
+        | [.[] | select(.issue_type != "epic") | select(.id as $i | $idset[$i])]
+        | sort_by(.priority, .title) | .[]
+        | "\(.status)\t\(.priority // 2)\t\(.id)\t\(.title)"' \
     | while IFS=$'\t' read -r status priority oid title; do
         case "$status" in
           closed)      icon="✓" ;;
