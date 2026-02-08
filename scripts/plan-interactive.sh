@@ -192,22 +192,20 @@ build_task_lines() {
       echo "No orphaned tasks." >&2
       return 1
     fi
-    # Fetch each orphaned task's details
-    local orphan_ids
-    orphan_ids=$(cat "$ORPHAN_CACHE")
-    TASKS=""
-    for oid in $orphan_ids; do
-      local task_line
-      task_line=$(bd show "$oid" --json 2>/dev/null \
-        | jq -r '.[0] | [.id, .status, (.priority // 2 | tostring), .title] | @tsv')
-      if [ -n "$task_line" ]; then
-        if [ -z "$TASKS" ]; then
-          TASKS="$task_line"
-        else
-          TASKS="${TASKS}"$'\n'"${task_line}"
-        fi
-      fi
-    done
+    # Bulk-fetch all task details in one bd call, filter to orphan IDs (avoids N+1)
+    local orphan_ids_json
+    orphan_ids_json=$(jq -R -s 'split("\n") | map(select(. != ""))' "$ORPHAN_CACHE")
+    TASKS=$(bd list --all --json --limit 0 2>/dev/null \
+      | jq -r --argjson ids "$orphan_ids_json" '
+          ($ids | map({(.): true}) | add) as $idset
+          | [.[]
+             | select(.issue_type != "epic")
+             | select(.id as $i | $idset[$i])
+            ]
+          | sort_by(.priority, .title)
+          | .[]
+          | [.id, .status, (.priority // 2 | tostring), .title]
+          | @tsv')
   else
     TASKS=$(bd list --parent "$EPIC_ID" --all --json --limit 0 2>/dev/null \
       | jq -r 'sort_by(.priority, .title) | .[] | [.id, .status, .priority, .title] | @tsv')
@@ -272,7 +270,7 @@ while true; do
             --no-sort \
             --cycle \
             --header '→/Enter: drill in │ ←/Esc: quit │ ?: toggle preview' \
-            --preview "bash \"$SCRIPT_DIR/plan-preview.sh\" {1}" \
+            --preview "bash \"$SCRIPT_DIR/plan-preview.sh\" {1} \"$ORPHAN_CACHE\"" \
             --preview-window 'right,60%,border-left,wrap,<120(down,50%,border-top,wrap),<80(hidden)' \
             --bind '?:toggle-preview,right:accept,left:abort' \
         || true)
