@@ -116,10 +116,11 @@ class HomeAssistantAdapter:
         Yields Signal objects whenever an entity state changes.
         The AdapterManager iterates this and publishes to the store.
         """
-        # Implementation: connect to ws://<url>/api/websocket,
-        # authenticate, subscribe to state_changed events,
-        # yield Signals for each change.
-        ...  # Your WebSocket implementation here
+        # 1. Connect to ws://<url>/api/websocket and authenticate
+        # 2. Subscribe to state_changed events
+        # 3. Yield signals as they arrive
+        async for message in self._listen_websocket():
+            yield self._entity_to_signal(message)
 
     # --- Lifecycle ---
 

@@ -14,10 +14,6 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
-  "mounts": [
-    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,readonly"
-  ],
-
   "remoteEnv": {
     "PATH": "/workspace/packages/backend/.venv/bin:${containerEnv:PATH}",
     "UV_LINK_MODE": "symlink",

@@ -55,27 +55,67 @@ For how the backend components fit together, see
 
 ## 4. GitHub CLI Authentication
 
-The container mounts your host's `~/.ssh` directory for SSH-based authentication. If
-you have SSH keys configured on your host, `gh` should work out of the box.
+VS Code automatically forwards your host's **SSH agent** into the container. If you
+have SSH keys loaded in your agent, `git` and `gh` work out of the box — no file
+mounting needed.
 
-**If SSH isn't configured:**
+**Prerequisite:** your SSH agent must be running on the host with keys loaded:
+
+=== "macOS"
+
+    Automatic — macOS Keychain manages the agent. Just ensure your key is added:
+
+    ```bash
+    ssh-add --apple-use-keychain ~/.ssh/id_ed25519
+    ```
+
+=== "Linux"
+
+    Start the agent and add your key (add to `~/.bashrc` or `~/.zprofile` to persist):
+
+    ```bash
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/id_ed25519
+    ```
+
+=== "Windows"
+
+    Enable the ssh-agent service (PowerShell as admin, one-time):
+
+    ```powershell
+    Set-Service ssh-agent -StartupType Automatic
+    Start-Service ssh-agent
+    ssh-add $env:USERPROFILE\.ssh\id_ed25519
+    ```
+
+**Verify it works inside the container:**
+
+```bash
+ssh -T git@github.com
+# → "Hi <username>! You've successfully authenticated..."
+```
+
+**If you don't use SSH keys**, authenticate with a token instead:
 
 ```bash
 gh auth login
-# Follow the prompts to authenticate
+# Follow the prompts (HTTPS + browser-based auth)
 ```
 
-??? info "How SSH mounting works"
-    The container mounts `~/.ssh` from your host with full access. SSH needs read
-    access for private keys and write access for `known_hosts` when connecting to new
-    hosts. Keys aren't copied — they're mounted. Nothing persists except `known_hosts`
-    entries.
+??? info "How SSH agent forwarding works"
+    VS Code detects the host's `SSH_AUTH_SOCK` and forwards it into the container.
+    When SSH inside the container needs to sign something, the request goes back to
+    the host's agent — **private keys never enter the container**. This is more secure
+    than mounting `~/.ssh` (even read-only) and avoids permissions issues with
+    `known_hosts`. The container's `known_hosts` is pre-seeded with GitHub's host key
+    during setup via `ssh-keyscan`.
 
 **Troubleshooting:**
 
 | Problem                         | Solution                                                       |
 | ------------------------------- | -------------------------------------------------------------- |
-| "permission denied (publickey)" | Add SSH key to GitHub: <https://github.com/settings/keys>      |
+| "permission denied (publickey)" | Ensure agent is running: `ssh-add -l` (should list keys)       |
+| Agent has no keys listed        | Add your key: `ssh-add ~/.ssh/id_ed25519`                      |
 | "command not found: gh"         | `sudo apt update && sudo apt install -y gh`                    |
 | Token expired                   | `gh auth login` again                                          |
 | SSH not working in WSL          | Ensure keys are in WSL `~/.ssh/`, not Windows home             |
@@ -165,10 +205,10 @@ For the full contribution workflow, see the
 | `task typecheck:be`        | mypy type checking                       |
 | `task check`               | All checks (lint + types + tests)        |
 | `task test:fe`             | Frontend tests                           |
+| `task docs:serve`          | Preview documentation locally            |
 
 ## Next Steps
 
 - [Getting Started](getting-started.md) — run lumehaven with a real adapter
 - [Coding Standards](../contributing/coding-standards.md) — style, docstrings, tooling
 - [Testing How-To](../how-to/testing.md) — coverage thresholds and test organization
-| `task docs:serve`   | Preview documentation locally       |
