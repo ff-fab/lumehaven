@@ -44,19 +44,33 @@ task typecheck:be     # Type checking passes
 
 Pre-commit hooks will also run automatically on commit.
 
-### 5. Push and Create a PR
+### 5. Close Beads Tasks
+
+Before pushing, commit the beads state so it's included in the branch:
 
 ```bash
 bd close <id>         # Mark your task as done
+bd sync               # Export to JSONL
+git add .beads/ && git commit -m "chore: sync beads state"
+```
+
+!!! warning "Commit before push"
+    Beads data lives in `.beads/issues.jsonl` — a regular git-tracked file.
+    If you push without committing, the PR will have stale issue state.
+    The pre-push hook will reject the push if uncommitted beads changes are detected.
+
+### 6. Push and Create a PR
+
+```bash
 git push -u origin feature/description
 gh pr create
 ```
 
-!!! note "Beads syncs automatically"
-    A pre-push hook runs `bd sync` to export the latest issue state before pushing.
-    After pulling, a post-merge hook imports any remote changes.
+!!! note "Post-merge sync"
+    After pulling, a post-merge hook runs `bd import` to pick up beads changes
+    from remote.
 
-### 6. Review Process
+### 7. Review Process
 
 - CI must pass (tests, lint, type check, coverage thresholds)
 - PRs should have clear descriptions of what and why

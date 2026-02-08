@@ -77,14 +77,23 @@ lumehaven/
    - shared fixtures (in tests/fixtures/) should be used to avoid duplication
    - always ensure tests incl. fixtures, documentation and feature are in sync
 
-4. **Push and create pull request**
+4. **Close beads tasks and commit state**
+
+   ```bash
+   bd close <id>         # Close finished work
+   bd sync               # Export to JSONL
+   git add .beads/ && git commit -m "chore: sync beads state"
+   ```
+
+5. **Push and create pull request**
 
    ```bash
    git push -u origin feature/description
    gh pr create
    ```
 
-**Key Principle:** `main` is always deployable. All changes go through PRs.
+**Key Principle:** `main` is always deployable. All changes go through PRs. Beads state
+must be committed before pushing — the pre-push hook enforces this.
 
 ## Issue Tracking (Beads)
 
@@ -103,7 +112,7 @@ Run `bd prime` for full workflow context.
 - `bd sync` — Sync with git (run at session end)
 
 **Workflow:** Check `bd ready` at session start. Claim work, implement, close when done.
-Run `bd sync` before ending the session.
+Commit beads state (`bd sync && git add .beads/ && git commit`) before pushing.
 
 ### Beads vs TODO: Two Systems, Distinct Purposes
 

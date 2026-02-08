@@ -157,9 +157,29 @@ particular phase starts. These are tracked as **gate tasks** in beads:
 
 ## Git Integration
 
-Beads data is committed to git alongside code. Two hooks keep things in sync:
+Beads data lives in `.beads/issues.jsonl` — a regular git-tracked file. Like any
+file, changes only reach remote when **committed and pushed**.
 
-- **pre-push**: Runs `bd sync` to export the latest state before pushing
-- **post-merge**: Runs `bd import` to pick up changes from remote
+### Before Pushing: Commit Beads State
 
-These hooks are managed via pre-commit and run automatically.
+After closing tasks, export and commit:
+
+```bash
+bd close <id>         # Close finished work
+bd sync               # Export to JSONL
+git add .beads/ && git commit -m "chore: sync beads state"
+git push
+```
+
+This ensures the PR includes up-to-date issue state when merged to `main`.
+
+!!! warning "The pre-push hook enforces this"
+    A pre-push hook runs `bd sync` and **rejects the push** if `.beads/*.jsonl`
+    has uncommitted changes. If you see this error, simply commit the beads
+    state and push again.
+
+### After Pulling: Automatic Import
+
+A post-merge hook runs `bd import` to pick up beads changes from remote.
+
+Both hooks are managed via pre-commit and run automatically.
