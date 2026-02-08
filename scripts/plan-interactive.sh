@@ -223,6 +223,9 @@ while true; do
       echo ""
       printf "\033[2mPress any key to return to task list...\033[0m"
       read -rsn1
+      # Drain any trailing bytes from multi-byte sequences (e.g. arrow keys
+      # send \e[A — three bytes; read -n1 only consumes the first).
+      read -rsn5 -t 0.05 2>/dev/null || true
       STATE="TASKS"
       ;;
 
