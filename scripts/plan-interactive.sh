@@ -11,8 +11,8 @@
 #   <80        → preview hidden (toggle with ?)
 #
 # Keybindings:
-#   Enter  → print selected epic ID and exit
-#   Esc/q  → exit without selection
+#   Enter  → show selected epic's backlog (children) and exit
+#   Esc    → exit without selection
 #   ?      → toggle preview pane
 
 set -euo pipefail
@@ -58,10 +58,14 @@ while IFS=$'\t' read -r id status title; do
     closed=$total
   else
     total=$(echo "$EPIC_STATUS" | jq -r --arg id "$id" \
-      '.[] | select(.epic.id == $id) | .total_children')
+      '.[] | select(.epic.id == $id) | .total_children // 0')
     closed=$(echo "$EPIC_STATUS" | jq -r --arg id "$id" \
-      '.[] | select(.epic.id == $id) | .closed_children')
+      '.[] | select(.epic.id == $id) | .closed_children // 0')
   fi
+
+  # Normalize empty/null to 0 for safe arithmetic
+  total=${total:-0}; [ "$total" = "null" ] && total=0
+  closed=${closed:-0}; [ "$closed" = "null" ] && closed=0
 
   # Calculate bar segments and percentage
   if [ "$total" -gt 0 ] 2>/dev/null; then
@@ -108,7 +112,7 @@ SELECTED=$(echo -e "$FZF_LINES" \
       --no-sort \
       --cycle \
       --header 'Enter: drill in │ Esc: quit │ ?: toggle preview' \
-      --preview "bash $SCRIPT_DIR/plan-preview.sh {1}" \
+      --preview "bash \"$SCRIPT_DIR/plan-preview.sh\" {1}" \
       --preview-window 'right,60%,border-left,wrap,<120(down,50%,border-top,wrap),<80(hidden)' \
       --bind '?:toggle-preview,left:up,right:down' \
   || true)

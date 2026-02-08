@@ -10,6 +10,11 @@
 
 set -euo pipefail
 
+if [ "$#" -lt 1 ] || [ -z "${1:-}" ]; then
+  echo "Usage: $0 <epic-id>" >&2
+  exit 1
+fi
+
 EPIC_ID="$1"
 
 bd children "$EPIC_ID" 2>/dev/null \
