@@ -15,19 +15,25 @@ When the backend is running (`task dev:be`), the following endpoints are availab
 
 ## Key Endpoints
 
-| Method | Path                       | Description                            |
-| ------ | -------------------------- | -------------------------------------- |
-| `GET`  | `/api/signals`             | List all current signals               |
-| `GET`  | `/api/signals/{signal_id}` | Get a specific signal by ID            |
-| `GET`  | `/api/signals/stream`      | SSE stream of real-time signal updates |
-| `GET`  | `/health`                  | Health check with adapter status       |
+| Method | Path                         | Description                             |
+| ------ | ---------------------------- | --------------------------------------- |
+| `GET`  | `/api/signals`               | List all current signals                |
+| `GET`  | `/api/signals/{signal_id}`   | Get a specific signal by ID             |
+| `GET`  | `/api/events/signals`        | SSE stream of real-time signal updates  |
+| `GET`  | `/health`                    | Health check with adapter status        |
+| `GET`  | `/metrics`                   | Internal metrics (subscriber/signal counts) |
+
+For example usage with `curl`, see the
+[Getting Started tutorial](../tutorials/getting-started.md#4-explore-the-api).
 
 ## Authentication
 
 Currently, lumehaven does not require authentication. This will be revisited when
 deployment guides are added.
 
-## Python API Reference
+## Related
 
-For the implementation details behind these endpoints, see the
-[API Routes](api/routes.md) reference.
+- [API Routes](api/routes.md) — Python implementation reference
+- [SSE Endpoint](api/routes.md) — Server-Sent Events implementation
+- [Configuration Reference](configuration.md) — server host/port settings
+- [Architecture](../explanation/architecture.md) — data flow and SSE streaming explained

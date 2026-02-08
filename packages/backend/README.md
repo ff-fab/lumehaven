@@ -122,7 +122,7 @@ Environment variables (can also be in `.env` file):
 | `GET` | `/health` | Health check |
 | `GET` | `/api/signals` | List all signals |
 | `GET` | `/api/signals/{id}` | Get specific signal |
-| `GET` | `/api/signals/stream` | SSE stream of signal updates |
+| `GET` | `/api/events/signals` | SSE stream of signal updates |
 
 ## Related ADRs
 

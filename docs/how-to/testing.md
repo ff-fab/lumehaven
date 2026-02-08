@@ -62,3 +62,11 @@ task test:be:thresholds
 
 For full testing strategy details, see the [Testing Strategy](../testing/00-index.md)
 explanation section.
+
+## Related
+
+- [Coding Standards](../contributing/coding-standards.md) — Python style, docstrings,
+  tooling
+- [Add a New Adapter](add-adapter.md) — includes adapter-specific test examples
+- [Development Setup](../tutorials/development-setup.md) — running tests in the dev
+  container

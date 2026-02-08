@@ -47,6 +47,16 @@ if [ -f ".pre-commit-config.yaml" ]; then
     fi
 fi
 
+# SSH: seed known_hosts for GitHub so the first git push doesn't trigger a TOFU prompt.
+# VS Code forwards the host's SSH agent automatically (SSH_AUTH_SOCK), so keys never
+# enter the container. We just need known_hosts to be pre-populated and writable.
+mkdir -p /home/vscode/.ssh
+chmod 700 /home/vscode/.ssh
+ssh-keyscan -t ed25519 github.com >> /home/vscode/.ssh/known_hosts 2>/dev/null
+chmod 644 /home/vscode/.ssh/known_hosts
+chown -R vscode:vscode /home/vscode/.ssh
+echo "✅ SSH known_hosts seeded (agent forwarding handles authentication)"
+
 # GitHub CLI: disable pager (prevents 'alternate buffer' issues with Copilot in VS Code)
 # gh defaults to $PAGER (=less) when its own pager config is blank.
 # GH_PAGER=cat is set via remoteEnv, but gh config persists across shell sessions.
