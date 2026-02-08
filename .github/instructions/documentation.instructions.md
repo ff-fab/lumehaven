@@ -67,8 +67,9 @@ _<Date>_
 
 ## File Locations
 
-| Content           | Location         |
-| ----------------- | ---------------- |
-| ADRs              | `docs/adr/`      |
-| Planning/Roadmaps | `docs/planning/` |
-| Pending Decisions | `docs/TODO/`     |
+| Content            | Location         |
+| ------------------ | ---------------- |
+| ADRs               | `docs/adr/`      |
+| Planning/Decisions | `docs/planning/` |
+| Pending Decisions  | `docs/TODO/`     |
+| Work Tracking      | `.beads/`        |

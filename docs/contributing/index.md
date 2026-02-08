@@ -11,20 +11,30 @@ workflow, conventions, and expectations for contributions.
 lumehaven uses GitHub Flow — `main` is always deployable, all changes go through pull
 requests.
 
-### 1. Create a Feature Branch
+### 1. Find Work
+
+```bash
+task plan:ready       # Show unblocked tasks
+bd update <id> --status in_progress   # Claim a task
+```
+
+For full details on work tracking, see
+[Track Work with Beads](../how-to/work-tracking.md).
+
+### 2. Create a Feature Branch
 
 ```bash
 git checkout main && git pull
 git checkout -b feature/description   # or fix/, docs/, refactor/
 ```
 
-### 2. Make Changes
+### 3. Make Changes
 
 - Follow the [coding standards](coding-standards.md)
 - Write tests for new functionality
 - Update documentation if needed
 
-### 3. Verify Locally
+### 4. Verify Locally
 
 ```bash
 task test:be          # All backend tests pass
@@ -34,14 +44,19 @@ task typecheck:be     # Type checking passes
 
 Pre-commit hooks will also run automatically on commit.
 
-### 4. Push and Create a PR
+### 5. Push and Create a PR
 
 ```bash
+bd close <id>         # Mark your task as done
 git push -u origin feature/description
 gh pr create
 ```
 
-### 5. Review Process
+!!! note "Beads syncs automatically"
+    A pre-push hook runs `bd sync` to export the latest issue state before pushing.
+    After pulling, a post-merge hook imports any remote changes.
+
+### 6. Review Process
 
 - CI must pass (tests, lint, type check, coverage thresholds)
 - PRs should have clear descriptions of what and why

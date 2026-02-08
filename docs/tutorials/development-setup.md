@@ -192,6 +192,8 @@ For the full contribution workflow, see the
 
 ## Available Task Commands
 
+### Development & Testing
+
 | Command                    | Description                              |
 | -------------------------- | ---------------------------------------- |
 | `task dev:be`              | Start backend with hot reload            |
@@ -206,6 +208,19 @@ For the full contribution workflow, see the
 | `task check`               | All checks (lint + types + tests)        |
 | `task test:fe`             | Frontend tests                           |
 | `task docs:serve`          | Preview documentation locally            |
+
+### Planning & Work Tracking
+
+| Command                         | Description                              |
+| ------------------------------- | ---------------------------------------- |
+| `task plan`                     | Phase progress overview (epic status)    |
+| `task plan:ready`               | Show unblocked work ready to start       |
+| `task plan:phase`               | Backlog of highest-priority open phase   |
+| `task plan:phase -- <keyword>`  | Backlog of a specific phase by keyword   |
+| `task plan:order`               | Dependency graph of current phase        |
+| `task plan:order -- <keyword>`  | Dependency graph of a specific phase     |
+
+For details on beads usage, see [Track Work with Beads](../how-to/work-tracking.md).
 
 ## Next Steps
 

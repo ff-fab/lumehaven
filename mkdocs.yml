@@ -135,6 +135,7 @@ nav:
       - Configure lumehaven: how-to/configuration.md
       - Add a New Adapter: how-to/add-adapter.md
       - Run Tests & Check Coverage: how-to/testing.md
+      - Track Work with Beads: how-to/work-tracking.md
 
   - Reference:
       - reference/index.md

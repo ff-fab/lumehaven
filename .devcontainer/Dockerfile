@@ -53,11 +53,9 @@ ENV BUN_INSTALL="/usr/local"
 
 # Install beads (bd) — git-backed issue tracker for AI agents
 # https://github.com/steveyegge/beads
-# Install script places binary in ~/.local/bin; during build user is root,
-# so we move it to /usr/local/bin for all users.
-RUN curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash \
-    && mv /root/.local/bin/bd /usr/local/bin/bd \
-    && ln -sf /usr/local/bin/bd /usr/local/bin/beads
+# The install script detects platform, downloads the release binary, and places
+# it in /usr/local/bin (with a 'beads' alias) automatically.
+RUN curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
 
 # Create .vscode-server directory with proper ownership
 # This prevents permission issues when volumes are mounted

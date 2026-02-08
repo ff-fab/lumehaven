@@ -1,7 +1,8 @@
 {
   "servers": {
     "beads": {
-      "command": "beads-mcp"
+      "command": "uvx",
+      "args": ["beads-mcp"]
     }
   }
 }
