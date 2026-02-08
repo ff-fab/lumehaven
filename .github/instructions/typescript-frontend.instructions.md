@@ -1,30 +1,58 @@
 ---
 description: 'TypeScript frontend development - React, Vite, bun'
-applyTo: 'packages/frontend/**/*.{ts,tsx,js,jsx}'
+applyTo:
+  'packages/frontend/**/*.{ts,tsx,js,jsx}, packages/core/**/*.{ts,tsx,js,jsx},
+  packages/react/**/*.{ts,tsx,js,jsx}'
 ---
 
 # TypeScript Frontend Instructions
 
+## Package Architecture (ADR-008)
+
+| Package              | Purpose                        | Dependencies      |
+| -------------------- | ------------------------------ | ----------------- |
+| `@lumehaven/core`    | SSE client, Signal types       | None (vanilla TS) |
+| `@lumehaven/react`   | React hooks + Signal component | core + React      |
+| `packages/frontend/` | Reference dashboard SPA        | react + Vite      |
+
 ## Technology Stack
 
-| Component  | Choice     | Notes                    |
-| ---------- | ---------- | ------------------------ |
-| Framework  | React 18+  | Function components only |
-| Build Tool | Vite       | Fast HMR                 |
-| Language   | TypeScript | Strict mode enabled      |
-| Runtime    | bun        | Replaces node.js         |
+| Component  | Choice     | Notes                                        |
+| ---------- | ---------- | -------------------------------------------- |
+| Framework  | React 18+  | Function components only                     |
+| Build Tool | Vite       | Fast HMR                                     |
+| Language   | TypeScript | Strict mode enabled                          |
+| Runtime    | bun        | Replaces node.js                             |
+| Styling    | CSS + BEM  | `.signal`, `.signal__value`, `.signal__unit` |
+| UI State   | Zustand    | Theme, active view                           |
 
 ## Architecture Role
 
 The frontend is intentionally "dumb":
 
-- Receives **pre-formatted** data from backend
-- Just displays `signal.value` and `signal.unit`
+- Receives **enriched** data from backend (ADR-010)
+- Uses `display_value` for rendering, `value` for logic
+- Uses `signal_type` to select component variant
+- Uses `available` flag for staleness indicators
 - No unit conversion or formatting logic
 
-## SSE Client Pattern
+## Signal Component (ADR-008)
 
-Use `useEffect` with proper cleanup:
+```tsx
+// Two usage patterns:
+<Signal id="oh:kitchen_temp" />     {/* Fetches from store; id includes adapter prefix */}
+<Signal signal={signalObject} />     {/* Direct pass */}
+
+// Renders BEM structure:
+// <span class="signal" data-type="number" data-available="true" data-id="oh:kitchen_temp">
+//   <span class="signal__value">21.3</span>
+//   <span class="signal__unit">°C</span>
+// </span>
+```
+
+## SSE Client Pattern (in @lumehaven/core)
+
+The SSE client lives in `@lumehaven/core` (no React dependency):
 
 ```typescript
 useEffect(() => {

@@ -15,32 +15,49 @@ applyTo: 'packages/backend/**/*.py'
 | Validation      | pydantic v2  | Use v2 patterns, not v1        |
 | State Storage   | In-memory    | Abstracted interface (ADR-001) |
 
-## Signal Model (ADR-005)
+## Signal Model (ADR-005, amended by ADR-010)
 
-The core data model for smart home signals:
+The core data model for smart home signals (enriched per ADR-010):
 
 ```python
-@dataclass
+class SignalType(StrEnum):
+    STRING   = "string"      # Weather descriptions, messages
+    NUMBER   = "number"      # Temperature, humidity, power
+    BOOLEAN  = "boolean"     # ON/OFF, OPEN/CLOSED, motion
+    ENUM     = "enum"        # Heat/Cool/Auto/Off
+    DATETIME = "datetime"    # Timestamps
+
+@dataclass(frozen=True)
 class Signal:
-    id: str           # Unique identifier (OpenHAB item name / HA entity_id)
-    value: str        # Pre-formatted, display-ready value
-    unit: str         # Unit symbol (e.g., "°C", "%", "W")
-    label: str = ""   # Human-readable name
+    id: str                                    # Unique identifier
+    value: str | int | float | bool | None     # Typed native value
+    unit: str = ""                             # Unit symbol ("°C", "%")
+    label: str = ""                            # Human-readable name
+    display_value: str = ""                    # Pre-formatted for display
+    available: bool = True                     # Device reachable?
+    signal_type: SignalType = SignalType.STRING # Discriminator for UI
 ```
 
-**Key principle:** Backend normalizes ALL data. Frontend just displays `value` and
-`unit`.
+**Key principle:** Backend normalizes ALL data. Frontend uses `display_value` for
+rendering and `value` for logic (thresholds, sorting).
 
 ## Adapter Protocol
 
-Smart home adapters implement this protocol (ADR-005):
+Smart home adapters implement this protocol (ADR-005, ADR-011):
 
 ```python
+from collections.abc import AsyncIterator
+
 class SmartHomeAdapter(Protocol):
-    def get_signals(self) -> Dict[str, Signal]: ...
-    def get_signal(self, signal_id: str) -> Signal: ...
-    def subscribe_events(self) -> Generator[Signal, None, None]: ...
+    async def get_signals(self) -> dict[str, Signal]: ...
+    async def get_signal(self, signal_id: str) -> Signal | None: ...
+    def subscribe_events(self) -> AsyncIterator[Signal]: ...
+    async def send_command(self, signal_id: str, command: str) -> None: ...  # ADR-011
+    async def close(self) -> None: ...
 ```
+
+> **Note:** `send_command()` is the target protocol shape per ADR-011. It is not yet
+> implemented in `protocol.py` — that work is tracked in task `lh-6yy.14`.
 
 ## SSE Event Flow
 

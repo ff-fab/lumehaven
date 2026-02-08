@@ -5,6 +5,12 @@
 A Signal is the universal data unit in lumehaven. It's deliberately minimal — a frozen
 dataclass with just four string fields:
 
+!!! note "Enrichment planned (ADR-010)"
+    The Signal model is being enriched with typed `value`, `display_value`, `available`,
+    and `signal_type` fields. See [ADR-010](../adr/ADR-010-signal-model-enrichment.md)
+    for the full specification. The documentation below describes the current
+    implementation.
+
 | Field   | Type  | Default | Description                                                   |
 | ------- | ----- | ------- | ------------------------------------------------------------- |
 | `id`    | `str` | —       | Unique identifier, prefixed by adapter (e.g., `oh:LivingRoom_Temp`) |
@@ -162,4 +168,6 @@ For how this fits into the overall architecture, see
 ## Related Decisions
 
 - [ADR-005: Signal Identity and Metadata Abstraction](../adr/ADR-005-signal-abstraction.md)
+- [ADR-010: Signal Model Enrichment](../adr/ADR-010-signal-model-enrichment.md) (amends ADR-005)
 - [ADR-001: State Management](../adr/ADR-001-state-management.md)
+- [ADR-011: Command Architecture](../adr/ADR-011-command-architecture.md)

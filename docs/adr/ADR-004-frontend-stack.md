@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted (Amended February 2026)
 
 ## Context
 
@@ -480,3 +480,34 @@ function ToggleButton({ item, onCommand, isPending }: ToggleButtonProps) {
 
 _Accepted: December 2025_ _Close decision between React and Preact; React chosen for
 ecosystem breadth and reputation._
+
+## Amendment: February 2026
+
+The following aspects of this ADR have been refined or superseded by later decisions
+made during the Phase 3 architectural assessment:
+
+| Original Decision          | Updated By                                          | Change                                                      |
+| -------------------------- | --------------------------------------------------- | ----------------------------------------------------------- |
+| Single `packages/frontend/` | [ADR-008](ADR-008-frontend-package-architecture.md) | Split into `packages/core/` + `packages/react/` + `packages/frontend/` |
+| "CSS Modules or Tailwind"   | ADR-008                                              | Plain CSS + BEM for the component library                   |
+| State: "Context or Zustand" | ADR-008                                              | React Context for signals + Zustand for UI state            |
+| Implementation Notes        | [ADR-009](ADR-009-dashboard-ownership.md)            | Reference dashboard in monorepo; personal dashboards in separate repos |
+| Signal types (`Item`)       | [ADR-010](ADR-010-signal-model-enrichment.md)        | Enriched Signal model with typed value, display_value, available |
+| Command hook pattern        | [ADR-011](ADR-011-command-architecture.md)           | Simple string commands, optimistic updates by default       |
+
+**Core decision confirmed:** React + Vite + TypeScript remains the frontend stack.
+The framework choice, bundler, and language are unchanged. Only the package structure,
+styling approach, and downstream contracts have been refined.
+
+**Additional decisions made:**
+
+- **Localization:** Hybrid — backend formats signal values per configured locale;
+  frontend handles UI chrome (dates, navigation labels)
+- **Authentication:** None (local network only, BFF handles smart home credentials)
+- **Error UX:** Connection banner + signal-level staleness indicators
+- **Performance:** Soft targets (<2s initial load, <100ms SSE-to-render); no hard
+  budgets enforced in CI
+- **Device routing:** Client-side routing for device-specific layouts
+  (`/`, `/mobile`, `/kiosk`)
+
+_Amended: February 2026_
