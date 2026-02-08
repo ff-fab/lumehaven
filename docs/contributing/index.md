@@ -67,8 +67,8 @@ gh pr create
 ```
 
 !!! note "Post-merge sync"
-    After pulling, a post-merge hook runs `bd import` to pick up beads changes
-    from remote.
+    After pulling, a post-merge hook runs `bd sync --import-only` to pick up
+    beads changes from remote.
 
 ### 7. Review Process
 

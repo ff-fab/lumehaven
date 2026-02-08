@@ -33,9 +33,8 @@ done <<< "$ALL_EPICS"
 echo ""
 while IFS=$'\t' read -r id status title; do
   if [ "$status" = "closed" ]; then
-    # Closed epic: count parent-child dependents (all closed by definition)
-    total=$(bd show "$id" --json 2>/dev/null \
-      | jq '[.[0].dependents[] | select(.dependency_type == "parent-child")] | length')
+    # Closed epic: count children via parent filter (all closed by definition)
+    total=$(bd list --parent "$id" --all --json --limit 0 2>/dev/null | jq 'length')
     closed=$total
   else
     # Open epic: use pre-fetched epic status data

@@ -180,6 +180,6 @@ This ensures the PR includes up-to-date issue state when merged to `main`.
 
 ### After Pulling: Automatic Import
 
-A post-merge hook runs `bd import` to pick up beads changes from remote.
+A post-merge hook runs `bd sync --import-only` to pick up beads changes from remote.
 
 Both hooks are managed via pre-commit and run automatically.
