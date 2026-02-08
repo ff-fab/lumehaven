@@ -23,9 +23,11 @@ The Taskfile provides ergonomic wrappers around common `bd` operations:
 
 ```bash
 task plan             # Phase progress overview (epic status bars)
+task plan:ui          # Interactive plan overview                |
 task plan:ready       # Show unblocked work ready to start
 task plan:phase       # Backlog of highest-priority open phase
 task plan:phase -- frontend   # Backlog of a specific phase (by keyword)
+task plan:task ID=lh-6yy.3    # Show full details of a single task
 task plan:order       # Dependency graph of highest-priority open phase
 task plan:order -- deploy     # Dependency graph of a specific phase
 ```
@@ -37,11 +39,13 @@ These commands resolve phases by **title keyword**, **full ID**, or **short ID**
 task plan:phase -- frontend   # by title keyword
 task plan:phase -- lh-809     # by full ID
 task plan:phase -- 809        # by short ID
+task plan:task ID=6yy.3       # short ID works here too
 ```
 
-!!! note "The `--` separator is required"
-    Taskfile uses `--` to separate its own flags from arguments passed to the script.
+!!! note "The `--` separator"
+    Phase/order commands use `--` to separate Taskfile flags from arguments.
     Always write `task plan:phase -- <arg>`, not `task plan:phase --<arg>`.
+    The `plan:task` command uses `ID=` instead, which avoids `--` pitfalls.
 
 ## Find Available Work
 

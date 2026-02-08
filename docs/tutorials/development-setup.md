@@ -218,6 +218,7 @@ For the full contribution workflow, see the
 | `task plan:ready`               | Show unblocked work ready to start       |
 | `task plan:phase`               | Backlog of highest-priority open phase   |
 | `task plan:phase -- <keyword>`  | Backlog of a specific phase by keyword   |
+| `task plan:task ID=<id>`        | Show full details of a single task       |
 | `task plan:order`               | Dependency graph of current phase        |
 | `task plan:order -- <keyword>`  | Dependency graph of a specific phase     |
 
