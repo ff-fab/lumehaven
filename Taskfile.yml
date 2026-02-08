@@ -30,7 +30,7 @@ tasks:
     desc: Show progress per phase (epic completion overview)
     silent: true
     cmds:
-      - bd epic status
+      - bash scripts/plan-overview.sh
 
   plan:ready:
     desc: Show unblocked work you can start right now

@@ -56,13 +56,21 @@ bd update <id> --status in_progress
 task plan
 ```
 
-Shows progress bars for each epic (project phase), e.g.:
+Shows color-coded progress bars for each epic (project phase), e.g.:
 
 ```
-Phase 0: Foundation     ████████████████████ 100%  (5/5)
-Phase 2b: Beads         ████████████████░░░░  80%  (4/5)
-Phase 3: Frontend       ░░░░░░░░░░░░░░░░░░░░   0%  (0/11)
+ ●  lh-19c  Phase 0: Foundation Decisions             ████████████████████  100%  (7/7)
+ ●  lh-26x  Phase 1: Backend Core                     ████████████████████  100%  (8/8)
+ ○  lh-clk  Phase 2b: Implement Beads                 ████████████████░░░░   80%  (4/5)
+ ○  lh-6yy  Phase 3: Frontend Implementation          █░░░░░░░░░░░░░░░░░░░    9%  (1/11)
+ ○  lh-809  Phase 4: Integration & Deployment         ░░░░░░░░░░░░░░░░░░░░    0%  (0/6)
 ```
+
+Color coding (visible in terminal):
+
+- **● green** — phase completed (100%)
+- **○ yellow** — phase in progress (>0%)
+- **○ dim** — phase not started (0%)
 
 ### Phase Backlog
 
