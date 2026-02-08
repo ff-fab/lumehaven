@@ -13,14 +13,18 @@ stays "dumb" and lightweight.
 
 All major decisions are documented in `docs/adr/`. **Follow these decisions:**
 
-| ADR | Decision           | Summary                                       |
-| --- | ------------------ | --------------------------------------------- |
-| 001 | State Management   | In-memory, abstracted interface, no Redis     |
-| 002 | Backend Runtime    | Python + FastAPI + uv                         |
-| 004 | Frontend Stack     | React + Vite + TypeScript + bun               |
-| 005 | Signal Abstraction | Minimal: `id`, `value`, `unit`, `label`       |
-| 006 | Testing            | pytest (unit) + Robot Framework (integration) |
-| 007 | Documentation      | MkDocs-Material + mkdocstrings                |
+| ADR | Decision             | Summary                                                     |
+| --- | -------------------- | ----------------------------------------------------------- |
+| 001 | State Management     | In-memory, abstracted interface, no Redis                   |
+| 002 | Backend Runtime      | Python + FastAPI + uv                                       |
+| 004 | Frontend Stack       | React + Vite + TypeScript + bun (amended: routing, locale)  |
+| 005 | Signal Abstraction   | Enriched model (amended by ADR-010)                         |
+| 006 | Testing              | pytest (unit) + Robot Framework (integration)               |
+| 007 | Documentation        | MkDocs-Material + mkdocstrings                              |
+| 008 | Package Architecture | Two packages: `@lumehaven/core` + `@lumehaven/react`        |
+| 009 | Dashboard Ownership  | App + injection; reference dashboard in monorepo            |
+| 010 | Signal Enrichment    | Typed value, `display_value`, `available`, `signal_type`    |
+| 011 | Command Architecture | POST command endpoint, optimistic updates, adapter protocol |
 
 Create new ADRs for any major changes or decisions.
 
@@ -30,7 +34,9 @@ Create new ADRs for any major changes or decisions.
 lumehaven/
 ├── packages/
 │   ├── backend/              # Python BFF (FastAPI)
-│   └── frontend/             # React SPA (TypeScript)
+│   ├── core/                 # @lumehaven/core — vanilla TS, zero React deps (ADR-008)
+│   ├── react/                # @lumehaven/react — thin React bindings (ADR-008)
+│   └── frontend/             # Reference dashboard SPA (ADR-009)
 ├── docs/
 │   ├── adr/                  # Architecture Decision Records (authoritative)
 │   ├── planning/             # Decision tracker, design docs

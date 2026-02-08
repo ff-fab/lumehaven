@@ -53,6 +53,10 @@ class SmartHomeAdapter(Protocol):
 Three properties identify the adapter instance, two async methods provide data access,
 one method streams live events, and two methods manage the connection lifecycle.
 
+!!! note "Command support planned (ADR-011)"
+    The protocol will be extended with `send_command(signal_id: str, command: str)`
+    for write operations. See [ADR-011](../adr/ADR-011-command-architecture.md).
+
 !!! tip "Why Protocol, not ABC?"
     Protocol uses *structural* subtyping — if a class has the right methods, it
     satisfies the Protocol without explicitly inheriting from it. This means adapter

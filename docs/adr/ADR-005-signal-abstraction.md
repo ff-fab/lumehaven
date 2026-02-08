@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted (Amended by [ADR-010](ADR-010-signal-model-enrichment.md))
 
 ## Context
 

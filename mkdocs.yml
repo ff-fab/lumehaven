@@ -156,6 +156,10 @@ nav:
           - ADR-005 Signal Abstraction: adr/ADR-005-signal-abstraction.md
           - ADR-006 Testing Strategy: adr/ADR-006-testing-strategy.md
           - ADR-007 Documentation System: adr/ADR-007-documentation-system.md
+          - ADR-008 Frontend Package Architecture: adr/ADR-008-frontend-package-architecture.md
+          - ADR-009 Dashboard Ownership: adr/ADR-009-dashboard-ownership.md
+          - ADR-010 Signal Model Enrichment: adr/ADR-010-signal-model-enrichment.md
+          - ADR-011 Command Architecture: adr/ADR-011-command-architecture.md
 
   - Explanation:
       - explanation/index.md
