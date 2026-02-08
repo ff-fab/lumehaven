@@ -101,7 +101,7 @@ tasks:
         bd graph "$EPIC_ID" --compact
 
   plan:ui:
-    desc: Interactive epic browser with preview (requires fzf)
+    desc: Interactive epic/task browser with drill-down (requires fzf)
     silent: true
     cmds:
       - bash scripts/plan-interactive.sh
