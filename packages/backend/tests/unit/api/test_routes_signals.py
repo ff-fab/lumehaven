@@ -16,6 +16,7 @@ import pytest
 from httpx import AsyncClient
 
 from lumehaven.api.routes import SignalResponse, SignalsResponse
+from lumehaven.core.signal import SignalType
 from lumehaven.state.store import SignalStore
 from tests.fixtures.signals import (
     ALL_TEST_SIGNALS,
@@ -90,13 +91,15 @@ class TestListSignals:
         async_client: AsyncClient,
         signal_store: SignalStore,
     ) -> None:
-        """Each signal in response includes id, value, unit, label."""
+        """Each signal in response includes all enriched fields (ADR-010)."""
         # Arrange
         signal = create_signal(
             id="test:temp",
-            value="21.5",
+            value=21.5,
+            display_value="21.5",
             unit="°C",
             label="Temperature",
+            signal_type=SignalType.NUMBER,
         )
         await signal_store.set(signal)
 
@@ -107,9 +110,12 @@ class TestListSignals:
         data = response.json()
         sig = data["signals"][0]
         assert sig["id"] == "test:temp"
-        assert sig["value"] == "21.5"
+        assert sig["value"] == 21.5
+        assert sig["display_value"] == "21.5"
         assert sig["unit"] == "°C"
         assert sig["label"] == "Temperature"
+        assert sig["available"] is True
+        assert sig["signal_type"] == "number"
 
 
 class TestGetSignal:
@@ -127,9 +133,11 @@ class TestGetSignal:
         # Arrange
         signal = create_signal(
             id="oh:LivingRoom_Temp",
-            value="21.5",
+            value=21.5,
+            display_value="21.5",
             unit="°C",
             label="Living Room Temperature",
+            signal_type=SignalType.NUMBER,
         )
         await signal_store.set(signal)
 
@@ -140,9 +148,12 @@ class TestGetSignal:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == "oh:LivingRoom_Temp"
-        assert data["value"] == "21.5"
+        assert data["value"] == 21.5
+        assert data["display_value"] == "21.5"
         assert data["unit"] == "°C"
         assert data["label"] == "Living Room Temperature"
+        assert data["available"] is True
+        assert data["signal_type"] == "number"
 
     async def test_returns_404_for_missing_signal(
         self,
@@ -173,9 +184,11 @@ class TestGetSignal:
         # Arrange
         signal = create_signal(
             id="oh:Floor_1_Room_2_Temp",
-            value="20.0",
+            value=20.0,
+            display_value="20.0",
             unit="°C",
             label="F1R2 Temp",
+            signal_type=SignalType.NUMBER,
         )
         await signal_store.set(signal)
 
@@ -194,13 +207,15 @@ class TestSignalResponseModel:
     """
 
     def test_from_signal_preserves_all_fields(self) -> None:
-        """SignalResponse.from_signal() creates response with all fields."""
+        """SignalResponse.from_signal() creates response with all enriched fields."""
         # Arrange
         signal = create_signal(
             id="test:id",
-            value="42",
+            value=42,
+            display_value="42",
             unit="kWh",
             label="Energy Consumption",
+            signal_type=SignalType.NUMBER,
         )
 
         # Act
@@ -209,8 +224,11 @@ class TestSignalResponseModel:
         # Assert
         assert response.id == signal.id
         assert response.value == signal.value
+        assert response.display_value == signal.display_value
         assert response.unit == signal.unit
         assert response.label == signal.label
+        assert response.available == signal.available
+        assert response.signal_type == signal.signal_type
 
     def test_from_signal_handles_empty_strings(self) -> None:
         """from_signal() handles empty unit and label correctly."""
@@ -235,8 +253,24 @@ class TestSignalsResponseModel:
         """SignalsResponse raises if count doesn't match signals length."""
         # Arrange
         signals = [
-            SignalResponse(id="1", value="a", unit="", label=""),
-            SignalResponse(id="2", value="b", unit="", label=""),
+            SignalResponse(
+                id="1",
+                value="a",
+                display_value="a",
+                unit="",
+                label="",
+                available=True,
+                signal_type=SignalType.STRING,
+            ),
+            SignalResponse(
+                id="2",
+                value="b",
+                display_value="b",
+                unit="",
+                label="",
+                available=True,
+                signal_type=SignalType.STRING,
+            ),
         ]
 
         # Act & Assert — count matches (should pass)
@@ -250,7 +284,15 @@ class TestSignalsResponseModel:
         """
         # Arrange
         signals = [
-            SignalResponse(id="1", value="a", unit="", label=""),
+            SignalResponse(
+                id="1",
+                value="a",
+                display_value="a",
+                unit="",
+                label="",
+                available=True,
+                signal_type=SignalType.STRING,
+            ),
         ]
 
         # Act & Assert

@@ -77,11 +77,12 @@ class TestSSEEventFormat:
         self,
         signal_store: SignalStore,
     ) -> None:
-        """Event data is JSON-encoded Signal with all fields."""
+        """Event data is JSON-encoded Signal with all enriched fields."""
         # Arrange
         signal = create_signal(
             id="test:temp",
-            value="21.5",
+            value=21.5,
+            display_value="21.5",
             unit="°C",
             label="Temperature",
         )
@@ -120,9 +121,12 @@ class TestSSEEventFormat:
         assert received_event is not None
         data = json.loads(received_event["data"])
         assert data["id"] == "test:temp"
-        assert data["value"] == "21.5"
+        assert data["value"] == 21.5
+        assert data["display_value"] == "21.5"
         assert data["unit"] == "°C"
         assert data["label"] == "Temperature"
+        assert data["available"] is True
+        assert data["signal_type"] == "string"
 
 
 class TestSSESubscription:

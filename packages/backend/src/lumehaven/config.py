@@ -89,6 +89,7 @@ class Settings(BaseSettings):
         env_file=(".env", "../../.env", "../../../.env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
 
     # Legacy single-adapter settings (used if no YAML config)
