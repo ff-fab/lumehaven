@@ -87,7 +87,7 @@ class TestSignalCreation:
         assert signal.value is True
         assert signal.unit == ""
         assert signal.label == ""
-        assert signal.display_value == ""
+        assert signal.display_value == "True"  # Auto-filled by __post_init__
         assert signal.available is True
         assert signal.signal_type == SignalType.STRING
 
@@ -177,7 +177,7 @@ class TestSignalToDict:
         assert result == {
             "id": "switch",
             "value": True,
-            "display_value": "",
+            "display_value": "True",  # Auto-filled by __post_init__
             "unit": "",
             "label": "",
             "available": True,
@@ -286,6 +286,47 @@ class TestSignalFromDict:
         signal = Signal.from_dict(data)
 
         assert signal.signal_type == SignalType.BOOLEAN
+
+    def test_from_dict_normalizes_undef_sentinel(self) -> None:
+        """from_dict() converts legacy UNDEF sentinel to None with available=False.
+
+        Technique: Boundary testing for ADR-005 → ADR-010 transition.
+        """
+        data = {"id": "legacy", "value": "UNDEF"}
+
+        signal = Signal.from_dict(data)
+
+        assert signal.value is None
+        assert signal.available is False
+        assert signal.display_value == ""
+
+    def test_from_dict_normalizes_null_sentinel(self) -> None:
+        """from_dict() converts legacy NULL sentinel to None with available=False."""
+        data = {"id": "legacy", "value": "NULL"}
+
+        signal = Signal.from_dict(data)
+
+        assert signal.value is None
+        assert signal.available is False
+        assert signal.display_value == ""
+
+    def test_from_dict_enriched_with_explicit_available_unchanged(self) -> None:
+        """from_dict() preserves explicit available flag even with None value.
+
+        When deserializing enriched format, explicit available overrides
+        the value-based default.
+        """
+        data = {
+            "id": "explicit",
+            "value": None,
+            "available": True,  # Override the value-based default
+        }
+
+        signal = Signal.from_dict(data)
+
+        assert signal.value is None
+        assert signal.available is True
+        assert signal.display_value == ""
 
 
 class TestSignalRoundTrip:

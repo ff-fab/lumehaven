@@ -91,6 +91,17 @@ class Signal:
     available: bool = True
     signal_type: SignalType = SignalType.STRING
 
+    def __post_init__(self) -> None:
+        """Auto-populate display_value from value if empty.
+
+        During the transition to ADR-010 enrichment, adapters may not
+        explicitly set display_value. This ensures a safe default by
+        computing it from the value (when not specified and value is not None).
+        Uses object.__setattr__ because the dataclass is frozen=True.
+        """
+        if not self.display_value and self.value is not None:
+            object.__setattr__(self, "display_value", str(self.value))
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization.
 
@@ -113,7 +124,8 @@ class Signal:
         """Create a Signal from a dictionary.
 
         Handles both the enriched format (ADR-010) and the legacy
-        four-field format for backward compatibility.
+        four-field format for backward compatibility. Normalizes legacy
+        sentinel values (UNDEF/NULL) to the enriched representation.
 
         Args:
             data: Dictionary with signal fields.
@@ -122,7 +134,9 @@ class Signal:
             New Signal instance.
 
         Raises:
-            KeyError: If required field ``id`` is missing.
+            KeyError: If required fields ``id`` or ``value`` are missing.
+            ValueError: If ``signal_type`` is present but not a valid
+                ``SignalType`` member.
         """
         # Determine value: enriched dicts may have explicit None
         if "value" in data:
@@ -130,11 +144,21 @@ class Signal:
         else:
             raise KeyError("value")
 
+        # Normalize legacy sentinels (ADR-005 → ADR-010 transition).
+        # Convert UNDEF/NULL strings to None with available=False.
+        if isinstance(value, str) and value in (UNDEFINED_VALUE, NULL_VALUE):
+            value = None
+
         # Parse signal_type from string if present
         raw_type = data.get("signal_type")
         signal_type = (
             SignalType(raw_type) if raw_type is not None else SignalType.STRING
         )
+
+        # Default available based on value when not explicitly provided.
+        # Enriched dicts include explicit available; legacy dicts without it
+        # infer from whether value is None (after sentinel normalization).
+        available = data.get("available", value is not None)
 
         return cls(
             id=data["id"],
@@ -144,7 +168,7 @@ class Signal:
             ),
             unit=data.get("unit", ""),
             label=data.get("label", ""),
-            available=data.get("available", True),
+            available=available,
             signal_type=signal_type,
         )
 

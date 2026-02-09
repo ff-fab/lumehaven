@@ -12,17 +12,15 @@ def create_signal(
     value: SignalValue = "100",
     unit: str = "",
     label: str = "",
-    display_value: str | None = None,
+    display_value: str = "",
     available: bool = True,
     signal_type: SignalType = SignalType.STRING,
 ) -> Signal:
     """Create a test signal with sensible defaults.
 
-    If ``display_value`` is not given, it defaults to ``str(value)``
-    when ``value`` is not None, or ``""`` when ``value`` is None.
+    The Signal.__post_init__ method automatically populates display_value
+    from value if display_value is empty and value is not None.
     """
-    if display_value is None:
-        display_value = str(value) if value is not None else ""
     return Signal(
         id=id,
         value=value,
