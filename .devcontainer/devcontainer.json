@@ -27,15 +27,12 @@
         "python.defaultInterpreterPath": "/workspace/packages/backend/.venv/bin/python",
         "python.terminal.activateEnvironment": true,
 
-        // Robot Framework (RobotCode extension)
-        "robotcode.python": "/workspace/packages/backend/.venv/bin/python",
-
         // Line length: 88 characters (matches Prettier, Ruff, and Black conventions)
         "editor.rulers": [88],
         "editor.wordWrap": "off",
 
         // Default formatter for different file types
-        "editor.defaultFormatter": "prettier.prettier-vscode",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.formatOnSave": true,
 
         // Python formatting and linting
@@ -51,28 +48,28 @@
 
         // TypeScript/JavaScript formatting
         "[typescript]": {
-          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
           "editor.formatOnSave": true
         },
         "[typescriptreact]": {
-          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
           "editor.formatOnSave": true
         },
         "[javascript]": {
-          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
           "editor.formatOnSave": true
         },
 
         // JSON formatting
         "[json]": {
-          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
           "editor.formatOnSave": true
         },
 
         // Markdown formatting (Prettier, not Markdown All in One)
         "[markdown]": {
           "editor.wordWrap": "on",
-          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
           "editor.formatOnSave": true
         },
 
@@ -82,7 +79,7 @@
 
         // YAML formatting
         "[yaml]": {
-          "editor.defaultFormatter": "prettier.prettier-vscode",
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
           "editor.formatOnSave": true
         },
 
