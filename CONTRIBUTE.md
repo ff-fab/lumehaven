@@ -44,16 +44,15 @@ Full workflow:
 
 ## Key Resources
 
-| Topic                | Where                                                                          |
-| -------------------- | ------------------------------------------------------------------------------ |
-| Development setup    | [Tutorial](https://ff-fab.github.io/lumehaven/tutorials/development-setup/)    |
-| Coding standards     | [Standards](https://ff-fab.github.io/lumehaven/contributing/coding-standards/) |
-| Testing & coverage   | [How-To](https://ff-fab.github.io/lumehaven/how-to/testing/)                   |
-| Architecture         | [Explanation](https://ff-fab.github.io/lumehaven/explanation/architecture/)    |
-| Configuration        | [Reference](https://ff-fab.github.io/lumehaven/reference/configuration/)       |
-| Adding adapters      | [How-To](https://ff-fab.github.io/lumehaven/how-to/add-adapter/)               |
-| ADRs                 | [decisions](https://ff-fab.github.io/lumehaven/adr/)                           |
-| DevContainer details | [.devcontainer/README.md](.devcontainer/README.md)                             |
+| Topic              | Where                                                                          |
+| ------------------ | ------------------------------------------------------------------------------ |
+| Development setup  | [Tutorial](https://ff-fab.github.io/lumehaven/tutorials/development-setup/)    |
+| Coding standards   | [Standards](https://ff-fab.github.io/lumehaven/contributing/coding-standards/) |
+| Testing & coverage | [How-To](https://ff-fab.github.io/lumehaven/how-to/testing/)                   |
+| Architecture       | [Explanation](https://ff-fab.github.io/lumehaven/explanation/architecture/)    |
+| Configuration      | [Reference](https://ff-fab.github.io/lumehaven/reference/configuration/)       |
+| Adding adapters    | [How-To](https://ff-fab.github.io/lumehaven/how-to/add-adapter/)               |
+| ADRs               | [decisions](https://ff-fab.github.io/lumehaven/adr/)                           |
 
 ## Questions?
 
