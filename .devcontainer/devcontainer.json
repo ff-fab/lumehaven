@@ -150,7 +150,8 @@
         "GitHub.copilot-chat",
         "eamodio.gitlens",
         "ryanluker.vscode-coverage-gutters",
-        "task.vscode-task"
+        "task.vscode-task",
+        "planet57.vscode-beads"
       ]
     }
   },

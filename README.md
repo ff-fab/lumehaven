@@ -115,10 +115,8 @@ task --list            # Show all available tasks
 lumehaven/
 ├── .devcontainer/              # DevContainer configuration
 │   ├── devcontainer.json       # Container setup + VS Code settings
-│   ├── docker-compose.yml      # Docker Compose definition
 │   ├── Dockerfile              # Container image
 │   ├── post-create.sh          # Auto-setup script
-│   └── README.md               # DevContainer documentation
 ├── packages/
 │   ├── backend/                # Python FastAPI backend
 │   │   ├── src/lumehaven/      # Source code
@@ -130,15 +128,11 @@ lumehaven/
 │       └── package.json        # Node dependencies, scripts
 ├── docs/                       # Documentation
 │   ├── adr/                    # Architecture Decision Records
+│   ├── demos/                  # Showboat agent demo proofs
 │   ├── ll/                     # Lessons learned from PoC
-│   ├── planning/               # Decisions, design docs
-│   ├── DEVELOPMENT-ENVIRONMENT.md  # Development guide
-│   └── TODO/                   # Task backlog
-├── .prettierrc.json            # Frontend formatter config
-├── .gitattributes              # Cross-platform line ending rules
+│   └── TODO/                   # Pending decisions and deferred topics
 ├── VERSIONING.md               # Version management documentation
 ├── mkdocs.yml                  # Documentation site config
-└── README.md                   # This file
 ```
 
 ## Code Quality
@@ -211,26 +205,8 @@ Run `task plan` to see phase progress, or `bd ready` for available work.
 
 ## Documentation
 
-Full development guide:
-[docs/DEVELOPMENT-ENVIRONMENT.md](docs/DEVELOPMENT-ENVIRONMENT.md)
-
-DevContainer guide: [.devcontainer/README.md](.devcontainer/README.md)
-
 Architecture decisions: [docs/adr/](docs/adr/)
-
-Lessons from PoC: [docs/ll/](docs/ll/)
 
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
-
-## Lessons from Proof-of-Concept
-
-The `old/` directory contains a working PoC that informed this project. Key learnings:
-
-- **SSE in React** — Must use `useEffect` with proper cleanup, not in render
-- **OpenHAB special values** — `"UNDEF"` and `"NULL"` are valid states
-- **Encoding issues** — OpenHAB SSE may have encoding problems
-- **Unit extraction** — Can derive from `stateDescription.pattern` metadata
-
-See [docs/ll/](docs/ll/) for detailed lessons learned.

@@ -188,6 +188,7 @@ nav:
 exclude_docs: |
   planning/
   TODO/
+  demos/
 
 extra:
   social:
