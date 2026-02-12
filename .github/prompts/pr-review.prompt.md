@@ -1,9 +1,6 @@
 ---
-mode: agent
-description: >
-  Evaluate PR findings, CI results, and reviewer comments. Suggest fixes and
-  improvements while teaching design patterns, SOLID principles, and language idioms
-  relevant to the changes.
+agent: agent
+description: 'Evaluate PR findings, CI results, and reviewer comments. Suggest fixes and improvements while teaching design patterns, SOLID principles, and language idioms relevant to the changes.'
 ---
 
 # PR Review & Learning
