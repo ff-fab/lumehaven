@@ -39,6 +39,7 @@ lumehaven/
 │   └── frontend/             # Reference dashboard SPA (ADR-009)
 ├── docs/
 │   ├── adr/                  # Architecture Decision Records (authoritative)
+│   ├── demos/                # Showboat proof-of-work demos (not published)
 │   ├── planning/             # Decision tracker, design docs
 │   └── TODO/                 # Technical debt, deferred items
 └── old/                      # PoC reference (do not modify)
@@ -83,7 +84,17 @@ lumehaven/
    - shared fixtures (in tests/fixtures/) should be used to avoid duplication
    - always ensure tests incl. fixtures, documentation and feature are in sync
 
-4. **Close beads tasks and commit state**
+4. **Create showboat demo** (if code or config changed) — see `AGENTS.md` for full
+   instructions:
+
+   ```bash
+   showboat init docs/demos/<branch-name>.md "<Title>"
+   showboat note docs/demos/<branch-name>.md "What was changed and why."
+   showboat exec docs/demos/<branch-name>.md bash "<proof command>"
+   showboat verify docs/demos/<branch-name>.md  # Must exit 0
+   ```
+
+5. **Close beads tasks and commit state**
 
    ```bash
    bd close <id>         # Close finished work
@@ -91,7 +102,7 @@ lumehaven/
    git add .beads/ && git commit -m "chore: sync beads state"
    ```
 
-5. **Push and create pull request**
+6. **Push and create pull request**
 
    ```bash
    git push -u origin feature/description

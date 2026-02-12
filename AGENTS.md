@@ -21,25 +21,33 @@ until `git push` succeeds.
 
 1. **File issues for remaining work** - Create issues for anything that needs follow-up
 2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Close beads tasks and commit** - Beads state MUST be committed before pushing:
+3. **Create showboat demo** (if code or config changed) - Document and prove your work:
+   ```bash
+   showboat init docs/demos/<branch-name>.md "<Title of Work>"
+   showboat note docs/demos/<branch-name>.md "Description of what was done and why."
+   showboat exec docs/demos/<branch-name>.md bash "<command that proves it works>"
+   showboat verify docs/demos/<branch-name>.md  # Must exit 0
+   ```
+   See [Showboat Demos](#showboat-demos-proof-of-work) below for details.
+4. **Close beads tasks and commit** - Beads state MUST be committed before pushing:
    ```bash
    bd close <id>                # Close finished work
    bd sync                      # Export to JSONL
    git add .beads/ && git commit -m "chore: sync beads state"
    ```
-4. **PUSH TO REMOTE** - This is MANDATORY:
+5. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
    git push
    git status  # MUST show "up to date with origin"
    ```
-5. **Create PR** (if new branch):
+6. **Create PR** (if new branch):
    ```bash
    gh pr create
    ```
-6. **Clean up** - Clear stashes, prune remote branches
-7. **Verify** - All changes committed AND pushed
-8. **Hand off** - Provide context for next session
+7. **Clean up** - Clear stashes, prune remote branches
+8. **Verify** - All changes committed AND pushed
+9. **Hand off** - Provide context for next session
 
 **CRITICAL RULES:**
 
@@ -69,3 +77,67 @@ item. The gate task references the TODO doc but contains no decision logic itsel
 
 - Date-triggered TODOs stay markdown-only
 - When closing a gate task: create an ADR, update the TODO, or create new tasks
+
+## Showboat Demos (Proof of Work)
+
+**Showboat** creates executable demo documents that prove an agent's work. Every session
+that changes code or configuration MUST produce a showboat demo before pushing.
+
+### What is a Showboat Demo?
+
+A markdown file that mixes commentary with executable code blocks and their captured
+output. The demo serves as both:
+
+- **Documentation** — what was changed and why
+- **Reproducible proof** — `showboat verify` re-runs all code blocks and confirms
+  outputs match
+
+### When to Create a Demo
+
+- **Required:** Any session that changes code, configuration, or infrastructure
+- **Skip:** Documentation-only changes, beads-only changes, trivial formatting fixes
+
+### How to Create a Demo
+
+```bash
+# 1. Initialize the demo (use the branch name as filename)
+showboat init docs/demos/<branch-name>.md "<Title describing the work>"
+
+# 2. Add commentary explaining what was done
+showboat note docs/demos/<branch-name>.md "Describe the change and its purpose."
+
+# 3. Run commands that prove it works (output is captured automatically)
+showboat exec docs/demos/<branch-name>.md bash "<test or verification command>"
+
+# 4. If a command fails, remove it and redo
+showboat pop docs/demos/<branch-name>.md
+showboat exec docs/demos/<branch-name>.md bash "<corrected command>"
+
+# 5. Verify the demo is reproducible (MUST exit 0)
+showboat verify docs/demos/<branch-name>.md
+```
+
+### Demo Content Guidelines
+
+The agent decides the scope based on work complexity:
+
+- **Simple fix:** Note explaining the fix + one `exec` proving the test passes
+- **New feature:** Notes on design choices + multiple `exec` blocks showing the feature
+  works (API responses, test runs, etc.)
+- **Refactoring:** Before/after notes + proof that tests still pass
+
+### Conventions
+
+| Convention    | Value                            |
+| ------------- | -------------------------------- |
+| **Location**  | `docs/demos/`                    |
+| **Filename**  | `<branch-name>.md`               |
+| **Committed** | Yes — part of the PR             |
+| **MkDocs**    | Excluded (not published to site) |
+| **Verify**    | `showboat verify` must exit 0    |
+
+### Reference
+
+- [Showboat README](https://github.com/simonw/showboat)
+- Installed in devcontainer via `uv tool install showboat`
+- Key commands: `init`, `note`, `exec`, `pop`, `verify`, `extract`

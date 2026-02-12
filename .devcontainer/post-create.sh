@@ -53,6 +53,11 @@ fi
 echo "🔮 Installing beads MCP server..."
 uv tool install beads-mcp 2>/dev/null || echo "⚠️  beads-mcp install had issues, continuing..."
 
+# Install showboat — executable demo documents for agent work verification
+# https://github.com/simonw/showboat
+echo "🚢 Installing showboat..."
+uv tool install showboat 2>/dev/null || echo "⚠️  showboat install had issues, continuing..."
+
 # Initialize beads issue tracker if not already done
 cd /workspace
 if [ ! -d ".beads" ]; then

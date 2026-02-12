@@ -65,3 +65,15 @@ forgotten.
   Hooks installed for `pre-push` (auto-syncs uncommitted JSONL) and `post-merge`
   (imports upstream JSONL changes after pull).
 - **Resolved:** February 2026
+
+### T8: E2E Testing Tool Evaluation
+
+- **Source:** ADR-006 (Testing Strategy), Phase 4 planning
+- **Document:** [e2e-testing-tool-evaluation.md](e2e-testing-tool-evaluation.md)
+- **Note:** ADR-006 Phase 4 assumes RF + Browser Library for E2E tests. New tools
+  (Rodney — CLI-driven Chrome automation) warrant a full evaluation against Playwright,
+  Selenium, Cypress, and RF+Browser Library before committing to an implementation.
+- **Options:** 5 candidates evaluated with weighted decision matrix
+- **Trigger:** Phase 4 — before implementing E2E tests (`lh-809.2`)
+- **Gate task:** Beads gate task blocks `lh-809.2` until resolved
+- **Outcome:** ADR-012 or amendment to ADR-006

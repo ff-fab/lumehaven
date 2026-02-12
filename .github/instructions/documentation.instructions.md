@@ -13,7 +13,7 @@ applyTo: '**/*.md'
 | Theme           | Material for MkDocs                                     |
 | Python API Docs | mkdocstrings                                            |
 | Structure       | Diátaxis (Tutorials / How-To / Reference / Explanation) |
-| CLI             | `mkdocs serve`, `mkdocs build`                          |
+| CLI             | `task docs:serve`, `task docs:build`                    |
 
 ## ADR Format
 
@@ -72,4 +72,5 @@ _<Date>_
 | ADRs               | `docs/adr/`      |
 | Planning/Decisions | `docs/planning/` |
 | Pending Decisions  | `docs/TODO/`     |
+| Agent Demo Proofs  | `docs/demos/`    |
 | Work Tracking      | `.beads/`        |
