@@ -6,9 +6,10 @@
 
 <!-- Bullet list of key changes -->
 
-## Checklist
+## Quality Gates
 
-- [ ] Tests pass locally (`task test:be` / `task test:fe`)
-- [ ] Beads tasks updated (`bd close <id>` + committed before push)
+- [ ] `task pre-pr` passes (pre-commit + lint + typecheck + tests + coverage thresholds)
+- [ ] Beads tasks closed and committed (`bd close <id> && bd sync`)
 - [ ] Documentation updated (if user-facing changes)
 - [ ] ADR created (if architectural decision)
+- [ ] Showboat demo created (if significant feature — `docs/demos/<branch-name>.md`)

@@ -316,6 +316,13 @@ tasks:
       - task: typecheck
       - task: test
 
+  pre-pr:
+    desc: Run all pre-PR quality gates (pre-commit + check + coverage thresholds)
+    cmds:
+      - pre-commit run --all-files
+      - task: check
+      - task: test:be:thresholds
+
   # ===========================================================================
   # Documentation
   # ===========================================================================
