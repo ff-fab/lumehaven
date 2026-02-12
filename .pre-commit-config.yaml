@@ -62,7 +62,8 @@ repos:
         exclude: |
           (?x)^(
             packages/backend/.*|
-            old/.*
+            old/.*|
+            .*\.prompt\.md$
           )$
 
   # Ruff: Lint and format Python

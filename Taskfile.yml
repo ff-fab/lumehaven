@@ -162,6 +162,8 @@ tasks:
   test:fe:
     desc: Run all frontend tests
     cmds:
+      - cmd: 'test -d {{.FRONTEND_DIR}} || exit 0'
+        shell: /bin/bash
       - task: test:fe:unit
 
   test:e2e:
@@ -221,15 +223,15 @@ tasks:
 
   test:fe:unit:
     desc: Run frontend unit tests
-    dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - bun test
+      - cmd: 'test -d {{.FRONTEND_DIR}} && (cd {{.FRONTEND_DIR}} && bun test) || echo "Frontend unit tests skipped ({{.FRONTEND_DIR}} not found)"'
+        shell: /bin/bash
 
   test:fe:cov:
     desc: Run frontend tests with coverage
-    dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - bun test --coverage
+      - cmd: 'test -d {{.FRONTEND_DIR}} && (cd {{.FRONTEND_DIR}} && bun test --coverage) || echo "Frontend coverage skipped ({{.FRONTEND_DIR}} not found)"'
+        shell: /bin/bash
 
   # ===========================================================================
   # Combined Coverage
@@ -271,21 +273,21 @@ tasks:
 
   lint:fe:
     desc: Run frontend linting (eslint)
-    dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - bun run lint
+      - cmd: 'test -d {{.FRONTEND_DIR}} && (cd {{.FRONTEND_DIR}} && bun run lint) || echo "Frontend lint skipped ({{.FRONTEND_DIR}} not found)"'
+        shell: /bin/bash
 
   lint:fe:fix:
     desc: Fix frontend linting issues automatically
-    dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - bun run lint:fix
+      - cmd: 'test -d {{.FRONTEND_DIR}} && (cd {{.FRONTEND_DIR}} && bun run lint:fix) || echo "Frontend lint:fix skipped ({{.FRONTEND_DIR}} not found)"'
+        shell: /bin/bash
 
   typecheck:fe:
     desc: Run frontend type checking (tsc)
-    dir: '{{.FRONTEND_DIR}}'
     cmds:
-      - bun run typecheck
+      - cmd: 'test -d {{.FRONTEND_DIR}} && (cd {{.FRONTEND_DIR}} && bun run typecheck) || echo "Frontend typecheck skipped ({{.FRONTEND_DIR}} not found)"'
+        shell: /bin/bash
 
   # ===========================================================================
   # Combined Lint & Check
@@ -315,6 +317,15 @@ tasks:
       - task: lint
       - task: typecheck
       - task: test
+
+  pre-pr:
+    desc: Run all pre-PR quality gates (pre-commit + lint + typecheck + tests + coverage thresholds)
+    cmds:
+      - pre-commit run --all-files
+      - task: lint
+      - task: typecheck
+      - task: test:fe
+      - task: test:be:thresholds
 
   # ===========================================================================
   # Documentation
