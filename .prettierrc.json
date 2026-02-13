@@ -15,6 +15,13 @@
       }
     },
     {
+      "files": ["*.instructions.md"],
+      "options": {
+        "printWidth": 1000,
+        "proseWrap": "preserve"
+      }
+    },
+    {
       "files": ["*.json"],
       "options": {
         "parser": "json"

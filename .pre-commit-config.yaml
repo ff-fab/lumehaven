@@ -63,7 +63,8 @@ repos:
           (?x)^(
             packages/backend/.*|
             old/.*|
-            .*\.prompt\.md$
+            .*\.prompt\.md$|
+            .*\.instructions\.md$
           )$
 
   # Ruff: Lint and format Python
