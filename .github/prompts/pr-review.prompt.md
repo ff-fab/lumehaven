@@ -6,8 +6,7 @@ description: 'Evaluate PR findings, CI results, and reviewer comments. Suggest f
 # PR Review & Learning
 
 Analyze the current pull request and provide actionable feedback with educational
-context. This prompt replaces the manual "evaluate the findings and comments of the PR
-and suggest fixes and improvements" workflow.
+context.
 
 ## Context Gathering
 

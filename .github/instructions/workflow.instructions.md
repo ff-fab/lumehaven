@@ -1,6 +1,5 @@
 ---
-description:
-  'Development workflow: Git flow, issue tracking, quality gates, session completion'
+description: 'Development workflow: Git flow, issue tracking, quality gates, session completion'
 applyTo: '**'
 ---
 

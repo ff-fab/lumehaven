@@ -1,8 +1,6 @@
 ---
 description: 'TypeScript frontend development - React, Vite, bun'
-applyTo:
-  'packages/frontend/**/*.{ts,tsx,js,jsx}, packages/core/**/*.{ts,tsx,js,jsx},
-  packages/react/**/*.{ts,tsx,js,jsx}'
+applyTo: 'packages/frontend/**/*.{ts,tsx,js,jsx}, packages/core/**/*.{ts,tsx,js,jsx}, packages/react/**/*.{ts,tsx,js,jsx}'
 ---
 
 # TypeScript Frontend Instructions
