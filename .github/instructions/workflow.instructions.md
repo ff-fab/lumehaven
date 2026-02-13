@@ -102,11 +102,12 @@ Run `task pre-pr` to execute all quality gates before creating a PR. This task r
 
 1. `pre-commit run --all-files` — formatting, whitespace, spelling, merge conflicts,
    private key detection, editorconfig compliance
-2. `task check` — lint (ruff + eslint), typecheck (mypy + tsc), all tests (pytest +
-   Robot Framework + bun test)
-3. `task test:be:thresholds` — per-module coverage threshold enforcement
+2. `task lint` — ruff (backend) + eslint (frontend, if present)
+3. `task typecheck` — mypy (backend) + tsc (frontend, if present)
+4. `task test:fe` — frontend unit tests (skipped if no frontend directory)
+5. `task test:be:thresholds` — pytest with per-module coverage threshold enforcement
 
-All three must pass before pushing.
+All steps must pass before pushing.
 
 ## Session Completion ("Landing the Plane")
 

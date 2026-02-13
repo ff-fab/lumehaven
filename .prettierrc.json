@@ -9,16 +9,16 @@
   "endOfLine": "lf",
   "overrides": [
     {
+      "files": ["*.md"],
+      "options": {
+        "proseWrap": "always"
+      }
+    },
+    {
       "files": ["*.instructions.md"],
       "options": {
         "printWidth": 1000,
         "proseWrap": "preserve"
-      }
-    },
-    {
-      "files": ["*.md"],
-      "options": {
-        "proseWrap": "always"
       }
     },
     {
