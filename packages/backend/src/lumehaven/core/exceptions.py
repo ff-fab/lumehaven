@@ -3,7 +3,8 @@
 Exception hierarchy:
     LumehavenError (base)
     ├── SmartHomeConnectionError
-    └── AdapterError
+    ├── AdapterError
+    └── SignalNotFoundError
 """
 
 
@@ -54,3 +55,18 @@ class AdapterError(LumehavenError):
     def __init__(self, adapter: str, message: str) -> None:
         self.adapter = adapter
         super().__init__(f"[{adapter}] {message}")
+
+
+class SignalNotFoundError(LumehavenError):
+    """Raised when a signal ID does not exist in the adapter.
+
+    Used by ``send_command()`` (ADR-011) when the target signal cannot
+    be resolved.  Maps to HTTP 404 in the REST API.
+
+    Attributes:
+        signal_id: The signal ID that was not found.
+    """
+
+    def __init__(self, signal_id: str) -> None:
+        self.signal_id = signal_id
+        super().__init__(f"Signal not found: {signal_id}")

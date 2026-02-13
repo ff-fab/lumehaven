@@ -15,6 +15,7 @@ from __future__ import annotations
 import pytest
 
 from lumehaven.adapters.openhab.adapter import OpenHABAdapter
+from lumehaven.core.signal import SignalType
 from tests.fixtures.openhab_responses import (
     COLOR_ITEM,
     CONTACT_ITEM,
@@ -213,7 +214,11 @@ class TestExtractSignalDefault:
         signal, metadata = adapter._extract_signal(item)
 
         assert signal.unit == ""
-        assert signal.value == item["state"]
+        # Boolean items (Switch/Contact) have coerced values
+        if item["type"] in ("Switch", "Contact"):
+            assert isinstance(signal.value, bool)
+        else:
+            assert signal.value == item["state"]
 
 
 class TestExtractSignalEdgeCases:
@@ -231,11 +236,221 @@ class TestExtractSignalEdgeCases:
         assert signal.label == NO_LABEL_ITEM["name"]
 
     def test_special_states_preserved(self, adapter: OpenHABAdapter) -> None:
-        """UNDEF and NULL states are preserved as-is."""
+        """UNDEF and NULL states produce unavailable signals with None value."""
         adapter._default_units = {"Temperature": "°C"}
 
         undef_signal, _ = adapter._extract_signal(UNDEF_ITEM)
         null_signal, _ = adapter._extract_signal(NULL_ITEM)
 
-        assert undef_signal.value == "UNDEF"
-        assert null_signal.value == "NULL"
+        assert undef_signal.value is None
+        assert undef_signal.available is False
+        assert undef_signal.display_value == ""
+        assert undef_signal.signal_type == SignalType.NUMBER
+
+        assert null_signal.value is None
+        assert null_signal.available is False
+        assert null_signal.display_value == ""
+        assert null_signal.signal_type == SignalType.NUMBER
+
+
+# =========================================================================
+# ADR-010 enrichment tests — typed value, display_value, signal_type
+# =========================================================================
+
+
+class TestEnrichmentSignalType:
+    """Tests for signal_type mapping from OpenHAB item types.
+
+    Technique: Decision Table — every OpenHAB base type maps to a SignalType.
+    """
+
+    @pytest.mark.parametrize(
+        ("item", "expected_type"),
+        [
+            (TEMPERATURE_ITEM, SignalType.NUMBER),  # Number:Temperature
+            (POWER_ITEM, SignalType.NUMBER),  # Number:Power
+            (ENERGY_ITEM, SignalType.NUMBER),  # Number:Energy
+            (SWITCH_ITEM, SignalType.BOOLEAN),
+            (CONTACT_ITEM, SignalType.BOOLEAN),
+            (DATETIME_ITEM, SignalType.DATETIME),
+            (STRING_ITEM, SignalType.STRING),
+            (PLAYER_ITEM, SignalType.ENUM),
+            (COLOR_ITEM, SignalType.STRING),
+            (LOCATION_ITEM, SignalType.STRING),
+            (DIMMER_ITEM, SignalType.NUMBER),
+            (ROLLERSHUTTER_ITEM, SignalType.NUMBER),
+            (DIMENSIONLESS_ITEM, SignalType.NUMBER),  # Number:Dimensionless
+        ],
+        ids=[
+            "number_temperature",
+            "number_power",
+            "number_energy",
+            "switch",
+            "contact",
+            "datetime",
+            "string",
+            "player",
+            "color",
+            "location",
+            "dimmer",
+            "rollershutter",
+            "dimensionless",
+        ],
+    )
+    def test_signal_type_from_item_type(
+        self,
+        adapter: OpenHABAdapter,
+        item: dict,
+        expected_type: SignalType,
+    ) -> None:
+        """Each OpenHAB item type maps to the correct SignalType."""
+        adapter._default_units = {"Temperature": "°C", "Power": "W", "Energy": "kWh"}
+        signal, _ = adapter._extract_signal(item)
+        assert signal.signal_type == expected_type
+
+    def test_transformed_items_are_always_string(self, adapter: OpenHABAdapter) -> None:
+        """Transformed items always have signal_type STRING."""
+        adapter._default_units = {"Temperature": "°C", "Time": "s", "Angle": "°"}
+        for item in TRANSFORMED_ITEMS:
+            signal, _ = adapter._extract_signal(item)
+            assert signal.signal_type == SignalType.STRING
+
+
+class TestEnrichmentTypedValue:
+    """Tests for value type coercion per ADR-010 mapping rules.
+
+    Technique: Equivalence Partitioning — type coercion per signal_type.
+    """
+
+    def test_number_value_is_float(self, adapter: OpenHABAdapter) -> None:
+        """Number:Temperature '21.5 °C' → value=21.5 (float)."""
+        adapter._default_units = {"Temperature": "°C"}
+        signal, _ = adapter._extract_signal(TEMPERATURE_ITEM)
+        assert signal.value == 21.5
+        assert isinstance(signal.value, float)
+
+    def test_whole_number_value_is_int(self, adapter: OpenHABAdapter) -> None:
+        """Number:Power '1250 W' → value=1250 (int)."""
+        adapter._default_units = {"Power": "W"}
+        signal, _ = adapter._extract_signal(POWER_ITEM)
+        assert signal.value == 1250
+        assert isinstance(signal.value, int)
+
+    def test_switch_on_is_true(self, adapter: OpenHABAdapter) -> None:
+        """Switch 'ON' → value=True."""
+        adapter._default_units = {}
+        signal, _ = adapter._extract_signal(SWITCH_ITEM)
+        assert signal.value is True
+
+    def test_contact_closed_is_false(self, adapter: OpenHABAdapter) -> None:
+        """Contact 'CLOSED' → value=False (not open)."""
+        adapter._default_units = {}
+        signal, _ = adapter._extract_signal(CONTACT_ITEM)
+        assert signal.value is False
+
+    def test_string_value_unchanged(self, adapter: OpenHABAdapter) -> None:
+        """String items keep their string value."""
+        adapter._default_units = {}
+        signal, _ = adapter._extract_signal(STRING_ITEM)
+        assert signal.value == "Partly Cloudy"
+        assert isinstance(signal.value, str)
+
+    def test_datetime_value_is_string(self, adapter: OpenHABAdapter) -> None:
+        """DateTime items keep their ISO string value."""
+        adapter._default_units = {}
+        signal, _ = adapter._extract_signal(DATETIME_ITEM)
+        assert signal.value == DATETIME_ITEM["state"]
+        assert isinstance(signal.value, str)
+
+    def test_dimmer_value_is_int(self, adapter: OpenHABAdapter) -> None:
+        """Dimmer '75' → value=75 (int)."""
+        adapter._default_units = {}
+        signal, _ = adapter._extract_signal(DIMMER_ITEM)
+        assert signal.value == 75
+        assert isinstance(signal.value, int)
+
+    def test_rollershutter_value_is_int(self, adapter: OpenHABAdapter) -> None:
+        """Rollershutter '30' → value=30 (int)."""
+        adapter._default_units = {}
+        signal, _ = adapter._extract_signal(ROLLERSHUTTER_ITEM)
+        assert signal.value == 30
+        assert isinstance(signal.value, int)
+
+    def test_player_value_is_string(self, adapter: OpenHABAdapter) -> None:
+        """Player 'PAUSE' → value='PAUSE' (enum string)."""
+        adapter._default_units = {}
+        signal, _ = adapter._extract_signal(PLAYER_ITEM)
+        assert signal.value == "PAUSE"
+
+
+class TestEnrichmentDisplayValue:
+    """Tests for display_value field per ADR-010.
+
+    Technique: Specification-based — display_value is the formatted string.
+    """
+
+    def test_number_display_value(self, adapter: OpenHABAdapter) -> None:
+        """display_value is the format-applied string, not the typed value."""
+        adapter._default_units = {"Temperature": "°C"}
+        signal, _ = adapter._extract_signal(TEMPERATURE_ITEM)
+        assert signal.display_value == "21.5"
+        assert isinstance(signal.display_value, str)
+
+    def test_switch_display_value(self, adapter: OpenHABAdapter) -> None:
+        """Switch display_value is the raw state string."""
+        adapter._default_units = {}
+        signal, _ = adapter._extract_signal(SWITCH_ITEM)
+        assert signal.display_value == "ON"
+
+    def test_transformed_display_value(self, adapter: OpenHABAdapter) -> None:
+        """Transformed items use transformedState as display_value."""
+        adapter._default_units = {"Time": "s", "Angle": "°"}
+        for item in TRANSFORMED_ITEMS:
+            signal, _ = adapter._extract_signal(item)
+            assert signal.display_value == item["transformedState"]
+
+    def test_unavailable_display_value_is_empty(self, adapter: OpenHABAdapter) -> None:
+        """Unavailable signals have empty display_value."""
+        adapter._default_units = {"Temperature": "°C"}
+        signal, _ = adapter._extract_signal(UNDEF_ITEM)
+        assert signal.display_value == ""
+
+
+class TestEnrichmentAvailability:
+    """Tests for available flag per ADR-010 availability rules.
+
+    Technique: Boundary Value — UNDEF/NULL boundary.
+    """
+
+    def test_normal_signal_is_available(self, adapter: OpenHABAdapter) -> None:
+        """Normal signals have available=True."""
+        adapter._default_units = {"Temperature": "°C"}
+        signal, _ = adapter._extract_signal(TEMPERATURE_ITEM)
+        assert signal.available is True
+
+    def test_undef_is_unavailable(self, adapter: OpenHABAdapter) -> None:
+        """UNDEF state → available=False, value=None."""
+        adapter._default_units = {"Temperature": "°C"}
+        signal, _ = adapter._extract_signal(UNDEF_ITEM)
+        assert signal.available is False
+        assert signal.value is None
+
+    def test_null_is_unavailable(self, adapter: OpenHABAdapter) -> None:
+        """NULL state → available=False, value=None."""
+        adapter._default_units = {}
+        signal, _ = adapter._extract_signal(NULL_ITEM)
+        assert signal.available is False
+        assert signal.value is None
+
+    def test_unavailable_preserves_signal_type(self, adapter: OpenHABAdapter) -> None:
+        """Unavailable signals still have the correct signal_type."""
+        adapter._default_units = {"Temperature": "°C"}
+        signal, _ = adapter._extract_signal(UNDEF_ITEM)
+        # UNDEF_ITEM is Number:Temperature → signal_type should be NUMBER
+        assert signal.signal_type == SignalType.NUMBER
+
+    def test_unavailable_preserves_unit(self, adapter: OpenHABAdapter) -> None:
+        """Unavailable QuantityType signals still have the unit."""
+        adapter._default_units = {"Temperature": "°C"}
+        signal, _ = adapter._extract_signal(UNDEF_ITEM)
+        assert signal.unit == "°C"

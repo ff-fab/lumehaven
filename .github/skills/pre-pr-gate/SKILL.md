@@ -1,6 +1,6 @@
 ---
 name: pre-pr-gate
-description: >
+description:
   Pre-PR quality gate workflow. Use when preparing to create a pull request, finishing a
   task, completing a work session, or when the user says "let's wrap up", "land the
   plane", "prepare a PR", or "session complete". Runs deterministic quality checks,

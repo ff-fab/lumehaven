@@ -17,6 +17,7 @@ import pytest
 
 from lumehaven.adapters.openhab.adapter import OpenHABAdapter
 from lumehaven.core.exceptions import SmartHomeConnectionError
+from lumehaven.core.signal import SignalType
 from tests.fixtures.openhab_responses import ALL_ITEMS, TEMPERATURE_ITEM
 
 if TYPE_CHECKING:
@@ -153,9 +154,12 @@ class TestGetSignal:
         signal = await adapter.get_signal("LivingRoom_Temperature")
 
         assert signal.id == "oh:LivingRoom_Temperature"
-        assert signal.value == "21.5"
+        assert signal.value == 21.5
+        assert signal.display_value == "21.5"
         assert signal.unit == "°C"
         assert signal.label == "Living Room Temperature"
+        assert signal.available is True
+        assert signal.signal_type == SignalType.NUMBER
 
     async def test_returns_none_for_missing_item(
         self,

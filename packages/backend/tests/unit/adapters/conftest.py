@@ -19,7 +19,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 from lumehaven.adapters.manager import AdapterManager
-from lumehaven.core.signal import Signal
+from lumehaven.core.exceptions import SignalNotFoundError
+from lumehaven.core.signal import Signal, SignalType
 from lumehaven.state.store import SignalStore
 
 if TYPE_CHECKING:
@@ -69,6 +70,10 @@ class MockAdapter:
     get_signals_call_count: int = 0
     subscribe_events_call_count: int = 0
     close_call_count: int = 0
+    send_command_call_count: int = 0
+    last_command: tuple[str, str] | None = None
+    should_fail_command: bool = False
+    command_error_message: str = "Command delivery failed"
 
     # Internal state
     _connected: bool = False
@@ -162,6 +167,22 @@ class MockAdapter:
         # Signal event stream to close
         await self._event_queue.put(None)
 
+    async def send_command(self, signal_id: str, command: str) -> None:
+        """Send a command to a signal/device (ADR-011).
+
+        Raises:
+            SignalNotFoundError: If signal_id not in signals_to_return.
+            ConnectionError: If should_fail_command is True.
+        """
+        self.send_command_call_count += 1
+        self.last_command = (signal_id, command)
+
+        if self.should_fail_command:
+            raise ConnectionError(self.command_error_message)
+
+        if signal_id not in self.signals_to_return:
+            raise SignalNotFoundError(signal_id)
+
     # ==========================================================================
     # Test helper methods
     # ==========================================================================
@@ -179,6 +200,8 @@ class MockAdapter:
         self.get_signals_call_count = 0
         self.subscribe_events_call_count = 0
         self.close_call_count = 0
+        self.send_command_call_count = 0
+        self.last_command = None
 
 
 # =============================================================================
@@ -228,12 +251,22 @@ def mock_adapter_factory() -> Callable[..., MockAdapter]:
 
 @pytest.fixture
 def sample_signals() -> dict[str, Signal]:
-    """Sample signals for adapter tests."""
+    """Sample signals for adapter tests (ADR-010 enriched)."""
     return {
         "mock:temp_1": Signal(
-            id="mock:temp_1", value="21.5", unit="°C", label="Temperature"
+            id="mock:temp_1",
+            value=21.5,
+            display_value="21.5",
+            unit="°C",
+            label="Temperature",
+            signal_type=SignalType.NUMBER,
         ),
         "mock:switch_1": Signal(
-            id="mock:switch_1", value="ON", unit="", label="Light Switch"
+            id="mock:switch_1",
+            value=True,
+            display_value="ON",
+            unit="",
+            label="Light Switch",
+            signal_type=SignalType.BOOLEAN,
         ),
     }
