@@ -26,6 +26,7 @@ import httpx
 import pytest
 
 from lumehaven.adapters.openhab.adapter import OpenHABAdapter
+from lumehaven.core.signal import SignalType
 from tests.fixtures.openhab_responses import (
     DIMENSIONLESS_ITEM,
     TEMPERATURE_ITEM,
@@ -101,8 +102,10 @@ class TestProcessEventQuantityType:
             break
 
         assert len(signals) == 1
-        assert signals[0].value == "22.5"
+        assert signals[0].value == 22.5
+        assert signals[0].display_value == "22.5"
         assert signals[0].unit == "°C"
+        assert signals[0].signal_type == SignalType.NUMBER
 
 
 @pytest.mark.httpx_mock(can_send_already_matched_responses=True)
@@ -199,8 +202,10 @@ class TestProcessEventRawState:
             break
 
         assert len(signals) == 1
-        # Value is formatted via %.1f pattern from DIMENSIONLESS_ITEM
-        assert signals[0].value == "75.0"
+        # Value is formatted via %.1f pattern; coerced to int since 75.0 is whole
+        assert signals[0].value == 75
+        assert signals[0].display_value == "75.0"
+        assert signals[0].signal_type == SignalType.NUMBER
 
 
 @pytest.mark.httpx_mock(can_send_already_matched_responses=True)
@@ -247,8 +252,9 @@ class TestProcessEventErrorHandling:
             break
 
         assert len(signals) == 1
-        # ftfy should fix the encoding
-        assert "Â" not in signals[0].value
+        # ftfy should fix the encoding; value is a typed float
+        assert signals[0].value == 22.5
+        assert "Â" not in signals[0].display_value
 
 
 @pytest.mark.httpx_mock(can_send_already_matched_responses=True)
@@ -258,13 +264,13 @@ class TestProcessEventException:
     Technique: Error Guessing — exception in processing path.
     """
 
-    async def test_skips_events_with_none_state(
+    async def test_handles_none_state_as_unavailable(
         self,
         adapter: OpenHABAdapter,
         mock_root_response: dict,
         httpx_mock: HTTPXMock,
     ) -> None:
-        """Skips events with None state without raising."""
+        """None state produces an unavailable signal without raising."""
         items = [TEMPERATURE_ITEM]
         httpx_mock.add_response(
             url="http://openhab:8080/rest/", json=mock_root_response
@@ -295,8 +301,16 @@ class TestProcessEventException:
         signals = []
         async for signal in adapter.subscribe_events():
             signals.append(signal)
-            break  # Get first valid signal
+            if len(signals) == 2:
+                break
 
-        # Should get the valid signal, None was skipped
-        assert len(signals) == 1
-        assert signals[0].value == "21.0"
+        # First event: None state → unavailable signal (ADR-010)
+        assert signals[0].value is None
+        assert signals[0].available is False
+        assert signals[0].display_value == ""
+        assert signals[0].signal_type == SignalType.NUMBER
+
+        # Second event: valid state → enriched signal
+        assert signals[1].value == 21
+        assert signals[1].display_value == "21.0"
+        assert signals[1].available is True

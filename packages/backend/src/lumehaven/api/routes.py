@@ -55,6 +55,24 @@ class SignalResponse(BaseModel):
         )
 
 
+class CommandRequest(BaseModel):
+    """API request model for sending a command to a signal (ADR-011).
+
+    Commands are always string values matching the platform's native
+    command format.  The adapter translates as needed.
+
+    The endpoint ``POST /api/signals/{signal_id}/command`` accepts this
+    body and returns 202 Accepted (the actual state change arrives
+    asynchronously via SSE).
+
+    Example:
+        >>> CommandRequest(value="ON").model_dump()
+        {'value': 'ON'}
+    """
+
+    value: str
+
+
 class SignalsResponse(BaseModel):
     """API response model for multiple signals."""
 

@@ -186,7 +186,8 @@ class TestSubscribeEvents:
 
         assert len(signals) == 1
         assert signals[0].id == "oh:LivingRoom_Temperature"
-        assert signals[0].value == "22.0"
+        assert signals[0].value == 22
+        assert signals[0].display_value == "22.0"
 
     @pytest.mark.httpx_mock(can_send_already_matched_responses=True)
     async def test_subscribe_events_skips_non_data_lines(

@@ -10,7 +10,7 @@ Reference: old/backend/home-observer/units_of_measurement.json
 import re
 from typing import Literal
 
-from lumehaven.core.signal import is_undefined
+from lumehaven.core.signal import NULL_VALUE, UNDEFINED_VALUE
 
 # Default units by QuantityType for SI and US measurement systems
 # Reference: https://www.openhab.org/docs/concepts/units-of-measurement.html
@@ -149,7 +149,7 @@ def format_value(
         '42'
     """
     # Preserve undefined states
-    if is_undefined(state):
+    if state in (UNDEFINED_VALUE, NULL_VALUE):
         return state
 
     # No formatting needed

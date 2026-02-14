@@ -23,7 +23,13 @@ from lumehaven.adapters.openhab.units import (
     get_default_units,
 )
 from lumehaven.core.exceptions import SmartHomeConnectionError
-from lumehaven.core.signal import Signal
+from lumehaven.core.signal import (
+    NULL_VALUE,
+    UNDEFINED_VALUE,
+    Signal,
+    SignalType,
+    SignalValue,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -295,139 +301,256 @@ class OpenHABAdapter:
             if signal:
                 yield signal
 
-    def _extract_signal(self, item: dict[str, Any]) -> tuple[Signal, _ItemMetadata]:
-        """Extract a Signal and metadata from an OpenHAB item response.
+    @staticmethod
+    def _resolve_signal_type(base_type: str) -> SignalType:
+        """Map an OpenHAB base item type to a SignalType discriminator.
 
-        This handles the complex logic of determining units and formatting
-        based on item type, state patterns, and transformations.
+        This centralises the mapping so that both ``_extract_signal`` and
+        ``_process_event`` produce consistent ``signal_type`` values.
+
+        Args:
+            base_type: The base OpenHAB type (before the colon),
+                e.g. ``"Number"``, ``"Switch"``, ``"Dimmer"``.
+
+        Returns:
+            The corresponding ``SignalType``.
+        """
+        match base_type:
+            case "Number" | "Dimmer" | "Rollershutter":
+                return SignalType.NUMBER
+            case "Switch" | "Contact":
+                return SignalType.BOOLEAN
+            case "DateTime":
+                return SignalType.DATETIME
+            case "Player":
+                return SignalType.ENUM
+            case _:
+                return SignalType.STRING
+
+    @staticmethod
+    def _coerce_value(display: str, signal_type: SignalType) -> SignalValue:
+        """Coerce a formatted display string to a typed Python value.
+
+        The coercion rules follow the ADR-010 mapping table:
+
+        * ``NUMBER`` → ``int`` when the float value is a whole number,
+          otherwise ``float``.
+        * ``BOOLEAN`` → ``True`` for OpenHAB ``ON`` / ``OPEN``,
+          ``False`` for ``OFF`` / ``CLOSED``.
+        * Everything else → the original string.
+
+        Args:
+            display: The formatted value string (already stripped of units).
+            signal_type: The resolved ``SignalType``.
+
+        Returns:
+            A typed Python value suitable for ``Signal.value``.
+        """
+        if signal_type is SignalType.NUMBER:
+            try:
+                f = float(display)
+                return int(f) if f.is_integer() else f
+            except ValueError, TypeError:
+                return display
+        if signal_type is SignalType.BOOLEAN:
+            return display in ("ON", "OPEN")
+        return display
+
+    def _extract_signal(self, item: dict[str, Any]) -> tuple[Signal, _ItemMetadata]:
+        """Extract an enriched Signal and metadata from an OpenHAB item.
+
+        Produces an ADR-010 enriched Signal with typed ``value``,
+        ``display_value``, ``available`` flag, and ``signal_type``
+        discriminator.  Handles:
+
+        * TransformedState items (JS/MAP transformations)
+        * DateTime items (no unit)
+        * QuantityType items with/without ``stateDescription.pattern``
+        * Rollershutter/Dimmer implicit percentage
+        * Default items (Switch, String, Contact, …)
+        * Unavailable states (``UNDEF`` / ``NULL``)
 
         Args:
             item: Raw item data from OpenHAB REST API.
 
         Returns:
-            Tuple of (Signal, ItemMetadata for event processing).
+            Tuple of (enriched Signal, ItemMetadata for SSE processing).
         """
         name = item["name"]
-        label = item.get("label") or name  # Fall back to name if label is empty
+        label = item.get("label") or name
         state = item.get("state", "")
         item_type = item.get("type", "")
 
-        # Parse item type (e.g., "Number:Temperature" -> ["Number", "Temperature"])
         type_parts = item_type.split(":")
+        base_type = type_parts[0]
         is_quantity_type = len(type_parts) > 1
 
-        # If transformation was applied, use transformed state directly
+        signal_type = self._resolve_signal_type(base_type)
+        unavailable = state in (UNDEFINED_VALUE, NULL_VALUE)
+
+        # --- Determine unit, display_value, metadata per item structure ---
+
         if "transformedState" in item:
-            return Signal(
-                id=self._prefixed_id(name),
-                value=item["transformedState"],
-                unit="",
+            transformed = item["transformedState"]
+            display_value = "" if unavailable else transformed
+            typed_value: SignalValue = None if unavailable else transformed
+            unit = ""
+            # Transformed output is always a display string.
+            signal_type = SignalType.STRING
+            metadata = _ItemMetadata(
+                event_state_contains_unit=False,
                 label=label,
-            ), _ItemMetadata(event_state_contains_unit=False, label=label)
+                signal_type=SignalType.STRING,
+            )
 
-        # DateTime items have no units
-        if type_parts[0] == "DateTime":
-            return Signal(
-                id=self._prefixed_id(name),
-                value=state,
-                unit="",
+        elif base_type == "DateTime":
+            display_value = "" if unavailable else state
+            typed_value = None if unavailable else state
+            unit = ""
+            metadata = _ItemMetadata(
+                event_state_contains_unit=False,
                 label=label,
-            ), _ItemMetadata(event_state_contains_unit=False, label=label)
+                signal_type=SignalType.DATETIME,
+            )
 
-        # Check for custom unit in state description pattern
-        state_desc = item.get("stateDescription", {})
-        pattern = state_desc.get("pattern") if state_desc else None
-
-        if pattern:
+        elif (pattern := self._item_pattern(item)) is not None:
             unit, fmt = extract_unit_from_pattern(pattern)
-            value = format_value(state, unit, fmt, is_quantity_type)
-            return Signal(
-                id=self._prefixed_id(name),
-                value=value,
-                unit=unit,
-                label=label,
-            ), _ItemMetadata(
+            if unavailable:
+                display_value = ""
+                typed_value = None
+            else:
+                display_value = format_value(state, unit, fmt, is_quantity_type)
+                typed_value = self._coerce_value(display_value, signal_type)
+            metadata = _ItemMetadata(
                 unit=unit,
                 format=fmt,
                 is_quantity_type=is_quantity_type,
                 event_state_contains_unit=True,
                 label=label,
+                signal_type=signal_type,
             )
 
-        # QuantityType: use default unit from measurement system
-        if is_quantity_type:
+        elif is_quantity_type:
             quantity_type = type_parts[1]
             unit = self._default_units.get(quantity_type, "")
-            value = format_value(state, unit, "%s", is_quantity_type=True)
-            return Signal(
-                id=self._prefixed_id(name),
-                value=value,
-                unit=unit,
-                label=label,
-            ), _ItemMetadata(
+            if unavailable:
+                display_value = ""
+                typed_value = None
+            else:
+                display_value = format_value(state, unit, "%s", is_quantity_type=True)
+                typed_value = self._coerce_value(display_value, signal_type)
+            metadata = _ItemMetadata(
                 unit=unit,
                 format="%s",
                 is_quantity_type=True,
                 event_state_contains_unit=True,
                 label=label,
+                signal_type=signal_type,
             )
 
-        # Rollershutter and Dimmer are percentage values
-        if type_parts[0] in ("Rollershutter", "Dimmer"):
-            return Signal(
-                id=self._prefixed_id(name),
-                value=state,
-                unit="%",
-                label=label,
-            ), _ItemMetadata(
+        elif base_type in ("Rollershutter", "Dimmer"):
+            unit = "%"
+            if unavailable:
+                display_value = ""
+                typed_value = None
+            else:
+                display_value = state
+                typed_value = self._coerce_value(state, SignalType.NUMBER)
+            metadata = _ItemMetadata(
                 unit="%",
                 format="%d",
                 event_state_contains_unit=False,
                 label=label,
+                signal_type=SignalType.NUMBER,
             )
 
-        # Default: no unit
+        else:
+            unit = ""
+            if unavailable:
+                display_value = ""
+                typed_value = None
+            else:
+                display_value = state
+                typed_value = self._coerce_value(state, signal_type)
+            metadata = _ItemMetadata(
+                event_state_contains_unit=False,
+                label=label,
+                signal_type=signal_type,
+            )
+
         return Signal(
             id=self._prefixed_id(name),
-            value=state,
-            unit="",
+            value=typed_value,
+            display_value=display_value,
+            unit=unit,
             label=label,
-        ), _ItemMetadata(event_state_contains_unit=False, label=label)
+            available=not unavailable,
+            signal_type=signal_type,
+        ), metadata
+
+    @staticmethod
+    def _item_pattern(item: dict[str, Any]) -> str | None:
+        """Extract the stateDescription pattern from an item, if any."""
+        state_desc = item.get("stateDescription", {})
+        return state_desc.get("pattern") if state_desc else None
 
     def _process_event(self, item_name: str, payload: dict[str, Any]) -> Signal | None:
-        """Process an SSE event payload into a Signal.
+        """Process an SSE event payload into an enriched Signal.
+
+        Produces an ADR-010 enriched Signal with typed ``value``,
+        ``display_value``, ``available``, and ``signal_type``.
 
         Args:
             item_name: The item that changed.
             payload: Event payload with state/displayState.
 
         Returns:
-            Signal with updated value, or None if processing failed.
+            Enriched Signal, or None if processing failed.
         """
         metadata = self._item_metadata.get(item_name)
         if not metadata:
             return None
 
         try:
+            raw_state = payload.get("state", "")
+            unavailable = raw_state is None or (
+                isinstance(raw_state, str)
+                and raw_state in (UNDEFINED_VALUE, NULL_VALUE)
+            )
+
+            if unavailable:
+                return Signal(
+                    id=self._prefixed_id(item_name),
+                    value=None,
+                    display_value="",
+                    unit=metadata.unit,
+                    label=metadata.label,
+                    available=False,
+                    signal_type=metadata.signal_type,
+                )
+
+            # Compute display_value from the appropriate source
             if metadata.event_state_contains_unit:
-                # State contains unit, need to extract and format
-                raw_state = fix_encoding(payload.get("state", ""))
-                value = format_value(
-                    raw_state,
+                display_value = format_value(
+                    fix_encoding(raw_state),
                     metadata.unit,
                     metadata.format,
                     metadata.is_quantity_type,
                 )
             elif "displayState" in payload:
-                value = fix_encoding(payload["displayState"])
+                display_value = fix_encoding(payload["displayState"])
             else:
-                value = fix_encoding(payload.get("state", ""))
+                display_value = fix_encoding(raw_state)
+
+            typed_value = self._coerce_value(display_value, metadata.signal_type)
 
             return Signal(
                 id=self._prefixed_id(item_name),
-                value=value,
+                value=typed_value,
+                display_value=display_value,
                 unit=metadata.unit,
                 label=metadata.label,
+                signal_type=metadata.signal_type,
             )
         except Exception:
             logger.exception(f"Failed to process event for {item_name}")
@@ -447,12 +570,34 @@ class OpenHABAdapter:
         """
         return self._client is not None and not self._client.is_closed
 
+    async def send_command(self, signal_id: str, command: str) -> None:
+        """Send a command to an OpenHAB item (ADR-011).
+
+        .. note::
+            Not yet implemented — tracked in the interactive widget phase.
+            The protocol method is defined now so the adapter satisfies
+            the extended ``SmartHomeAdapter`` protocol.
+
+        Args:
+            signal_id: The OpenHAB item name (without prefix).
+            command: The command value as a string (e.g. ``"ON"``).
+
+        Raises:
+            NotImplementedError: Always — implementation deferred.
+        """
+        raise NotImplementedError(
+            "OpenHAB send_command() is not yet implemented. "
+            "Tracked for the interactive widget phase."
+        )
+
 
 class _ItemMetadata:
     """Internal metadata for processing item events.
 
     Stores the formatting information needed to process SSE events,
-    since events don't include the full item metadata.
+    since events don't include the full item metadata.  Includes
+    ``signal_type`` so that ``_process_event`` can produce enriched
+    Signals per ADR-010.
     """
 
     __slots__ = (
@@ -461,6 +606,7 @@ class _ItemMetadata:
         "is_quantity_type",
         "event_state_contains_unit",
         "label",
+        "signal_type",
     )
 
     def __init__(
@@ -470,9 +616,11 @@ class _ItemMetadata:
         is_quantity_type: bool = False,
         event_state_contains_unit: bool = True,
         label: str = "",
+        signal_type: SignalType = SignalType.STRING,
     ) -> None:
         self.unit = unit
         self.format = format
         self.is_quantity_type = is_quantity_type
         self.event_state_contains_unit = event_state_contains_unit
         self.label = label
+        self.signal_type = signal_type

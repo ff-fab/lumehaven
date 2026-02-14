@@ -14,8 +14,9 @@ from __future__ import annotations
 
 import pytest
 from httpx import AsyncClient
+from pydantic import ValidationError
 
-from lumehaven.api.routes import SignalResponse, SignalsResponse
+from lumehaven.api.routes import CommandRequest, SignalResponse, SignalsResponse
 from lumehaven.core.signal import SignalType
 from lumehaven.state.store import SignalStore
 from tests.fixtures.signals import (
@@ -357,3 +358,25 @@ class TestMetricsEndpoint:
 
         # Assert — count increased
         assert response2.json()["signals"]["stored"] == initial_count + 1
+
+
+class TestCommandRequestModel:
+    """Tests for CommandRequest Pydantic model (ADR-011).
+
+    Technique: Specification-based Testing — request validation.
+    """
+
+    def test_accepts_string_value(self) -> None:
+        """CommandRequest accepts a string command value."""
+        request = CommandRequest(value="ON")
+        assert request.value == "ON"
+
+    def test_serializes_to_dict(self) -> None:
+        """CommandRequest serializes to expected JSON shape."""
+        request = CommandRequest(value="75")
+        assert request.model_dump() == {"value": "75"}
+
+    def test_rejects_missing_value(self) -> None:
+        """CommandRequest requires a value field."""
+        with pytest.raises(ValidationError):
+            CommandRequest()  # type: ignore[call-arg]

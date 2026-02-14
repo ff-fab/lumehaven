@@ -151,3 +151,24 @@ class SmartHomeAdapter(Protocol):
         Implementations should be idempotent (safe to call multiple times).
         """
         ...
+
+    async def send_command(self, signal_id: str, command: str) -> None:
+        """Send a command to a signal/device (ADR-011).
+
+        The command is a plain string value matching the platform's native
+        command format.  The adapter translates as needed.
+
+        The backend command router receives a fully-qualified ID
+        (e.g. ``"oh:Light"``), uses the prefix to select the adapter,
+        strips the prefix, then passes the remaining ID here.
+
+        Args:
+            signal_id: The adapter-local signal ID (without prefix).
+            command: The command value as a string (e.g. ``"ON"``,
+                ``"OFF"``, ``"50"``).
+
+        Raises:
+            SmartHomeConnectionError: If the command cannot be delivered.
+            SignalNotFoundError: If the signal_id doesn't exist.
+        """
+        ...

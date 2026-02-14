@@ -11,6 +11,7 @@ import pytest
 from lumehaven.core.exceptions import (
     AdapterError,
     LumehavenError,
+    SignalNotFoundError,
     SmartHomeConnectionError,
 )
 
@@ -27,8 +28,9 @@ class TestExceptionHierarchy:
         [
             SmartHomeConnectionError,
             AdapterError,
+            SignalNotFoundError,
         ],
-        ids=["SmartHomeConnectionError", "AdapterError"],
+        ids=["SmartHomeConnectionError", "AdapterError", "SignalNotFoundError"],
     )
     def test_all_exceptions_inherit_from_lumehaven_error(
         self, exception_class: type
@@ -112,3 +114,25 @@ class TestAdapterError:
         error = AdapterError(adapter="openhab", message="Invalid item state")
 
         assert str(error) == "[openhab] Invalid item state"
+
+
+class TestSignalNotFoundError:
+    """Specification-based tests for SignalNotFoundError (ADR-011)."""
+
+    def test_stores_signal_id(self) -> None:
+        """SignalNotFoundError stores the signal_id."""
+        error = SignalNotFoundError(signal_id="oh:NonExistent")
+
+        assert error.signal_id == "oh:NonExistent"
+
+    def test_message_format(self) -> None:
+        """SignalNotFoundError message includes signal_id."""
+        error = SignalNotFoundError(signal_id="oh:Missing_Light")
+
+        assert str(error) == "Signal not found: oh:Missing_Light"
+
+    def test_inherits_from_lumehaven_error(self) -> None:
+        """SignalNotFoundError inherits from LumehavenError."""
+        error = SignalNotFoundError(signal_id="test")
+
+        assert isinstance(error, LumehavenError)

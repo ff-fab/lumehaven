@@ -52,6 +52,9 @@ class CompliantAdapter:
     async def close(self) -> None:
         pass
 
+    async def send_command(self, signal_id: str, command: str) -> None:
+        pass
+
 
 class MissingMethodAdapter:
     """Partial implementation — missing close() method.
@@ -121,6 +124,9 @@ class MissingPropertyAdapter:
         return True
 
     async def close(self) -> None:
+        pass
+
+    async def send_command(self, signal_id: str, command: str) -> None:
         pass
 
 
@@ -280,6 +286,26 @@ class TestProtocolEventSubscription:
         assert len(signals) == 1
         assert isinstance(signals[0], Signal)
         assert signals[0].id == "event"
+
+
+class TestProtocolSendCommand:
+    """Tests verifying send_command() (ADR-011) Protocol method.
+
+    Technique: Specification-based Testing — verifying command contract.
+    """
+
+    async def test_send_command_is_awaitable(self) -> None:
+        """send_command() is an awaitable coroutine."""
+        adapter = CompliantAdapter()
+        await adapter.send_command("test:id", "ON")
+
+    async def test_send_command_accepts_string_arguments(self) -> None:
+        """send_command() accepts signal_id and command as strings."""
+        adapter = CompliantAdapter()
+        # Should complete without error for any string values
+        await adapter.send_command("light_living", "OFF")
+        await adapter.send_command("thermostat", "22.5")
+        await adapter.send_command("dimmer", "75")
 
 
 class TestProtocolTypeChecking:
